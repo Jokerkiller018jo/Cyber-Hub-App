@@ -1,5 +1,5 @@
 // Main Entry Point - Cyber-Hub v0.0.2
-import { observeAuth, handleLogout, loginWithGoogle, registerUser } from "./modules/auth-handler.js";
+import { observeAuth, handleLogout as doLogout, loginWithGoogle, registerUser } from "./modules/auth-handler.js";
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth as firebaseAuth, googleProvider } from "./modules/firebase-init.js";
 import { startLiveTicker } from "./modules/market-dashboard.js";
@@ -556,7 +556,7 @@ export function switchPage(pageId) {
 window.switchPage = switchPage;
 window.handleLogout = async () => {
     try {
-        await handleLogout();
+        await doLogout();
         showToast("Logged Out Successfully");
     } catch(e) {
         showToast("Logout Failed: " + e.message);

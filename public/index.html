@@ -261,8 +261,8 @@
                     <div style="width: 250px; display:flex; flex-direction:column; gap:5px;" id="settings-tabs">
                         <h4 style="color: #96989d; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; padding-left: 10px;">User Settings</h4>
                         <button class="nav-item active" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">My Account</button>
-                        <button class="nav-item" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Profiles</button>
-                        <button class="nav-item" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Privacy & Safety</button>
+                        <button class="nav-item" data-tab="profiles" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Profiles</button>
+                        <button class="nav-item" data-tab="privacy" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Privacy & Safety</button>
                         
                         <div style="height: 1px; background: #4f545c; margin: 10px 10px;"></div>
                         
@@ -298,6 +298,28 @@
                                 <div class="set-row">
                                     <label style="color: #b9bbbe; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 8px;">Neural Status (Local Only)</label>
                                     <input type="text" class="auth-input" id="set-status" style="background: #202225; border: none; color: #dcddde; width: 100%; border-radius: 3px;" value="Available">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Profiles Tab -->
+                        <div id="tab-profiles" class="tab-pane" style="display:none">
+                            <h2 style="color: #fff; margin-bottom: 30px;">Profiles</h2>
+                            <div style="background: #2f3136; border-radius: 8px; padding: 20px;">
+                                <p style="color:#b9bbbe; font-size:0.9rem;">Multiple operative profiles feature is currently restricted. Upgrade your neural link to access.</p>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Tab -->
+                        <div id="tab-privacy" class="tab-pane" style="display:none">
+                            <h2 style="color: #fff; margin-bottom: 30px;">Privacy & Safety</h2>
+                            <div style="background: #2f3136; border-radius: 8px; padding: 20px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <h4 style="color:#dcddde; margin:0 0 5px 0;">Safe Direct Messaging</h4>
+                                        <p style="color:#b9bbbe; font-size:0.8rem; margin:0;">Automatically scan and delete direct messages you receive that contain explicit content.</p>
+                                    </div>
+                                    <input type="checkbox" checked style="width:20px; height:20px; accent-color:#5865F2;">
                                 </div>
                             </div>
                         </div>
@@ -433,6 +455,8 @@
         // Local UI Handlers - v12
         const settingsNavItems = document.querySelectorAll('#settings-tabs .nav-item');
         const profilePane = document.getElementById('tab-profile');
+        const profilesPane = document.getElementById('tab-profiles');
+        const privacyPane = document.getElementById('tab-privacy');
         const advancedPane = document.getElementById('tab-advanced');
         const connectionsPane = document.getElementById('tab-connections');
 
@@ -445,11 +469,17 @@
                 
                 const tab = btn.getAttribute('data-tab');
                 if (profilePane) profilePane.style.display = 'none';
+                if (profilesPane) profilesPane.style.display = 'none';
+                if (privacyPane) privacyPane.style.display = 'none';
                 if (advancedPane) advancedPane.style.display = 'none';
                 if (connectionsPane) connectionsPane.style.display = 'none';
                 
                 if (tab === 'profile' && profilePane) {
                     profilePane.style.display = 'block';
+                } else if (tab === 'profiles' && profilesPane) {
+                    profilesPane.style.display = 'block';
+                } else if (tab === 'privacy' && privacyPane) {
+                    privacyPane.style.display = 'block';
                 } else if (tab === 'advanced' && advancedPane) {
                     advancedPane.style.display = 'block';
                 } else if (tab === 'connections' && connectionsPane) {
