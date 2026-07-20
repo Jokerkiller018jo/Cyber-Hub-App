@@ -488,10 +488,25 @@ function setupChatAndGrids() {
 
     // Data Grids Logic
     const currSearch = document.querySelector('#currency-page .auth-input');
-    const symSearch = document.querySelector('#symbol-page .auth-input');
+    const symSearch = document.getElementById('sym-search') || document.querySelector('#symbol-page .auth-input');
+    let currentSymCategory = "ALL";
+
+    const symCatBtns = document.querySelectorAll('.sym-cat-btn');
+    symCatBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            symCatBtns.forEach(b => {
+                b.style.border = 'none';
+                b.style.background = 'rgba(0,0,0,0.5)';
+            });
+            btn.style.border = '1px solid #ffaa00';
+            btn.style.background = 'transparent';
+            currentSymCategory = btn.getAttribute('data-cat');
+            renderGrid('grid-sym', SYMBOL_DATA, symSearch.value, currentSymCategory);
+        });
+    });
 
     currSearch?.addEventListener('input', (e) => renderGrid('grid-curr', CURRENCY_DATA, e.target.value));
-    symSearch?.addEventListener('input', (e) => renderGrid('grid-sym', SYMBOL_DATA, e.target.value));
+    symSearch?.addEventListener('input', (e) => renderGrid('grid-sym', SYMBOL_DATA, e.target.value, currentSymCategory));
 }
 
 export function switchPage(pageId) {
@@ -508,7 +523,12 @@ export function switchPage(pageId) {
 
     // Lazy render grids
     if (pageId === 'currency-page') renderGrid('grid-curr', CURRENCY_DATA);
-    if (pageId === 'symbol-page') renderGrid('grid-sym', SYMBOL_DATA);
+    if (pageId === 'symbol-page') {
+        const symSearch = document.getElementById('sym-search') || document.querySelector('#symbol-page .auth-input');
+        const activeCatBtn = document.querySelector('.sym-cat-btn[style*="border: 1px solid"]');
+        const currentCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : "ALL";
+        renderGrid('grid-sym', SYMBOL_DATA, symSearch?.value || "", currentCat);
+    }
 }
 
 // Global Exports for HTML

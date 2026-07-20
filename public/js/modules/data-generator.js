@@ -5,9 +5,15 @@ export const CURRENCY_DATA = "US Dollar|$|M;Euro|€|M;British Pound|£|M;Japan 
 
 export const SYMBOL_DATA = (() => {
     let db = [];
-    // Huge chunk of Unicode symbols (Arrows, Math, Tech, Box, Shapes, Misc, Dingbats, Braille, CJK)
     for(let i=0x2000; i<=0x4FFF; i++) {
-        db.push({n:`Symbol 0x${i.toString(16).toUpperCase()}`, s:String.fromCharCode(i), c:'UNICODE'});
+        let cat = 'UNICODE';
+        if (i >= 0x2190 && i <= 0x21FF) cat = 'ARROWS';
+        else if (i >= 0x2200 && i <= 0x22FF) cat = 'MATH';
+        else if (i >= 0x2500 && i <= 0x257F) cat = 'BOXES';
+        else if (i >= 0x25A0 && i <= 0x25FF) cat = 'SHAPES';
+        else if (i >= 0x2700 && i <= 0x27BF) cat = 'DINGBATS';
+        else if (i >= 0x2800 && i <= 0x28FF) cat = 'BRAILLE';
+        db.push({n:`Symbol 0x${i.toString(16).toUpperCase()}`, s:String.fromCharCode(i), c:cat});
     }
     // Emojis and Pictographs (requires fromCodePoint)
     for(let i=0x1F300; i<=0x1F5FF; i++) {
@@ -16,15 +22,24 @@ export const SYMBOL_DATA = (() => {
     return db;
 })();
 
-export function renderGrid(containerId, data, filter = "") {
+export function renderGrid(containerId, data, filter = "", category = "ALL") {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = "";
     
-    // Limit to top 200 items so the browser doesn't crash loading 13,000 DOM elements
-    const filtered = data.filter(i => i.n.toUpperCase().includes(filter.toUpperCase())).slice(0, 200);
+    // Filter by category if not ALL
+    let filtered = data;
+    if (category !== "ALL") {
+        filtered = filtered.filter(i => i.c === category);
+    }
     
-    filtered.forEach(i => {
+    // Filter by search text
+    filtered = filtered.filter(i => i.n.toUpperCase().includes(filter.toUpperCase()));
+    
+    // Limit to top 200 items so the browser doesn't crash loading DOM elements
+    const sliced = filtered.slice(0, 200);
+    
+    sliced.forEach(i => {
         const div = document.createElement('div');
         div.className = 'glass';
         div.style.padding = '15px';
@@ -39,7 +54,7 @@ export function renderGrid(containerId, data, filter = "") {
     });
 
     // Add a message if there are more results hidden
-    if (data.length > 200 && filtered.length === 200) {
+    if (filtered.length > 200) {
         const warn = document.createElement('div');
         warn.style.gridColumn = "1 / -1";
         warn.style.textAlign = "center";

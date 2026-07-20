@@ -338,7 +338,16 @@
             <div id="symbol-page" class="app-page">
                 <h2 style="color:#ffaa00; margin-bottom:15px;">⚜️ SYMBOLS</h2>
                 <div class="glass" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-                    <input type="text" class="auth-input" style="border-radius:0; border:none; border-bottom:1px solid #333;" placeholder="Search 13,000+ Unicode Characters...">
+                    <div id="sym-categories" style="display:flex; gap:10px; padding: 15px 20px 0 20px; overflow-x:auto;">
+                        <button class="auth-btn sym-cat-btn" data-cat="ALL" style="padding:8px 15px; width:auto; border:1px solid #ffaa00;">ALL</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="EMOJI" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">EMOJIS</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="ARROWS" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">ARROWS</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="MATH" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">MATH</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="SHAPES" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">SHAPES</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="DINGBATS" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">DINGBATS</button>
+                        <button class="auth-btn sym-cat-btn" data-cat="UNICODE" style="padding:8px 15px; width:auto; background:rgba(0,0,0,0.5);">MISC</button>
+                    </div>
+                    <input type="text" id="sym-search" class="auth-input" style="border-radius:0; border:none; border-bottom:1px solid #333; margin-top:10px;" placeholder="Search 13,000+ Unicode Characters...">
                     <div id="grid-sym" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px; padding:20px; overflow-y:auto;">
                         <!-- Injected by generator -->
                     </div>
