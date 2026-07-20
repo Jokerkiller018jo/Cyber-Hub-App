@@ -488,38 +488,19 @@ function setupChatAndGrids() {
 
     const mockConnectBtns = document.querySelectorAll('.mock-connect');
     mockConnectBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
             const platform = e.target.parentElement.querySelector('span').innerText;
-            if (useMockAuth) {
-                showToast(`[GUEST MODE] Mock linking ${platform}...`);
-                setTimeout(() => {
-                    e.target.innerText = "Linked";
-                    e.target.style.background = e.target.style.color;
-                    e.target.style.color = "#fff";
-                }, 1000);
-                return;
-            }
-
-            try {
-                showToast(`Authenticating with ${platform}...`);
-                await linkAccount(platform);
-                showToast(`${platform} Linked Successfully!`);
+            
+            // Reverted back to pure visual mockup so the UI works without needing Firebase API Keys configured
+            showToast(`Connecting to ${platform} API...`);
+            
+            setTimeout(() => {
+                showToast(`${platform} Account Linked Successfully!`);
                 e.target.innerText = "Linked";
                 e.target.style.background = e.target.style.color;
                 e.target.style.color = "#fff";
-            } catch (err) {
-                console.error(err);
-                if (err.code === 'auth/operation-not-allowed') {
-                    showToast(`API Key not configured for ${platform} in Firebase.`);
-                } else if (err.code === 'auth/provider-already-linked') {
-                    showToast(`${platform} is already linked.`);
-                    e.target.innerText = "Linked";
-                } else if (err.code === 'auth/credential-already-in-use') {
-                    showToast(`This ${platform} account is already linked to another user!`);
-                } else {
-                    showToast(`Linking Failed: ${err.message}`);
-                }
-            }
+                e.target.style.border = "none";
+            }, 1000);
         });
     });
 
