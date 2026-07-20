@@ -1,5 +1,5 @@
 // Main Entry Point - Cyber-Hub v0.0.2
-import { observeAuth, handleLogout as doLogout, loginWithGoogle, registerUser } from "./modules/auth-handler.js";
+import { observeAuth, handleLogout as doLogout, loginWithGoogle, registerUser, linkAccount } from "./modules/auth-handler.js";
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth as firebaseAuth, googleProvider } from "./modules/firebase-init.js";
 import { startLiveTicker } from "./modules/market-dashboard.js";
@@ -488,15 +488,36 @@ function setupChatAndGrids() {
 
     const mockConnectBtns = document.querySelectorAll('.mock-connect');
     mockConnectBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const platform = e.target.parentElement.querySelector('span').innerText;
-            showToast(`Connecting to ${platform} API...`);
-            setTimeout(() => {
-                showToast(`${platform} Account Linked Successfully!`);
+            if (useMockAuth) {
+                showToast(`[GUEST MODE] Mock linking ${platform}...`);
+                setTimeout(() => {
+                    e.target.innerText = "Linked";
+                    e.target.style.background = e.target.style.color;
+                    e.target.style.color = "#fff";
+                }, 1000);
+                return;
+            }
+
+            try {
+                showToast(`Authenticating with ${platform}...`);
+                await linkAccount(platform);
+                showToast(`${platform} Linked Successfully!`);
                 e.target.innerText = "Linked";
                 e.target.style.background = e.target.style.color;
                 e.target.style.color = "#fff";
-            }, 1000);
+            } catch (err) {
+                console.error(err);
+                if (err.code === 'auth/operation-not-allowed') {
+                    showToast(`API Key not configured for ${platform} in Firebase.`);
+                } else if (err.code === 'auth/provider-already-linked') {
+                    showToast(`${platform} is already linked.`);
+                    e.target.innerText = "Linked";
+                } else {
+                    showToast(`Linking Failed: ${err.message}`);
+                }
+            }
         });
     });
 
