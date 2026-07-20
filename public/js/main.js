@@ -133,6 +133,24 @@ function setupAuthUI() {
         }
     });
 
+    const mockSocials = [
+        { id: 'microsoft-login', name: 'Microsoft' },
+        { id: 'github-login', name: 'GitHub' },
+        { id: 'discord-login', name: 'Discord' },
+        { id: 'x-login', name: 'X (Twitter)' },
+        { id: 'xbox-login', name: 'Xbox' },
+        { id: 'whatsapp-login', name: 'WhatsApp' }
+    ];
+
+    mockSocials.forEach(provider => {
+        const btn = document.getElementById(provider.id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                alert(`${provider.name} Auth Not Configured`);
+            });
+        }
+    });
+
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;

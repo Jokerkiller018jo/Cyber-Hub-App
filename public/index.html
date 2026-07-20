@@ -41,10 +41,8 @@
         .auth-input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; border-radius: 8px; font-size: 1rem; }
         .auth-btn { width: 100%; padding: 15px; background: var(--magenta); color: black; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
         .auth-btn:active { transform: scale(0.98); }
-        .social-login { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .social-btn { padding: 10px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; transition: filter 0.2s, transform 0.2s; }
-        .social-btn:hover { filter: brightness(0.9); }
-        .social-btn:active { transform: scale(0.98); }
+        .social-login { margin-top: 20px; display: flex; gap: 10px; }
+        .social-btn { flex: 1; padding: 10px; background: white; color: #333; border-radius: 8px; border: none; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
 
         /* Sidebar Profile */
         .profile-cube { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -56,6 +54,10 @@
         .m-card { padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .m-card span { font-size: 0.7rem; color: #666; font-weight: bold; text-transform: uppercase; }
         .m-card b { font-size: 1.1rem; color: var(--cyan); margin-top: 5px; }
+
+        /* Discord Settings Overrides */
+        #settings-tabs .nav-item:hover { background: rgba(79, 84, 92, 0.32) !important; color: #dcddde !important; }
+        #settings-tabs .nav-item.active { background: rgba(79, 84, 92, 0.6) !important; color: #fff !important; }
     </style>
 </head>
 <body class="dark-mode">
@@ -94,27 +96,27 @@
                 <input type="text" class="auth-input" id="phone" placeholder="Phone Link (+123...)" style="display:none">
                 <button type="submit" class="auth-btn">AUTHORIZE</button>
             </form>
-            <div class="social-login">
-                <button class="social-btn" id="google-login" style="background:#ffffff; color:#000;">
+            <div class="social-login-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <button type="button" class="social-btn" id="google-login" style="background:#e0e0e0;">
                     <img src="https://www.google.com/favicon.ico" width="16" height="16"> Google
                 </button>
-                <button class="social-btn" id="microsoft-login" style="background:#00a4ef; color:#fff;" onclick="alert('Microsoft Auth Not Configured')">
+                <button type="button" class="social-btn" id="microsoft-login" style="background:#00a4ef; color:white;">
                     <img src="https://www.microsoft.com/favicon.ico" width="16" height="16"> Microsoft
                 </button>
-                <button class="social-btn" id="github-login" style="background:#24292e; color:#fff;" onclick="alert('GitHub Auth Not Configured')">
+                <button type="button" class="social-btn" id="github-login" style="background:#333; color:white;">
                     <img src="https://github.com/favicon.ico" width="16" height="16"> GitHub
                 </button>
-                <button class="social-btn" id="discord-login" style="background:#5865F2; color:#fff;" onclick="alert('Discord Auth Not Configured')">
-                    <img src="https://discord.com/assets/847541504914fd33810e70a0ea73177e.ico" width="16" height="16"> Discord
+                <button type="button" class="social-btn" id="discord-login" style="background:#5865F2; color:white;">
+                    <img src="https://discord.com/favicon.ico" width="16" height="16"> Discord
                 </button>
-                <button class="social-btn" id="x-login" style="background:#000000; color:#fff; border: 1px solid #333;" onclick="alert('X (Twitter) Auth Not Configured')">
+                <button type="button" class="social-btn" id="x-login" style="background:#000; color:white; border: 1px solid #333;">
                     <img src="https://abs.twimg.com/favicons/twitter.3.ico" width="16" height="16"> X
                 </button>
-                <button class="social-btn" id="xbox-login" style="background:#107C10; color:#fff;" onclick="alert('Xbox Auth Not Configured')">
+                <button type="button" class="social-btn" id="xbox-login" style="background:#107C10; color:white;">
                     <img src="https://www.xbox.com/favicon.ico" width="16" height="16"> Xbox
                 </button>
-                <button class="social-btn" id="whatsapp-login" style="background:#25D366; color:#fff; grid-column: span 2;" onclick="alert('WhatsApp Auth Not Configured')">
-                    <img src="https://web.whatsapp.com/favicon.ico" width="16" height="16"> WhatsApp
+                <button type="button" class="social-btn" id="whatsapp-login" style="grid-column: span 2; background:#25D366; color:white;">
+                    <img src="https://whatsapp.com/favicon.ico" width="16" height="16"> WhatsApp
                 </button>
             </div>
             <button onclick="enterDemoMode()" style="width:100%; margin-top:15px; background:rgba(255,255,255,0.05); color:#666; border:1px solid #333; padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem;">BYPASS TO DEMO MODE</button>
@@ -250,47 +252,77 @@
                 </div>
             </div>
 
-            <!-- SETTINGS PAGE -->
-            <div id="settings-page" class="app-page">
-                 <div class="glass" style="max-width:800px; margin:0 auto; padding:40px;">
-                    <h1 style="color:var(--magenta);">SYSTEM CONFIG</h1>
-                    <div style="display:grid; grid-template-columns: 200px 1fr; gap:40px; margin-top:30px;">
-                        <div style="display:flex; flex-direction:column; gap:10px;" id="settings-tabs">
-                            <button class="nav-item active" data-tab="profile">Profile</button>
-                            <button class="nav-item" data-tab="advanced">Advanced</button>
-                        </div>
-                        <div id="settings-content">
-                            <!-- Profile Tab -->
-                            <div id="tab-profile" class="tab-pane active">
-                                <div class="set-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                    <label>Codename</label>
-                                    <input type="text" class="auth-input" id="set-username" style="width:200px;" value="SysAdmin">
-                                </div>
-                                <div class="set-row" style="display:flex; justify-content:space-between; align-items:center;">
-                                    <label>Neural Status (Local Only)</label>
-                                    <input type="text" class="auth-input" id="set-status" style="width:200px;" value="Available">
-                                </div>
-                            </div>
-                            <!-- Advanced Tab (CSV Engines) -->
-                            <div id="tab-advanced" class="tab-pane" style="display:none">
-                                <h3 style="color:var(--cyan); margin-bottom:15px;">DATA SECTOR TOOLS</h3>
-                                <p style="font-size:0.8rem; color:#888; margin-bottom:20px;">Manage your local node telemetry via CSV Export/Import.</p>
-                                
-                                <div style="display:flex; flex-direction:column; gap:15px;">
-                                    <button class="auth-btn" id="export-csv-btn">EXPORT DATASET (.CSV)</button>
-                                    
-                                    <div style="border:1px dashed var(--magenta); padding:20px; border-radius:8px; text-align:center;">
-                                        <p style="font-size:0.7rem; color:var(--magenta); margin:0 0 10px 0;">IMPORT DATASET (CSV SOURCE)</p>
-                                        <input type="file" id="import-csv-file" accept=".csv" style="font-size:0.7rem; margin-bottom:10px;">
-                                        <button class="auth-btn" id="import-csv-btn" style="background:transparent; border:1px solid #fff; color:#fff;">SYNCHRONIZE SOURCE</button>
-                                    </div>
-
-                                    <button class="auth-btn" id="wipe-data-btn" style="background:#ff4444; color:#000;">PURGE LOCAL CACHE</button>
-                                </div>
-                            </div>
-                        </div>
+            <!-- SETTINGS PAGE (DISCORD STYLE) -->
+            <div id="settings-page" class="app-page" style="padding: 0; background: #36393f; flex-direction: row; position: absolute; z-index: 100; top: 0; left: 0;">
+                
+                <!-- Left Sidebar -->
+                <div style="flex: 1; max-width: 35%; background: #2f3136; display: flex; justify-content: flex-end; padding: 60px 20px 20px 20px;">
+                    <div style="width: 250px; display:flex; flex-direction:column; gap:5px;" id="settings-tabs">
+                        <h4 style="color: #96989d; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; padding-left: 10px;">User Settings</h4>
+                        <button class="nav-item active" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">My Account</button>
+                        <button class="nav-item" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Profiles</button>
+                        <button class="nav-item" data-tab="profile" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Privacy & Safety</button>
+                        
+                        <div style="height: 1px; background: #4f545c; margin: 10px 10px;"></div>
+                        
+                        <h4 style="color: #96989d; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; padding-left: 10px;">App Settings</h4>
+                        <button class="nav-item" data-tab="advanced" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Data Sector Tools</button>
+                        <button class="nav-item" data-tab="advanced" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Connections</button>
+                        
+                        <div style="height: 1px; background: #4f545c; margin: 10px 10px;"></div>
+                        
+                        <button class="nav-item" onclick="handleLogout()" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #ed4245; font-weight: bold; border: none; cursor: pointer;">Log Out</button>
                     </div>
-                 </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div style="flex: 2; background: #36393f; padding: 60px 40px 40px 40px; position: relative; overflow-y: auto;">
+                    
+                    <!-- Close Button -->
+                    <div onclick="switchPage('nexus-page')" style="position: absolute; right: 40px; top: 60px; text-align: center; cursor: pointer; color: #b9bbbe;">
+                        <div style="width: 36px; height: 36px; border: 2px solid #b9bbbe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 5px; transition: 0.2s;">X</div>
+                        <span style="font-size: 0.75rem; font-weight: bold;">ESC</span>
+                    </div>
+
+                    <div id="settings-content" style="max-width: 600px;">
+                        
+                        <!-- Profile Tab -->
+                        <div id="tab-profile" class="tab-pane active">
+                            <h2 style="color: #fff; margin-bottom: 30px;">My Account</h2>
+                            <div style="background: #2f3136; border-radius: 8px; padding: 20px;">
+                                <div class="set-row" style="margin-bottom:20px;">
+                                    <label style="color: #b9bbbe; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 8px;">Codename</label>
+                                    <input type="text" class="auth-input" id="set-username" style="background: #202225; border: none; color: #dcddde; width: 100%; border-radius: 3px;" value="SysAdmin">
+                                </div>
+                                <div class="set-row">
+                                    <label style="color: #b9bbbe; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 8px;">Neural Status (Local Only)</label>
+                                    <input type="text" class="auth-input" id="set-status" style="background: #202225; border: none; color: #dcddde; width: 100%; border-radius: 3px;" value="Available">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Tab (CSV Engines) -->
+                        <div id="tab-advanced" class="tab-pane" style="display:none">
+                            <h2 style="color: #fff; margin-bottom: 30px;">Data Sector Tools</h2>
+                            <p style="font-size:0.9rem; color:#b9bbbe; margin-bottom:20px;">Manage your local node telemetry via CSV Export/Import.</p>
+                            
+                            <div style="display:flex; flex-direction:column; gap:15px; background: #2f3136; padding: 20px; border-radius: 8px;">
+                                <button class="auth-btn" id="export-csv-btn" style="background: #5865F2; color: white;">EXPORT DATASET (.CSV)</button>
+                                
+                                <div style="border:1px dashed #4f545c; padding:20px; border-radius:8px; text-align:center;">
+                                    <p style="font-size:0.75rem; color:#b9bbbe; font-weight: bold; margin:0 0 10px 0; text-transform: uppercase;">IMPORT DATASET (CSV SOURCE)</p>
+                                    <input type="file" id="import-csv-file" accept=".csv" style="font-size:0.8rem; margin-bottom:10px; color: #dcddde;">
+                                    <button class="auth-btn" id="import-csv-btn" style="background:transparent; border:1px solid #5865F2; color:#5865F2;">SYNCHRONIZE SOURCE</button>
+                                </div>
+
+                                <button class="auth-btn" id="wipe-data-btn" style="background:#ed4245; color:white; border: none;">PURGE LOCAL CACHE</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- CURRENCY PAGE -->
             <div id="currency-page" class="app-page">
                 <h2 style="color:var(--cyan); margin-bottom:15px;">🏦 WORLD CURRENCIES</h2>
