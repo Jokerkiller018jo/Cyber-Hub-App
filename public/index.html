@@ -366,23 +366,26 @@
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 
         // Local UI Handlers - v12
-        const profileTabBtn = document.querySelector('[data-tab="profile"]');
-        const advancedTabBtn = document.querySelector('[data-tab="advanced"]');
+        const settingsNavItems = document.querySelectorAll('#settings-tabs .nav-item');
         const profilePane = document.getElementById('tab-profile');
         const advancedPane = document.getElementById('tab-advanced');
 
-        profileTabBtn?.addEventListener('click', () => {
-           profileTabBtn.classList.add('active');
-           advancedTabBtn.classList.remove('active');
-           profilePane.style.display = 'block';
-           advancedPane.style.display = 'none';
-        });
-
-        advancedTabBtn?.addEventListener('click', () => {
-           advancedTabBtn.classList.add('active');
-           profileTabBtn.classList.remove('active');
-           advancedPane.style.display = 'block';
-           profilePane.style.display = 'none';
+        settingsNavItems.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.innerText === "Log Out") return; // Let onclick handle logout
+                
+                settingsNavItems.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const tab = btn.getAttribute('data-tab');
+                if (tab === 'profile') {
+                    profilePane.style.display = 'block';
+                    advancedPane.style.display = 'none';
+                } else if (tab === 'advanced') {
+                    advancedPane.style.display = 'block';
+                    profilePane.style.display = 'none';
+                }
+            });
         });
 
         // Data Grids Logicle
