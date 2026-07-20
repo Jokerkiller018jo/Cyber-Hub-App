@@ -5,14 +5,14 @@ export const CURRENCY_DATA = "US Dollar|$|M;Euro|€|M;British Pound|£|M;Japan 
 
 export const SYMBOL_DATA = (() => {
     let db = [];
-    // Math Block
-    for(let i=0x2200; i<=0x2280; i++) db.push({n:`Math 0x${i.toString(16)}`, s:String.fromCharCode(i), c:'MATH'});
-    // Dingbats
-    for(let i=0x2700; i<=0x273F; i++) db.push({n:`Dingbat 0x${i.toString(16)}`, s:String.fromCharCode(i), c:'MISC'});
-    // Arrows
-    for(let i=0x2190; i<=0x21D0; i++) db.push({n:`Arrow 0x${i.toString(16)}`, s:String.fromCharCode(i), c:'UI'});
-    // Custom expansion
-    for(let i=0x2300; i<=0x2328; i++) db.push({n:`Tech 0x${i.toString(16)}`, s:String.fromCharCode(i), c:'TECH'});
+    // Huge chunk of Unicode symbols (Arrows, Math, Tech, Box, Shapes, Misc, Dingbats, Braille, CJK)
+    for(let i=0x2000; i<=0x4FFF; i++) {
+        db.push({n:`Symbol 0x${i.toString(16).toUpperCase()}`, s:String.fromCharCode(i), c:'UNICODE'});
+    }
+    // Emojis and Pictographs (requires fromCodePoint)
+    for(let i=0x1F300; i<=0x1F5FF; i++) {
+        db.push({n:`Emoji 0x${i.toString(16).toUpperCase()}`, s:String.fromCodePoint(i), c:'EMOJI'});
+    }
     return db;
 })();
 
@@ -21,19 +21,32 @@ export function renderGrid(containerId, data, filter = "") {
     if (!container) return;
     container.innerHTML = "";
     
-    data.filter(i => i.n.toUpperCase().includes(filter.toUpperCase()))
-        .forEach(i => {
-            const div = document.createElement('div');
-            div.className = 'glass';
-            div.style.padding = '15px';
-            div.style.textAlign = 'center';
-            div.style.cursor = 'pointer';
-            div.innerHTML = `<b style="font-size:1.5rem; display:block; color:var(--cyan);">${i.s}</b><small style="color:#666; font-size:0.6rem;">${i.n.substring(0,12)}</small>`;
-            div.onclick = () => {
-                navigator.clipboard.writeText(i.s);
-                // Assume showToast is global or imported
-                if (window.showToast) window.showToast(`Copied ${i.s}`);
-            };
-            container.appendChild(div);
-        });
+    // Limit to top 200 items so the browser doesn't crash loading 13,000 DOM elements
+    const filtered = data.filter(i => i.n.toUpperCase().includes(filter.toUpperCase())).slice(0, 200);
+    
+    filtered.forEach(i => {
+        const div = document.createElement('div');
+        div.className = 'glass';
+        div.style.padding = '15px';
+        div.style.textAlign = 'center';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<b style="font-size:1.5rem; display:block; color:var(--cyan);">${i.s}</b><small style="color:#666; font-size:0.6rem;">${i.n.substring(0,12)}</small>`;
+        div.onclick = () => {
+            navigator.clipboard.writeText(i.s);
+            if (window.showToast) window.showToast(`Copied ${i.s}`);
+        };
+        container.appendChild(div);
+    });
+
+    // Add a message if there are more results hidden
+    if (data.length > 200 && filtered.length === 200) {
+        const warn = document.createElement('div');
+        warn.style.gridColumn = "1 / -1";
+        warn.style.textAlign = "center";
+        warn.style.color = "#888";
+        warn.style.fontSize = "0.8rem";
+        warn.style.padding = "20px";
+        warn.innerHTML = "Showing top 200 results to prevent lag. Type in the search bar to find more.";
+        container.appendChild(warn);
+    }
 }
