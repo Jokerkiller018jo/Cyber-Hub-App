@@ -41,8 +41,10 @@
         .auth-input { width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; border-radius: 8px; font-size: 1rem; }
         .auth-btn { width: 100%; padding: 15px; background: var(--magenta); color: black; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
         .auth-btn:active { transform: scale(0.98); }
-        .social-login { margin-top: 20px; display: flex; gap: 10px; }
-        .social-btn { flex: 1; padding: 10px; background: white; color: #333; border-radius: 8px; border: none; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        .social-login { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .social-btn { padding: 10px; border-radius: 8px; border: none; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; transition: filter 0.2s, transform 0.2s; }
+        .social-btn:hover { filter: brightness(0.9); }
+        .social-btn:active { transform: scale(0.98); }
 
         /* Sidebar Profile */
         .profile-cube { margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
@@ -92,9 +94,29 @@
                 <input type="text" class="auth-input" id="phone" placeholder="Phone Link (+123...)" style="display:none">
                 <button type="submit" class="auth-btn">AUTHORIZE</button>
             </form>
-            <button class="social-btn" id="google-login">
-                <img src="https://www.google.com/favicon.ico" width="16" height="16"> Google Log
-            </button>
+            <div class="social-login">
+                <button class="social-btn" id="google-login" style="background:#ffffff; color:#000;">
+                    <img src="https://www.google.com/favicon.ico" width="16" height="16"> Google
+                </button>
+                <button class="social-btn" id="microsoft-login" style="background:#00a4ef; color:#fff;" onclick="alert('Microsoft Auth Not Configured')">
+                    <img src="https://www.microsoft.com/favicon.ico" width="16" height="16"> Microsoft
+                </button>
+                <button class="social-btn" id="github-login" style="background:#24292e; color:#fff;" onclick="alert('GitHub Auth Not Configured')">
+                    <img src="https://github.com/favicon.ico" width="16" height="16"> GitHub
+                </button>
+                <button class="social-btn" id="discord-login" style="background:#5865F2; color:#fff;" onclick="alert('Discord Auth Not Configured')">
+                    <img src="https://discord.com/assets/847541504914fd33810e70a0ea73177e.ico" width="16" height="16"> Discord
+                </button>
+                <button class="social-btn" id="x-login" style="background:#000000; color:#fff; border: 1px solid #333;" onclick="alert('X (Twitter) Auth Not Configured')">
+                    <img src="https://abs.twimg.com/favicons/twitter.3.ico" width="16" height="16"> X
+                </button>
+                <button class="social-btn" id="xbox-login" style="background:#107C10; color:#fff;" onclick="alert('Xbox Auth Not Configured')">
+                    <img src="https://www.xbox.com/favicon.ico" width="16" height="16"> Xbox
+                </button>
+                <button class="social-btn" id="whatsapp-login" style="background:#25D366; color:#fff; grid-column: span 2;" onclick="alert('WhatsApp Auth Not Configured')">
+                    <img src="https://web.whatsapp.com/favicon.ico" width="16" height="16"> WhatsApp
+                </button>
+            </div>
             <button onclick="enterDemoMode()" style="width:100%; margin-top:15px; background:rgba(255,255,255,0.05); color:#666; border:1px solid #333; padding:10px; border-radius:8px; cursor:pointer; font-size:0.7rem;">BYPASS TO DEMO MODE</button>
             <p id="auth-switch" style="text-align:center; margin-top: 20px; font-size: 0.8rem; cursor: pointer; color: var(--cyan);">Sign up for a new Node Access</p>
         </div>
