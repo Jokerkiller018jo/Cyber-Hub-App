@@ -268,7 +268,7 @@
                         
                         <h4 style="color: #96989d; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px; padding-left: 10px;">App Settings</h4>
                         <button class="nav-item" data-tab="advanced" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Data Sector Tools</button>
-                        <button class="nav-item" data-tab="advanced" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Connections</button>
+                        <button class="nav-item" data-tab="connections" style="text-align: left; background: transparent; padding: 10px; border-radius: 4px; color: #b9bbbe; font-weight: bold; border: none; cursor: pointer;">Connections</button>
                         
                         <div style="height: 1px; background: #4f545c; margin: 10px 10px;"></div>
                         
@@ -317,6 +317,47 @@
                                 </div>
 
                                 <button class="auth-btn" id="wipe-data-btn" style="background:#ed4245; color:white; border: none;">PURGE LOCAL CACHE</button>
+                            </div>
+                        </div>
+
+                        <!-- Connections Tab -->
+                        <div id="tab-connections" class="tab-pane" style="display:none">
+                            <h2 style="color: #fff; margin-bottom: 30px;">Connections</h2>
+                            <p style="font-size:0.9rem; color:#b9bbbe; margin-bottom:20px;">Connect your accounts to unlock special integrations.</p>
+                            
+                            <div style="display:flex; flex-direction:column; gap:10px;">
+                                <!-- Discord -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:30px; height:30px; background:#5865F2; border-radius:4px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:1.2rem;">D</div>
+                                        <span style="color:#dcddde; font-weight:bold;">Discord</span>
+                                    </div>
+                                    <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #5865F2; color:#5865F2; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
+                                </div>
+                                <!-- Xbox -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:30px; height:30px; background:#107C10; border-radius:4px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:1.2rem;">X</div>
+                                        <span style="color:#dcddde; font-weight:bold;">Xbox</span>
+                                    </div>
+                                    <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #107C10; color:#107C10; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
+                                </div>
+                                <!-- GitHub -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:30px; height:30px; background:#333; border-radius:4px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:1.2rem;">G</div>
+                                        <span style="color:#dcddde; font-weight:bold;">GitHub</span>
+                                    </div>
+                                    <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #dcddde; color:#dcddde; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
+                                </div>
+                                <!-- Google -->
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:30px; height:30px; background:#DB4437; border-radius:4px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:1.2rem;">G</div>
+                                        <span style="color:#dcddde; font-weight:bold;">Google</span>
+                                    </div>
+                                    <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #DB4437; color:#DB4437; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
+                                </div>
                             </div>
                         </div>
 
@@ -393,6 +434,7 @@
         const settingsNavItems = document.querySelectorAll('#settings-tabs .nav-item');
         const profilePane = document.getElementById('tab-profile');
         const advancedPane = document.getElementById('tab-advanced');
+        const connectionsPane = document.getElementById('tab-connections');
 
         settingsNavItems.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -402,12 +444,16 @@
                 btn.classList.add('active');
                 
                 const tab = btn.getAttribute('data-tab');
-                if (tab === 'profile') {
+                if (profilePane) profilePane.style.display = 'none';
+                if (advancedPane) advancedPane.style.display = 'none';
+                if (connectionsPane) connectionsPane.style.display = 'none';
+                
+                if (tab === 'profile' && profilePane) {
                     profilePane.style.display = 'block';
-                    advancedPane.style.display = 'none';
-                } else if (tab === 'advanced') {
+                } else if (tab === 'advanced' && advancedPane) {
                     advancedPane.style.display = 'block';
-                    profilePane.style.display = 'none';
+                } else if (tab === 'connections' && connectionsPane) {
+                    connectionsPane.style.display = 'block';
                 }
             });
         });

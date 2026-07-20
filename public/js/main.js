@@ -486,6 +486,20 @@ function setupChatAndGrids() {
         }
     });
 
+    const mockConnectBtns = document.querySelectorAll('.mock-connect');
+    mockConnectBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const platform = e.target.parentElement.querySelector('span').innerText;
+            showToast(`Connecting to ${platform} API...`);
+            setTimeout(() => {
+                showToast(`${platform} Account Linked Successfully!`);
+                e.target.innerText = "Linked";
+                e.target.style.background = e.target.style.color;
+                e.target.style.color = "#fff";
+            }, 1000);
+        });
+    });
+
     // Data Grids Logic
     const currSearch = document.querySelector('#currency-page .auth-input');
     const symSearch = document.getElementById('sym-search') || document.querySelector('#symbol-page .auth-input');
