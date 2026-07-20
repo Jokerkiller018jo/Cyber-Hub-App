@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/1
 import { auth as firebaseAuth, googleProvider } from "./modules/firebase-init.js";
 import { startLiveTicker } from "./modules/market-dashboard.js";
 import { playSound, showToast } from "./modules/ui-manager.js";
-import { CURRENCY_DATA, SYMBOL_DATA, renderGrid } from "./modules/data-generator.js";
+import { CURRENCY_DATA, SYMBOL_DATA, COLOR_DATA, renderGrid, renderColorGrid } from "./modules/data-generator.js";
 import { sendMessage, observeMessages, findUserByPhone, addContact } from "./modules/chat-logic.js";
 import { dataStore } from "./modules/data-store.js";
 import { exportToCSV, parseCSV, downloadCSV } from "./modules/csv-engine.js";
@@ -507,6 +507,9 @@ function setupChatAndGrids() {
 
     currSearch?.addEventListener('input', (e) => renderGrid('grid-curr', CURRENCY_DATA, e.target.value));
     symSearch?.addEventListener('input', (e) => renderGrid('grid-sym', SYMBOL_DATA, e.target.value, currentSymCategory));
+    
+    const colorSearch = document.getElementById('color-search');
+    colorSearch?.addEventListener('input', (e) => renderColorGrid('grid-color', COLOR_DATA, e.target.value));
 }
 
 export function switchPage(pageId) {
@@ -528,6 +531,10 @@ export function switchPage(pageId) {
         const activeCatBtn = document.querySelector('.sym-cat-btn[style*="border: 1px solid"]');
         const currentCat = activeCatBtn ? activeCatBtn.getAttribute('data-cat') : "ALL";
         renderGrid('grid-sym', SYMBOL_DATA, symSearch?.value || "", currentCat);
+    }
+    if (pageId === 'color-page') {
+        const colorSearch = document.getElementById('color-search');
+        renderColorGrid('grid-color', COLOR_DATA, colorSearch?.value || "");
     }
 }
 

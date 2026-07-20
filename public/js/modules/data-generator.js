@@ -65,3 +65,65 @@ export function renderGrid(containerId, data, filter = "", category = "ALL") {
         container.appendChild(warn);
     }
 }
+
+export const COLOR_DATA = (() => {
+    let db = [
+        {n: 'Black', hex: '#000000'}, {n: 'White', hex: '#FFFFFF'}, {n: 'Red', hex: '#FF0000'},
+        {n: 'Green', hex: '#00FF00'}, {n: 'Blue', hex: '#0000FF'}, {n: 'Yellow', hex: '#FFFF00'},
+        {n: 'Cyan', hex: '#00FFFF'}, {n: 'Magenta', hex: '#FF00FF'}, {n: 'Orange', hex: '#FFA500'},
+        {n: 'Purple', hex: '#800080'}, {n: 'Pink', hex: '#FFC0CB'}, {n: 'Lime', hex: '#00FF00'},
+        {n: 'Teal', hex: '#008080'}, {n: 'Navy', hex: '#000080'}
+    ];
+    // Generate 150 random procedural colors to fill the page
+    for(let i=0; i<150; i++) {
+        const r = Math.floor(Math.random()*256).toString(16).padStart(2, '0');
+        const g = Math.floor(Math.random()*256).toString(16).padStart(2, '0');
+        const b = Math.floor(Math.random()*256).toString(16).padStart(2, '0');
+        const hex = `#${r}${g}${b}`.toUpperCase();
+        db.push({n: `Hex ${hex}`, hex: hex});
+    }
+    return db;
+})();
+
+export function renderColorGrid(containerId, data, filter = "") {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+    
+    let filtered = [...data]; // clone
+    let search = filter.trim().toUpperCase();
+    let isHex = false;
+
+    // Magically handle valid hex searches to "generate" them instantly from the 16.7M possibilities
+    if (search.match(/^#?[0-9A-F]{3,6}$/)) {
+        isHex = true;
+        if (!search.startsWith('#')) search = '#' + search;
+        if (search.length === 4) { // #F00 to #FF0000
+            search = `#${search[1]}${search[1]}${search[2]}${search[2]}${search[3]}${search[3]}`;
+        }
+        if (search.length === 7) {
+            filtered.unshift({n: 'Custom Search', hex: search});
+        }
+    }
+
+    filtered = filtered.filter(i => isHex ? i.hex.includes(search) : (i.n.toUpperCase().includes(search) || i.hex.includes(search)));
+    const sliced = filtered.slice(0, 200);
+    
+    sliced.forEach(i => {
+        const div = document.createElement('div');
+        div.className = 'glass';
+        div.style.padding = '15px';
+        div.style.textAlign = 'center';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `
+            <div style="height: 60px; width: 100%; border-radius: 8px; background-color: ${i.hex}; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1);"></div>
+            <b style="font-size:1.1rem; display:block; color:var(--cyan);">${i.hex}</b>
+            <small style="color:#666; font-size:0.6rem;">${i.n}</small>
+        `;
+        div.onclick = () => {
+            navigator.clipboard.writeText(i.hex);
+            if (window.showToast) window.showToast(`Copied ${i.hex}`);
+        };
+        container.appendChild(div);
+    });
+}
