@@ -514,6 +514,8 @@ function setupChatAndGrids() {
                 } else if (err.code === 'auth/provider-already-linked') {
                     showToast(`${platform} is already linked.`);
                     e.target.innerText = "Linked";
+                } else if (err.code === 'auth/credential-already-in-use') {
+                    showToast(`This ${platform} account is already linked to another user!`);
                 } else {
                     showToast(`Linking Failed: ${err.message}`);
                 }
