@@ -45,6 +45,7 @@ export function enterDemoMode() {
 
 // Bind to window for HTML calls
 window.enterDemoMode = enterDemoMode;
+window.showToast = showToast;
 
 // DOM Elements
 const appView = document.getElementById('app-view');
