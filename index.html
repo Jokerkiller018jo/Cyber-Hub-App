@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber-Hub v11.0 | Dashboard</title>
+    <style>
+        @keyframes rgb-text {
+            0% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+            33% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+            66% { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+            100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        }
+        @keyframes pulse-border {
+            0% { border-color: rgba(255,0,255,0.4); box-shadow: 0 0 10px rgba(255,0,255,0.1); }
+            50% { border-color: rgba(0,255,255,0.6); box-shadow: 0 0 20px rgba(0,255,255,0.3); }
+            100% { border-color: rgba(255,0,255,0.4); box-shadow: 0 0 10px rgba(255,0,255,0.1); }
+        }
+
+        :root { --magenta: #ff00ff; --cyan: #00ffff; --dark: #050505; --card: rgba(18,18,18,0.75); }
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        /* BACKGROUND */
+        #dnaCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: #080808; }
+
+        /* VIRTUAL ROUTER (SPA) */
+        .view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 10; opacity: 0; transition: opacity 0.4s ease; }
+        .view.active { display: flex; opacity: 1; pointer-events: auto; }
+
+        /* --- LOGIN SYSTEM --- */
+        #login-view { justify-content: center; align-items: center; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); }
+        .auth-box { 
+            background: rgba(10, 10, 10, 0.85); 
+            border: 1px solid #333;
+            border-radius: 16px; 
+            padding: 40px; 
+            width: 100%; max-width: 400px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            animation: pulse-border 4s infinite linear;
+        }
+        .auth-box h2 { margin: 0 0 5px; font-weight: 900; animation: rgb-text 4s infinite linear; letter-spacing: 2px; }
+        .auth-box p { color: #888; font-size: 0.85rem; margin-bottom: 25px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { font-size: 0.75rem; color: #aaa; margin-bottom: 5px; display: block; text-transform: uppercase; }
+        .input-group input { 
+            width: 100%; padding: 12px; 
+            background: rgba(0,0,0,0.6); 
+            border: 1px solid #444; 
+            color: white; border-radius: 8px; 
+            outline: none; transition: 0.3s; 
+        }
+        .input-group input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,255,255,0.2); }
+        
+        .verify-btn { 
+            background: transparent; color: #ffaa00; border: 1px dashed #ffaa00; 
+            width: 100%; padding: 10px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; margin-bottom: 20px; transition: 0.3s;
+        }
+        .verify-btn:hover { background: rgba(255, 170, 0, 0.1); }
+        .verify-btn.verified { color: #00ff00; border-color: #00ff00; background: rgba(0, 255, 0, 0.05); }
+
+        .login-btn { 
+            background: var(--magenta); color: black; border: none; 
+            width: 100%; padding: 14px; border-radius: 8px; cursor: pointer;
+            font-weight: 900; font-size: 1rem; text-transform: uppercase; 
+            transition: 0.3s;
+        }
+        .login-btn:hover { filter: brightness(1.2); box-shadow: 0 0 15px var(--magenta); }
+
+        /* --- DASHBOARD WRAP --- */
+        #app-view { flex-direction: row; }
+        
+        /* SIDEBAR (BLURRED 32px) */
+        .sidebar {
+            width: 260px; height: 100%;
+            background: rgba(5, 5, 5, 0.45);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px); /* For Safari */
+            border-right: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column;
+            padding: 25px 20px;
+            z-index: 20;
+        }
+        .sb-logo { font-size: 1.4rem; font-weight: 900; animation: rgb-text 4s infinite linear; letter-spacing: 2px; text-align: center; margin-bottom: 40px; }
+        
+        .nav-item {
+            padding: 12px 15px; border-radius: 8px; cursor: pointer;
+            color: #aaa; font-size: 0.9rem; font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            transition: 0.3s; margin-bottom: 8px;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,0,255,0.1); color: white; border-left: 3px solid var(--magenta); }
+        
+        .sb-footer { margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
+        .logout-btn { color: #ff4444; background: transparent; border: none; cursor: pointer; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; }
+        .logout-btn:hover { color: #ff6666; }
+
+        /* CONTENT AREA */
+        .content-area { flex: 1; height: 100%; overflow-y: auto; background: rgba(0,0,0,0.6); position: relative; scroll-behavior: smooth;}
+        
+        /* INNER PAGES */
+        .app-page { display: none; padding: 30px; animation: fade-in 0.3s forwards; }
+        .app-page.active-page { display: block; }
+        @keyframes fade-in { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+        /* --- MARKET SECTION (LOBBY) --- */
+        .market-wrap { background: var(--card); border: 1px solid #222; border-radius: 12px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        .market-wrap h3 { margin:0 0 20px 0; font-size:1.1rem; color:var(--magenta); display: flex; align-items: center; gap: 10px; }
+        
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .m-card { 
+            background: rgba(0,0,0,0.6); border: 1px solid #333; 
+            padding: 18px 12px; border-radius: 10px; text-align: center; 
+            transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .m-card:hover { border-color: var(--cyan); transform: translateY(-3px); }
+        .m-card span { display: block; font-size: 0.7rem; color: #888; text-transform: uppercase; margin-bottom: 8px; font-weight: bold; }
+        .m-card b { color: white; font-size: 1.2rem; display: block; transition: color 0.3s; }
+        .m-card.up b { color: #00ff88; }
+        .m-card.down b { color: #ff4444; }
+
+        .lbp-box { background: rgba(26,26,26,0.9); border: 1px solid var(--magenta); padding: 20px; border-radius: 12px; margin-top: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .lbp-box input { background: #000; border: 1px solid #444; color: var(--cyan); padding: 10px; width: 100px; border-radius: 6px; outline: none; font-weight: bold; font-size: 1rem; }
+
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .app-card { background: rgba(18,18,18,0.9); border: 1px solid #333; border-radius: 12px; cursor: pointer; text-align: center; padding: 25px; transition: 0.3s; backdrop-filter: blur(5px); }
+        .app-card:hover { border-color: var(--magenta); background: rgba(255,0,255,0.05); }
+        
+        /* --- TERMINAL (Global Vault) --- */
+        .terminal { background: rgba(10,10,10,0.95); border: 1px solid var(--cyan); border-radius: 12px; display: flex; flex-direction: column; height: 80vh; max-width: 1000px; overflow: hidden; margin: 0 auto; box-shadow: 0 0 30px rgba(0,255,255,0.1); }
+        .tabs { display: flex; background: rgba(17,17,17,0.9); padding: 10px; gap: 8px; overflow-x: auto; border-bottom: 1px solid #333; }
+        .tab { padding: 8px 16px; background: rgba(34,34,34,0.9); font-size: 0.75rem; border-radius: 6px; cursor: pointer; white-space: nowrap; color: #888; font-weight: bold; transition: 0.2s; }
+        .tab:hover { color: white; }
+        .tab.active { background: var(--cyan); color: black; }
+        
+        .search-area { padding: 15px; border-bottom: 1px solid #222; background: rgba(0,0,0,0.9); }
+        .search-bar { width: 100%; padding: 12px 15px; background: #0a0a0a; border: 1px solid #444; color: var(--cyan); border-radius: 8px; outline: none; font-size: 1rem; }
+        .search-bar:focus { border-color: var(--cyan); }
+        
+        .content { flex: 1; overflow-y: auto; padding: 20px; background: rgba(0,0,0,0.8); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+        .item { background: rgba(15,15,15,0.9); border: 1px solid #333; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .item:hover { border-color: var(--cyan); background: rgba(0,255,255,0.05); transform: scale(1.05); }
+
+        #toast { position: fixed; bottom: -50px; left: 50%; transform: translateX(-50%); background: var(--magenta); color: #fff; padding: 12px 30px; border-radius: 8px; font-weight: bold; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 3000; box-shadow: 0 5px 15px rgba(255,0,255,0.4); }
+        .show { bottom: 40px !important; }
+
+        /* Loader */
+        .live-dot { height: 8px; width: 8px; background: #ff0055; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #ff0055; animation: blink 1s infinite alternate; }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<canvas id="dnaCanvas"></canvas>
+
+<!-- LOGIN VIEW -->
+<div id="login-view" class="view active">
+    <div class="auth-box">
+        <h2>CYBER-HUB</h2>
+        <p>V11.0 DNA SECURE PROTOCOL</p>
+        
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label>Operator Email</label>
+                <input type="email" id="email" required placeholder="sysadmin@cyber.hub">
+            </div>
+            <div class="input-group">
+                <label>Access Code</label>
+                <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            
+            <button type="button" id="loc-btn" class="verify-btn" onclick="verifyLocation()">
+                📍 Verify Location Access (Required)
+            </button>
+            
+            <button type="submit" class="login-btn">Initialize Connection</button>
+        </form>
+    </div>
+</div>
+
+<!-- DASHBOARD APP VIEW -->
+<div id="app-view" class="view">
+    <!-- BLURRED SIDEBAR -->
+    <div class="sidebar">
+        <div class="sb-logo">CYBER-HUB</div>
+        <div class="nav-item active" onclick="switchPage('lobby-page', this)">
+            🏠 Main Lobby
+        </div>
+        <div class="nav-item" onclick="switchPage('term-page', this)">
+            🌍 Global Vault
+        </div>
+        
+        <div class="sb-footer">
+            <button class="logout-btn" onclick="handleLogout()">✖ Disconnect Session</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content-area">
+        
+        <!-- PAGE: LOBBY -->
+        <div id="lobby-page" class="app-page active-page">
+            <div class="market-wrap">
+                <h3><span class="live-dot"></span> LIVE MARKET CATEGORY</h3>
+                <div class="market-grid">
+                    <div class="m-card" id="card-petrol"><span>Petrol (Sim)</span><b id="m-petrol">$84.10</b></div>
+                    <div class="m-card" id="card-gold"><span>Gold (Sim)</span><b id="m-gold">$2,341.00</b></div>
+                    <div class="m-card" id="card-silver"><span>Silver (Sim)</span><b id="m-silver">$28.50</b></div>
+                    <div class="m-card" id="card-btc"><span>Bitcoin (Live ⚡)</span><b id="m-btc">Loading...</b></div>
+                    <div class="m-card" id="card-diamond"><span>Diamond (Sim)</span><b id="m-diamond">$4,200.00</b></div>
+                </div>
+                <div class="lbp-box">
+                    <span style="font-size:0.8rem; color:#888;">CONVERT USD TO LBP:</span>
+                    <input type="number" id="usd-in" value="130" oninput="doLBP()">
+                    <span style="color:var(--magenta); font-size:1.2rem; font-weight:bold;">➔</span>
+                    <b id="lbp-out" style="font-size:1.3rem; color:var(--cyan);">0 LBP</b>
+                </div>
+            </div>
+
+            <div style="margin-bottom:15px; font-size:0.9rem; color:#888; letter-spacing:1px; text-transform:uppercase;">Quick Launch Applications</div>
+            <div class="app-grid">
+                <div class="app-card" onclick="document.querySelectorAll('.nav-item')[1].click()">
+                    <div style="font-size:3rem; margin-bottom:15px; text-shadow:0 0 15px rgba(0,255,255,0.5);">🌍</div>
+                    <div style="font-weight:bold; font-size:1.1rem; color:white;">Global Vault</div>
+                    <div style="font-size:0.75rem; color:#777; margin-top:5px;">Explore 150+ Currencies</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE: TERMINAL (Global Vault) -->
+        <div id="term-page" class="app-page">
+            <h2 style="margin-top:0; color:var(--cyan); font-weight:900;">GLOBAL VATULT SYSTEM</h2>
+            <div class="terminal">
+                <div class="tabs">
+                    <div class="tab active" onclick="setTab('ALL', this)">ALL</div>
+                    <div class="tab" onclick="setTab('MAJOR', this)">MAJOR</div>
+                    <div class="tab" onclick="setTab('AMERICAS', this)">AMERICAS</div>
+                    <div class="tab" onclick="setTab('EUROPE', this)">EUROPE</div>
+                    <div class="tab" onclick="setTab('MID-EAST', this)">MID-EAST</div>
+                    <div class="tab" onclick="setTab('ASIA', this)">ASIA</div>
+                    <div class="tab" onclick="setTab('AFRICA', this)">AFRICA</div>
+                    <div class="tab" onclick="setTab('OCEANIA', this)">OCEANIA</div>
+                    <div class="tab" onclick="setTab('CRYPTO', this)">CRYPTO</div>
+                </div>
+                <div class="search-area"><input type="text" id="srch" class="search-bar" placeholder="Search 150+ Currencies..."></div>
+                <div class="content"><div id="grid" class="grid"></div></div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<div id="toast">COPIED</div>
+
+<script>
+    // --- 1. SESSION & AUTHENTICATION LOGIC ---
+    let locationVerified = false;
+
+    function checkSession() {
+        if(localStorage.getItem('cyber_token')) {
+            document.getElementById('login-view').classList.remove('active');
+            document.getElementById('app-view').classList.add('active');
+            startMarketFeed(); // Start the live feeds when logged in
+            doLBP();
+            renderVault();
+        }
+    }
+
+    function verifyLocation() {
+        const btn = document.getElementById('loc-btn');
+        btn.innerText = "GPS Scanning...";
+        btn.style.borderColor = "var(--cyan)";
+        btn.style.color = "var(--cyan)";
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    locationVerified = true;
+                    btn.innerText = "✔️ Location Verified: Safe Origin";
+                    btn.classList.add('verified');
+                },
+                (err) => {
+                    alert("Verification Failed. Please allow location access to enter.");
+                    btn.innerText = "❌ Verification Failed - Retry";
+                    btn.style.color = "#ff4444";
+                    btn.style.borderColor = "#ff4444";
+                }
+            );
+        } else {
+            alert("Geolocation is not supported by your browser.");
+        }
+    }
+
+    function handleLogin(e) {
+        e.preventDefault();
+        if (!locationVerified) {
+            alert("SECURITY PROTOCOL: You must verify your device location first!");
+            return;
+        }
+        
+        // In a real app, send credentials to backend.
+        // Here we simulate a successful login.
+        localStorage.setItem('cyber_token', 'active_session_11.0');
+        
+        document.getElementById('login-view').classList.remove('active');
+        document.getElementById('app-view').classList.add('active');
+        
+        startMarketFeed();
+        doLBP();
+        renderVault();
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('cyber_token');
+        locationVerified = false;
+        
+        const btn = document.getElementById('loc-btn');
+        btn.innerText = "📍 Verify Location Access (Required)";
+        btn.classList.remove('verified');
+        btn.style.color = ""; btn.style.borderColor = "";
+        
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+
+        document.getElementById('app-view').classList.remove('active');
+        document.getElementById('login-view').classList.add('active');
+    }
+
+    // --- 2. ROUTING (SPA PAGE SWITCH) ---
+    function switchPage(pageId, navElement) {
+        document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active-page'));
+        document.getElementById(pageId).classList.add('active-page');
+        
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(navElement) navElement.classList.add('active');
+    }
+
+
+    // --- 3. LIVE MARKET SYSTEM ---
+    const markets = {
+        petrol: { price: 84.10, el: 'm-petrol', c: 'card-petrol', vol: 0.2 },
+        gold: { price: 2341.50, el: 'm-gold', c: 'card-gold', vol: 2.5 },
+        silver: { price: 28.50, el: 'm-silver', c: 'card-silver', vol: 0.1 },
+        diamond: { price: 4200.00, el: 'm-diamond', c: 'card-diamond', vol: 5.0 }
+    };
+    let btcInterval;
+    let simInterval;
+
+    const formatMoney = (v) => '$' + v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    function updateCardVisuals(key, oldPrice, newPrice) {
+        const cardEl = document.getElementById(markets[key].c);
+        const textEl = document.getElementById(markets[key].el);
+        textEl.innerText = formatMoney(newPrice);
+        
+        cardEl.classList.remove('up', 'down');
+        // Force reflow
+        void cardEl.offsetWidth; 
+        
+        if (newPrice > oldPrice) {
+            cardEl.classList.add('up');
+        } else if (newPrice < oldPrice) {
+            cardEl.classList.add('down');
+        }
+    }
+
+    // A. Fetch Real BTC Price from Binance
+    async function fetchBTC() {
+        try {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            const data = await res.json();
+            const price = parseFloat(data.price);
+            
+            const btcCard = document.getElementById('card-btc');
+            const btcText = document.getElementById('m-btc');
+            const currentStr = btcText.innerText.replace(/[^0-9.-]+/g,"");
+            const oldPrice = parseFloat(currentStr) || 0;
+            
+            btcText.innerText = formatMoney(price);
+            
+            btcCard.classList.remove('up', 'down');
+            void btcCard.offsetWidth;
+            if (price > oldPrice && oldPrice !== 0) btcCard.classList.add('up');
+            else if (price < oldPrice && oldPrice !== 0) btcCard.classList.add('down');
+
+        } catch (e) {
+            console.log("BTC Fetch Error:", e);
+        }
+    }
+
+    // B. Simulate Market Drops/Rises for Commodities
+    function simulateMarkets() {
+        for(let key in markets) {
+            const oldPrice = markets[key].price;
+            // Generate random fluctuation between -vol and +vol
+            const change = (Math.random() * (markets[key].vol * 2)) - markets[key].vol;
+            markets[key].price = oldPrice + change;
+            updateCardVisuals(key, oldPrice, markets[key].price);
+        }
+    }
+
+    function startMarketFeed() {
+        if(btcInterval) clearInterval(btcInterval);
+        if(simInterval) clearInterval(simInterval);
+        
+        fetchBTC(); // Init BTC immediately
+        for(let key in markets) updateCardVisuals(key, markets[key].price, markets[key].price); // Init Sim
+
+        // Update BTC every 5 seconds
+        btcInterval = setInterval(fetchBTC, 5000);
+        // Fluctuate commodities every 3.5 seconds
+        simInterval = setInterval(simulateMarkets, 3500);
+    }
+
+
+    // --- 4. ORIGINAL APP UTILS ---
+    function doLBP() {
+        const val = document.getElementById('usd-in').value;
+        const rate = 89500;
+        document.getElementById('lbp-out').innerText = (val * rate).toLocaleString() + " LBP";
+    }
+
+    const db = [
+        {n:'USD', s:'$', c:'MAJOR'}, {n:'EUR', s:'€', c:'MAJOR'}, {n:'GBP', s:'£', c:'MAJOR'}, {n:'JPY', s:'¥', c:'MAJOR'}, {n:'CHF', s:'Fr', c:'MAJOR'}, {n:'CAD', s:'$', c:'MAJOR'}, {n:'AUD', s:'$', c:'MAJOR'}, {n:'NZD', s:'$', c:'MAJOR'},
+        {n:'ARS', s:'$', c:'AMERICAS'}, {n:'BRL', s:'R$', c:'AMERICAS'}, {n:'MXN', s:'$', c:'AMERICAS'}, {n:'COP', s:'$', c:'AMERICAS'},
+        {n:'TRY', s:'₺', c:'EUROPE'}, {n:'UAH', s:'₴', c:'EUROPE'}, {n:'SEK', s:'kr', c:'EUROPE'}, {n:'PLN', s:'zł', c:'EUROPE'},
+        {n:'AED', s:'د.إ', c:'MID-EAST'}, {n:'ILS', s:'₪', c:'MID-EAST'}, {n:'LBP', s:'ل.ل', c:'MID-EAST'}, {n:'QAR', s:'﷼', c:'MID-EAST'},
+        {n:'CNY', s:'¥', c:'ASIA'}, {n:'INR', s:'₹', c:'ASIA'}, {n:'KRW', s:'₩', c:'ASIA'}, {n:'SGD', s:'$', c:'ASIA'},
+        {n:'ZAR', s:'R', c:'AFRICA'}, {n:'NGN', s:'₦', c:'AFRICA'}, {n:'KES', s:'Sh', c:'AFRICA'}, {n:'FJD', s:'$', c:'OCEANIA'},
+        {n:'BTC', s:'₿', c:'CRYPTO'}, {n:'ETH', s:'Ξ', c:'CRYPTO'}, {n:'SOL', s:'◎', c:'CRYPTO'}, {n:'DOGE', s:'Ð', c:'CRYPTO'}, {n:'BNB', s:'🔶', c:'CRYPTO'}
+    ];
+
+    let curTab = 'ALL';
+
+    function setTab(cat, el) {
+        curTab = cat;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        renderVault();
+    }
+
+    function renderVault() {
+        const q = document.getElementById('srch').value.toUpperCase();
+        const g = document.getElementById('grid');
+        g.innerHTML = '';
+        db.filter(i => (curTab === 'ALL' || i.c === curTab) && i.n.includes(q)).forEach(i => {
+            const d = document.createElement('div');
+            d.className = 'item';
+            d.innerHTML = `<b style="color:var(--cyan); font-size:1.4rem; display:block; margin-bottom:5px;">${i.s}</b><small style="color:#888; letter-spacing:1px;">${i.n}</small>`;
+            d.onclick = (e) => { 
+                e.stopPropagation();
+                navigator.clipboard.writeText(i.s); 
+                showToast(i.s); 
+            };
+            g.appendChild(d);
+        });
+    }
+
+    function showToast(s) {
+        const t = document.getElementById('toast');
+        t.innerText = "COPIED SYMBOL: " + s;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    document.getElementById('srch').addEventListener('input', renderVault);
+    
+    // Check session on load
+    checkSession();
+
+
+    // --- 5. DNA BACKGROUND SCRIPT ---
+    const canvas = document.getElementById('dnaCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    const numParticles = 80;
+    const maxLineDistance = 150; 
+    const particleSpeed = 0.3;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * particleSpeed;
+            this.vy = (Math.random() - 0.5) * particleSpeed;
+            this.radius = 1;
+            this.color = 'rgba(255, 0, 255, 0.4)'; // Lower opacity to match dark theme better
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+    }
+
+    function createParticles() {
+        particles = [];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+
+            for (let j = i + 1; j < particles.length; j++) {
+                const p1 = particles[i];
+                const p2 = particles[j];
+                const distance = Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+
+                if (distance < maxLineDistance) {
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    // Magenta/Cyan blend lines based on distance
+                    const blend = 1 - (distance / maxLineDistance);
+                    ctx.strokeStyle = `rgba(0, 255, 255, ${blend * 0.4})`; 
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    createParticles();
+    animate();
+</script>
+</body>
+</html>
