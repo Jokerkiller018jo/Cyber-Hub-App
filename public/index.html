@@ -137,6 +137,7 @@
                 <div class="nav-item" data-page="currency-page">🏦 CURRENCIES</div>
                 <div class="nav-item" data-page="symbol-page">⚜️ SYMBOLS</div>
                 <div class="nav-item" data-page="color-page">🎨 COLORS</div>
+                <div class="nav-item" data-page="hex-page">🔬 HEX EDITOR</div>
                 <div class="nav-item" data-page="settings-page">⚙️ SETTINGS</div>
             </nav>
 
@@ -432,6 +433,53 @@
                 </div>
             </div>
 
+            <!-- HEX EDITOR PAGE -->
+            <div id="hex-page" class="app-page">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 style="color:var(--magenta); margin:0;">🔬 CYBER HEX EDITOR</h2>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="hex-search-input" class="auth-input" style="margin:0; width:200px; font-family:monospace;" placeholder="Search hex (e.g. FFD8)">
+                        <button id="hex-search-btn" class="auth-btn" style="width:auto; padding:0 20px;">SEARCH</button>
+                    </div>
+                </div>
+                
+                <div class="glass" style="flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative;">
+                    
+                    <!-- Drag and Drop Overlay -->
+                    <div id="hex-dropzone-container" style="flex:1; display:flex; justify-content:center; align-items:center; padding:20px;">
+                        <div id="hex-dropzone" style="border: 2px dashed var(--magenta); border-radius: 12px; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease;">
+                            <div style="font-size: 3rem; margin-bottom: 20px;">📂</div>
+                            <h3 style="color: #fff; margin:0 0 10px 0;">DROP FILE TO ANALYZE</h3>
+                            <p style="color: #888; margin:0;">Or click to browse (Max 50MB for v1)</p>
+                            <input type="file" id="hex-file-input" style="display:none;">
+                        </div>
+                    </div>
+
+                    <!-- Viewer Container -->
+                    <div id="hex-viewer-container" style="flex:1; display:none; flex-direction:column;">
+                        <div style="background: rgba(0,0,0,0.5); padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between;">
+                            <span id="hex-file-name" style="color: #00ff88; font-weight:bold; font-family:monospace;">File: none</span>
+                            <div style="display:flex; gap:15px; align-items:center;">
+                                <button id="hex-prev-btn" class="auth-btn" style="width:auto; padding:2px 10px; font-size:0.7rem; background:transparent; border:1px solid #555;">PREV</button>
+                                <span id="hex-page-info" style="color:#888; font-size:0.8rem;">Page 1</span>
+                                <button id="hex-next-btn" class="auth-btn" style="width:auto; padding:2px 10px; font-size:0.7rem; background:transparent; border:1px solid #555;">NEXT</button>
+                            </div>
+                        </div>
+                        <div style="flex:1; overflow-y:auto; padding: 20px; font-family: monospace; font-size: 0.9rem; line-height: 1.5; display:flex; gap:20px;">
+                            <!-- Offset Column -->
+                            <div id="hex-col-offset" style="color: #888; user-select:none;"></div>
+                            
+                            <!-- Hex Bytes Column -->
+                            <div id="hex-col-bytes" style="color: #dcddde; flex:1;"></div>
+                            
+                            <!-- ASCII Column -->
+                            <div id="hex-col-ascii" style="color: var(--cyan); white-space:pre;"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -444,7 +492,7 @@
     </div>
 
     <!-- Logic Setup -->
-    <script type="module" src="js/main.js?v=15"></script>
+    <script type="module" src="js/main.js?v=16"></script>
     <script>
         // --- DNA CANVAS REPLICATED ---
         const canvas = document.getElementById('dnaCanvas'); const ctx = canvas.getContext('2d');

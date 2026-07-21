@@ -9,6 +9,7 @@ import { sendMessage, observeMessages, findUserByPhone, addContact } from "./mod
 import { dataStore } from "./modules/data-store.js";
 import { exportToCSV, parseCSV, downloadCSV } from "./modules/csv-engine.js";
 import { updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initHexEditor } from "./modules/hex-editor.js";
 
 // Global API State
 let aiMessagesEl;
@@ -112,6 +113,7 @@ function initApp() {
     setupNavigation();
     setupAuthUI();
     setupChatAndGrids();
+    initHexEditor();
 }
 
 function setupAuthUI() {
