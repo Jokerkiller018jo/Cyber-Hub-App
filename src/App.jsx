@@ -5,12 +5,27 @@ import AppLayout from './components/layout/AppLayout';
 import { observeAuth } from './services/auth-handler';
 
 // Pages
+import Lobby from './pages/Lobby';
 import AiNexus from './pages/AiNexus';
 import MarketDashboard from './pages/MarketDashboard';
+import CurrencyCenter from './pages/CurrencyCenter';
+import Symbols from './pages/Symbols';
+import Colors from './pages/Colors';
+import EmojiDatabase from './pages/EmojiDatabase';
 import HexEditor from './pages/HexEditor';
 import Settings from './pages/Settings';
-import DataGrids from './pages/DataGrids';
-import EmojiDatabase from './pages/EmojiDatabase';
+
+function Messages() {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '15px' }}>
+            <div style={{ fontSize: '3rem' }}>📡</div>
+            <h2 style={{ color: 'var(--accent-primary)', margin: 0 }}>MESSAGES</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center' }}>
+                No active transmissions.<br />Real-time messaging coming soon.
+            </p>
+        </div>
+    );
+}
 
 export default function App() {
     const [user, setUser] = useState(null);
@@ -25,28 +40,18 @@ export default function App() {
                     username: u.displayName || u.email?.split('@')[0],
                     avatar: u.photoURL
                 });
-            } else {
-                // If they are a guest, we keep them logged in state as guest unless explicitly logged out
-                // But this listener overwrites guest state if firebase says null.
-                // We'll handle this smoothly.
             }
             setLoading(false);
         });
-
         return () => unsubscribe();
     }, []);
 
-    const handleLogin = (u) => {
-        setUser(u);
-    };
-
-    const handleLogout = () => {
-        setUser(null);
-    };
+    const handleLogin = (u) => { setUser(u); };
+    const handleLogout = () => { setUser(null); };
 
     if (loading) {
         return (
-            <div style={{ height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-base)', color: 'var(--accent-primary)' }}>
+            <div style={{ height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-base)', color: 'var(--accent-primary)', fontSize: '1rem', letterSpacing: '3px', fontWeight: 700 }}>
                 INITIALIZING NEXUS CORE...
             </div>
         );
@@ -55,25 +60,26 @@ export default function App() {
     return (
         <Router>
             <Routes>
-                <Route 
-                    path="/login" 
-                    element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/nexus" />} 
+                <Route
+                    path="/login"
+                    element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/lobby" />}
                 />
-                
+
                 {user ? (
                     <Route element={<AppLayout user={user} onLogout={handleLogout} />}>
-                        <Route path="/" element={<Navigate to="/nexus" />} />
-                        <Route path="/nexus" element={<AiNexus />} />
-                        <Route path="/lobby" element={<div style={{color:'var(--text-main)'}}><h2>LOBBY</h2><p>Welcome to the main node.</p></div>} />
-                        <Route path="/chat" element={<div style={{color:'var(--text-main)'}}><h2>MESSAGES</h2><p>No active transmissions.</p></div>} />
+                        <Route path="/" element={<Navigate to="/lobby" />} />
+                        <Route path="/nexus" element={<Navigate to="/lobby" />} />
+                        <Route path="/AIChat" element={<AiNexus />} />
+                        <Route path="/lobby" element={<Lobby />} />
+                        <Route path="/chat" element={<Messages />} />
                         <Route path="/market" element={<MarketDashboard />} />
-                        <Route path="/currencies" element={<DataGrids type="currencies" />} />
-                        <Route path="/symbols" element={<DataGrids type="symbols" />} />
-                        <Route path="/colors" element={<DataGrids type="colors" />} />
+                        <Route path="/currencies" element={<CurrencyCenter />} />
+                        <Route path="/symbols" element={<Symbols />} />
+                        <Route path="/colors" element={<Colors />} />
                         <Route path="/emojis" element={<EmojiDatabase />} />
                         <Route path="/hex-editor" element={<HexEditor />} />
                         <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<div style={{color:'var(--text-muted)'}}>Page Under Construction or Porting...</div>} />
+                        <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />
                     </Route>
                 ) : (
                     <Route path="*" element={<Navigate to="/login" />} />
