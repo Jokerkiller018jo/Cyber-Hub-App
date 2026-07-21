@@ -21,32 +21,50 @@ export default function AiNexus() {
         ]);
     }, []);
 
-    const handleSend = (e) => {
+    const handleSend = async (e) => {
         e?.preventDefault();
         if (!input.trim()) return;
 
+        const lower = input.toLowerCase().trim();
+        if (lower === 'clear') {
+            setMessages([{ id: Date.now(), sender: 'ai', text: 'Terminal cleared.' }]);
+            setInput('');
+            return;
+        }
+
         const userMsg = { id: Date.now(), sender: 'user', text: input };
-        setMessages(prev => [...prev, userMsg]);
+        const updatedMessages = [...messages, userMsg];
+        setMessages(updatedMessages);
         setInput('');
         setIsTyping(true);
 
-        // Mock AI response
-        setTimeout(() => {
-            let aiText = "Command acknowledged. Processing request...";
-            const lower = userMsg.text.toLowerCase();
-            
-            if (lower.includes('clear')) {
-                setMessages([{ id: Date.now(), sender: 'ai', text: 'Terminal cleared.' }]);
-                setIsTyping(false);
-                return;
-            } else if (lower.includes('status')) {
-                aiText = "All systems nominal. Connection secure. Database synced.";
+        try {
+            const response = await fetch('/api/groq', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ messages: updatedMessages })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to get response');
             }
 
-            const aiMsg = { id: Date.now() + 1, sender: 'ai', text: aiText };
+            const aiMsg = { id: Date.now() + 1, sender: 'ai', text: data.reply };
             setMessages(prev => [...prev, aiMsg]);
+        } catch (err) {
+            console.error(err);
+            const errMsg = { 
+                id: Date.now() + 1, 
+                sender: 'ai', 
+                text: `⚠️ NEXUS LINK ERROR: ${err.message}` 
+            };
+            setMessages(prev => [...prev, errMsg]);
+        } finally {
             setIsTyping(false);
-        }, 1000);
+        }
     };
 
     return (
