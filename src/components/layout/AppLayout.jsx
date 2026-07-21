@@ -17,14 +17,16 @@ export default function AppLayout({ user, onLogout }) {
                 padding: '30px',
                 display: 'flex',
                 flexDirection: 'column',
-                overflowY: 'auto'
+                height: '100vh',
+                overflow: 'hidden'
             }}>
                 <div className="glass-panel" style={{
                     flex: 1,
                     display: 'flex',
                     flexDirection: 'column',
                     padding: '20px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    minHeight: 0
                 }}>
                     <Outlet />
                 </div>

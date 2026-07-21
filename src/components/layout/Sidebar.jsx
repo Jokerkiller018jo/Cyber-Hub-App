@@ -24,6 +24,7 @@ export default function Sidebar({ user, onLogout }) {
         { path: '/currencies', name: 'CURRENCIES', icon: 'bank' },
         { path: '/symbols', name: 'SYMBOLS', icon: 'symbol' },
         { path: '/colors', name: 'COLORS', icon: 'palette' },
+        { path: '/emojis', name: 'EMOJIS', icon: 'emoji' },
         { path: '/hex-editor', name: 'HEX EDITOR', icon: 'microscope' },
         { path: '/settings', name: 'SETTINGS', icon: 'settings' }
     ];

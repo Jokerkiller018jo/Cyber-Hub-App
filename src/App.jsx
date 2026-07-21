@@ -10,6 +10,7 @@ import MarketDashboard from './pages/MarketDashboard';
 import HexEditor from './pages/HexEditor';
 import Settings from './pages/Settings';
 import DataGrids from './pages/DataGrids';
+import EmojiDatabase from './pages/EmojiDatabase';
 
 export default function App() {
     const [user, setUser] = useState(null);
@@ -69,6 +70,7 @@ export default function App() {
                         <Route path="/currencies" element={<DataGrids type="currencies" />} />
                         <Route path="/symbols" element={<DataGrids type="symbols" />} />
                         <Route path="/colors" element={<DataGrids type="colors" />} />
+                        <Route path="/emojis" element={<EmojiDatabase />} />
                         <Route path="/hex-editor" element={<HexEditor />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<div style={{color:'var(--text-muted)'}}>Page Under Construction or Porting...</div>} />

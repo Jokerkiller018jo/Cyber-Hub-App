@@ -1,0 +1,6 @@
+@echo off
+title Cyber-Hub Local Dev Server
+echo Initializing Cyber-Hub 2.0 Local Environment...
+echo Calling Vite Dev Server...
+cmd.exe /c npm run dev
+pause
