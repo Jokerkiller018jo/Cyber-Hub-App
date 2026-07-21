@@ -17,7 +17,7 @@ export default function Sidebar({ user, onLogout }) {
     };
 
     const navItems = [
-        { path: '/nexus', name: 'AI NEXUS', icon: 'brain' },
+        { path: '/AIChat', name: 'AI Chat', icon: 'brain' },
         { path: '/lobby', name: 'LOBBY', icon: 'home' },
         { path: '/chat', name: 'MESSAGES', icon: 'message' },
         { path: '/market', name: 'MARKET', icon: 'chart' },
