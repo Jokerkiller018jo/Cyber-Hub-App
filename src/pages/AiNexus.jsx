@@ -39,20 +39,51 @@ export default function AiNexus() {
         setIsTyping(true);
 
         try {
-            const response = await fetch('/api/groq', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ messages: updatedMessages })
-            });
+            let replyText = "";
+            const localApiKey = import.meta.env.VITE_GROQ_API_KEY;
 
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to get response');
+            // Use direct client-side fetch ONLY for local development to bypass Vercel Serverless requirement locally
+            if (localApiKey && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+                const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localApiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'openai/gpt-oss-120b',
+                        messages: [
+                            { role: 'system', content: 'You are the Cyber-Hub Nexus Core AI. You assist operatives in a futuristic command center. Respond concisely, authoritatively, and with a slight cybernetic/terminal theme where appropriate.' },
+                            ...updatedMessages.map(msg => ({
+                                role: msg.sender === 'user' ? 'user' : 'assistant',
+                                content: msg.text
+                            }))
+                        ],
+                        temperature: 1,
+                        max_completion_tokens: 2048,
+                        top_p: 1,
+                        reasoning_effort: 'medium',
+                        stream: false
+                    })
+                });
+                
+                const data = await groqRes.json();
+                if (!groqRes.ok) throw new Error(data.error?.message || 'Failed Groq request');
+                replyText = data.choices?.[0]?.message?.content || 'No response generated.';
+            } else {
+                // Production: Securely call Vercel Serverless Function
+                const response = await fetch('/api/groq', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: updatedMessages })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to get response');
+                replyText = data.reply;
             }
 
-            const aiMsg = { id: Date.now() + 1, sender: 'ai', text: data.reply };
+            const aiMsg = { id: Date.now() + 1, sender: 'ai', text: replyText };
             setMessages(prev => [...prev, aiMsg]);
         } catch (err) {
             console.error(err);
