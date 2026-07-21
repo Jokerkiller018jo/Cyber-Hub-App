@@ -50,7 +50,7 @@ export default function AiNexus() {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
             <div style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)', marginBottom: '15px' }}>
                 <h2 style={{ color: 'var(--accent-primary)', margin: 0, fontSize: '1.4rem' }}>AI NEXUS TERMINAL</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '5px 0 0 0' }}>Secure comms established.</p>
