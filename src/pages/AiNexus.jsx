@@ -42,6 +42,16 @@ export default function AiNexus() {
             let replyText = "";
             const localApiKey = import.meta.env.VITE_GROQ_API_KEY;
 
+            const safeParseJSON = async (res) => {
+                const text = await res.text();
+                if (!text) throw new Error(`Empty response from server (Status: ${res.status}). If testing locally, make sure you refreshed the page after adding the .env file.`);
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error(`Server returned non-JSON response (Status: ${res.status}): ${text.substring(0, 50)}...`);
+                }
+            };
+
             // Use direct client-side fetch ONLY for local development to bypass Vercel Serverless requirement locally
             if (localApiKey && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
                 const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -67,7 +77,7 @@ export default function AiNexus() {
                     })
                 });
                 
-                const data = await groqRes.json();
+                const data = await safeParseJSON(groqRes);
                 if (!groqRes.ok) throw new Error(data.error?.message || 'Failed Groq request');
                 replyText = data.choices?.[0]?.message?.content || 'No response generated.';
             } else {
@@ -78,8 +88,8 @@ export default function AiNexus() {
                     body: JSON.stringify({ messages: updatedMessages })
                 });
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Failed to get response');
+                const data = await safeParseJSON(response);
+                if (!response.ok) throw new Error(data.error || 'Failed to get response from serverless function');
                 replyText = data.reply;
             }
 
