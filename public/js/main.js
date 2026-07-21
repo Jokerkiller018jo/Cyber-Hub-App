@@ -1,5 +1,5 @@
 // Main Entry Point - Cyber-Hub v0.0.2
-import { observeAuth, handleLogout as doLogout, loginWithGoogle, registerUser, linkAccount } from "./modules/auth-handler.js";
+import { registerUser, loginWithGoogle, handleLogout, observeAuth, linkAccount, setupRecaptcha, sendSMS, verifySMS, windowConfirmationResult } from "./modules/auth-handler.js";
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { auth as firebaseAuth, googleProvider } from "./modules/firebase-init.js";
 import { startLiveTicker } from "./modules/market-dashboard.js";
@@ -524,6 +524,76 @@ function setupChatAndGrids() {
             }
         });
     });
+
+    // Phone Auth Logic
+    const phoneSendBtn = document.getElementById('phone-send-btn');
+    const phoneVerifyBtn = document.getElementById('phone-verify-btn');
+    const phoneInput = document.getElementById('phone-link-input');
+    const codeInput = document.getElementById('phone-code-input');
+    let phoneVerificationId = null;
+
+    if (phoneSendBtn) {
+        // Init recaptcha when clicking the phone input so we don't prematurely trigger it
+        phoneInput.addEventListener('focus', () => {
+            if (!window.recaptchaVerifier) {
+                setupRecaptcha('recaptcha-container');
+            }
+        }, { once: true });
+
+        phoneSendBtn.addEventListener('click', async () => {
+            if (useMockAuth) {
+                showToast("[GUEST MODE] Mock SMS Sent to " + phoneInput.value);
+                document.getElementById('phone-step-1').style.display = 'none';
+                document.getElementById('phone-step-2').style.display = 'flex';
+                return;
+            }
+            const num = phoneInput.value.trim();
+            if(!num) return showToast("Enter a valid phone number with country code (e.g. +1).");
+            
+            try {
+                phoneSendBtn.innerText = "SENDING...";
+                phoneSendBtn.disabled = true;
+                
+                // If recaptcha wasn't setup (clicked without focusing first)
+                if (!window.recaptchaVerifier) setupRecaptcha('recaptcha-container');
+                
+                phoneVerificationId = await sendSMS(num);
+                
+                showToast("SMS Verification Code Sent!");
+                document.getElementById('phone-step-1').style.display = 'none';
+                document.getElementById('recaptcha-container').style.display = 'none';
+                document.getElementById('phone-step-2').style.display = 'flex';
+            } catch (err) {
+                console.error(err);
+                phoneSendBtn.innerText = "SEND SMS";
+                phoneSendBtn.disabled = false;
+                showToast(`SMS Error: ${err.message}`);
+            }
+        });
+
+        phoneVerifyBtn.addEventListener('click', async () => {
+            if (useMockAuth) {
+                showToast("[GUEST MODE] Phone Verified and Linked!");
+                document.getElementById('phone-auth-container').innerHTML = `<span style="color:#00ff88;">Phone Linked</span>`;
+                return;
+            }
+            const code = codeInput.value.trim();
+            if(!code) return showToast("Enter the 6-digit code.");
+            
+            try {
+                phoneVerifyBtn.innerText = "VERIFYING...";
+                phoneVerifyBtn.disabled = true;
+                await verifySMS(phoneVerificationId, code);
+                showToast("Phone Number Linked Successfully!");
+                document.getElementById('phone-auth-container').innerHTML = `<span style="color:#00ff88;">Secure Link Established</span>`;
+            } catch (err) {
+                console.error(err);
+                phoneVerifyBtn.innerText = "VERIFY CODE";
+                phoneVerifyBtn.disabled = false;
+                showToast(`Verification Failed: ${err.message}`);
+            }
+        });
+    }
 
     // Data Grids Logic
     const currSearch = document.querySelector('#currency-page .auth-input');

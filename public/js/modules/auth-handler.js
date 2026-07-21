@@ -9,10 +9,16 @@ import {
   linkWithPopup,
   OAuthProvider,
   GithubAuthProvider,
-  GoogleAuthProvider as GAuthProvider
+  GoogleAuthProvider as GAuthProvider,
+  RecaptchaVerifier,
+  PhoneAuthProvider,
+  linkWithCredential
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { dataStore } from "./data-store.js";
 import { auth as firebaseAuth, googleProvider } from "./firebase-init.js";
+
+// Keep a global reference for the confirmation result
+export let windowConfirmationResult = null;
 
 /**
  * Registers a user using email and password.
@@ -99,4 +105,58 @@ export const linkAccount = async (platform) => {
     }
     
     return linkWithPopup(firebaseAuth.currentUser, provider);
+};
+
+/**
+ * Initializes the RecaptchaVerifier for Phone Auth
+ */
+export const setupRecaptcha = (containerId) => {
+    window.recaptchaVerifier = new RecaptchaVerifier(firebaseAuth, containerId, {
+        'size': 'normal', // user asked for visible prompt
+        'callback': (response) => {
+            // reCAPTCHA solved
+        },
+        'expired-callback': () => {
+            // Response expired. Ask user to solve reCAPTCHA again.
+            if(window.showToast) window.showToast("reCAPTCHA expired. Please solve again.");
+        }
+    });
+};
+
+/**
+ * Sends the SMS Verification Code
+ */
+export const sendSMS = async (phoneNumber) => {
+    if (!firebaseAuth.currentUser) throw new Error("Operative not logged in.");
+    if (!window.recaptchaVerifier) throw new Error("reCAPTCHA not initialized.");
+    
+    // We are linking to the current user, but firebase-auth uses signInWithPhoneNumber for the flow
+    // To link, we get the credential and link it. But first we need the verification ID.
+    // We use the PhoneAuthProvider for this flow.
+    const provider = new PhoneAuthProvider(firebaseAuth);
+    try {
+        const verificationId = await provider.verifyPhoneNumber(phoneNumber, window.recaptchaVerifier);
+        return verificationId;
+    } catch (error) {
+        // Reset recaptcha on error so they can try again
+        window.recaptchaVerifier.render().then(function(widgetId) {
+            grecaptcha.reset(widgetId);
+        });
+        throw error;
+    }
+};
+
+/**
+ * Verifies the SMS Code and links the credential
+ */
+export const verifySMS = async (verificationId, smsCode) => {
+    if (!firebaseAuth.currentUser) throw new Error("Operative not logged in.");
+    
+    const credential = PhoneAuthProvider.credential(verificationId, smsCode);
+    try {
+        const result = await linkWithCredential(firebaseAuth.currentUser, credential);
+        return result.user;
+    } catch (error) {
+        throw error;
+    }
 };

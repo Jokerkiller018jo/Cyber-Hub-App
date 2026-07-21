@@ -357,13 +357,28 @@
                                     </div>
                                     <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #5865F2; color:#5865F2; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
                                 </div>
-                                <!-- Xbox -->
-                                <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
-                                    <div style="display:flex; align-items:center; gap:15px;">
-                                        <div style="width:30px; height:30px; background:#107C10; border-radius:4px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:1.2rem;">X</div>
-                                        <span style="color:#dcddde; font-weight:bold;">Xbox</span>
+                                <!-- Phone Auth -->
+                                <div style="display:flex; flex-direction:column; background:#2f3136; padding:15px 20px; border-radius:8px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div style="display:flex; align-items:center; gap:15px;">
+                                            <div style="width:30px; height:30px; background:#00ff88; border-radius:4px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold; font-size:1.2rem;">☎</div>
+                                            <span style="color:#dcddde; font-weight:bold;">Phone Secure Link</span>
+                                        </div>
                                     </div>
-                                    <button class="auth-btn mock-connect" style="background:transparent; border:1px solid #107C10; color:#107C10; padding:5px 15px; width:auto; font-size:0.8rem;">Connect</button>
+                                    
+                                    <div id="phone-auth-container" style="margin-top:15px;">
+                                        <div id="phone-step-1" style="display:flex; gap:10px;">
+                                            <input type="text" id="phone-link-input" class="auth-input" style="margin:0; flex:1;" placeholder="Phone (e.g. +1 555-555-5555)">
+                                            <button id="phone-send-btn" class="auth-btn" style="width:auto; padding:0 20px; border-color:#00ff88; color:#00ff88;">SEND SMS</button>
+                                        </div>
+                                        
+                                        <div id="recaptcha-container" style="margin-top:10px;"></div>
+
+                                        <div id="phone-step-2" style="display:none; gap:10px; margin-top:10px;">
+                                            <input type="text" id="phone-code-input" class="auth-input" style="margin:0; flex:1;" placeholder="6-digit SMS Code">
+                                            <button id="phone-verify-btn" class="auth-btn" style="width:auto; padding:0 20px; border-color:var(--cyan); color:var(--cyan);">VERIFY CODE</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- GitHub -->
                                 <div style="display:flex; justify-content:space-between; align-items:center; background:#2f3136; padding:15px 20px; border-radius:8px;">
@@ -492,7 +507,7 @@
     </div>
 
     <!-- Logic Setup -->
-    <script type="module" src="js/main.js?v=16"></script>
+    <script type="module" src="js/main.js?v=17"></script>
     <script>
         // --- DNA CANVAS REPLICATED ---
         const canvas = document.getElementById('dnaCanvas'); const ctx = canvas.getContext('2d');
