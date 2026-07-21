@@ -106,8 +106,74 @@ export function renderColorGrid(containerId, data, filter = "") {
         }
     }
 
-    filtered = filtered.filter(i => isHex ? i.hex.includes(search) : (i.n.toUpperCase().includes(search) || i.hex.includes(search)));
-    const sliced = filtered.slice(0, 200);
+    // Generate procedural variations if search is a basic color name
+    const colorBases = {
+        'BLACK': {r:0, g:0, b:0, range:40},
+        'WHITE': {r:255, g:255, b:255, range:40, dir:-1},
+        'RED': {r:255, g:0, b:0, range:60, target:'gb'},
+        'GREEN': {r:0, g:255, b:0, range:60, target:'rb'},
+        'BLUE': {r:0, g:0, b:255, range:60, target:'rg'},
+        'YELLOW': {r:255, g:255, b:0, range:60, target:'b'},
+        'CYAN': {r:0, g:255, b:255, range:60, target:'r'},
+        'MAGENTA': {r:255, g:0, b:255, range:60, target:'g'},
+        'ORANGE': {r:255, g:165, b:0, range:40},
+        'PINK': {r:255, g:192, b:203, range:40},
+        'PURPLE': {r:128, g:0, b:128, range:50},
+        'GRAY': {r:128, g:128, b:128, range:50, mono:true},
+        'GREY': {r:128, g:128, b:128, range:50, mono:true}
+    };
+
+    if (!isHex && colorBases[search]) {
+        const base = colorBases[search];
+        for(let i=0; i<100; i++) {
+            let r = base.r;
+            let g = base.g;
+            let b = base.b;
+            
+            if (base.mono) {
+                const off = Math.floor(Math.random() * base.range * 2) - base.range;
+                r = Math.max(0, Math.min(255, r + off));
+                g = Math.max(0, Math.min(255, g + off));
+                b = Math.max(0, Math.min(255, b + off));
+            } else if (base.dir === -1) {
+                // For white, subtract
+                r = Math.max(0, r - Math.floor(Math.random() * base.range));
+                g = Math.max(0, g - Math.floor(Math.random() * base.range));
+                b = Math.max(0, b - Math.floor(Math.random() * base.range));
+            } else if (base.target) {
+                // Vary specific channels
+                if (base.target.includes('r')) r = Math.min(255, r + Math.floor(Math.random() * base.range));
+                if (base.target.includes('g')) g = Math.min(255, g + Math.floor(Math.random() * base.range));
+                if (base.target.includes('b')) b = Math.min(255, b + Math.floor(Math.random() * base.range));
+            } else {
+                // General variation
+                r = Math.max(0, Math.min(255, r + Math.floor(Math.random() * base.range * 2) - base.range));
+                g = Math.max(0, Math.min(255, g + Math.floor(Math.random() * base.range * 2) - base.range));
+                b = Math.max(0, Math.min(255, b + Math.floor(Math.random() * base.range * 2) - base.range));
+            }
+
+            const hexR = r.toString(16).padStart(2, '0');
+            const hexG = g.toString(16).padStart(2, '0');
+            const hexB = b.toString(16).padStart(2, '0');
+            const hex = `#${hexR}${hexG}${hexB}`.toUpperCase();
+            
+            // Only add if it's not already exactly the base to avoid duplicate names
+            filtered.push({n: `Variation of ${search}`, hex: hex});
+        }
+    }
+
+    // Filter logic
+    let finalResults = filtered.filter(i => isHex ? i.hex.includes(search) : (i.n.toUpperCase().includes(search) || i.hex.includes(search)));
+    
+    // Deduplicate by hex
+    const seen = new Set();
+    finalResults = finalResults.filter(i => {
+        if (seen.has(i.hex)) return false;
+        seen.add(i.hex);
+        return true;
+    });
+
+    const sliced = finalResults.slice(0, 200);
     
     sliced.forEach(i => {
         const div = document.createElement('div');
