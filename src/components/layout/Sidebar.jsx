@@ -35,7 +35,7 @@ export default function Sidebar({ user, onLogout }) {
         { path: '/chat',        name: 'MESSAGES',   icon: 'message' },
         { path: '/market',      name: 'MARKET',     icon: 'chart' },
         { path: '/currencies',  name: 'CURRENCIES', icon: 'bank' },
-        { path: '/symbols',     name: 'TOOLBOX',    icon: 'database' },
+        { path: '/symbols',     name: 'VAULT',      icon: 'database' },
         { path: '/hex-editor',  name: 'HEX EDITOR', icon: 'microscope' },
     ];
 
