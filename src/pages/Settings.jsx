@@ -139,8 +139,25 @@ export default function Settings() {
                 return (
                     <div className="animate-fade" style={{ maxWidth: '600px' }}>
                         <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>MY ACCOUNT</h2>
-                        <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            Operator profile settings will be deployed here.
+                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
+                                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#333', border: '2px solid var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
+                                    👤
+                                </div>
+                                <button className="cyber-button" style={{ padding: '8px 15px', fontSize: '0.8rem' }}>CHANGE AVATAR</button>
+                            </div>
+                            
+                            <div>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>USERNAME</label>
+                                <input type="text" className="input-field" defaultValue="Guest Operator" />
+                            </div>
+                            
+                            <div>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>EMAIL ADDRESS</label>
+                                <input type="email" className="input-field" defaultValue="guest@nexus.core" />
+                            </div>
+                            
+                            <button className="cyber-button" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>SAVE CHANGES</button>
                         </div>
                     </div>
                 );
@@ -148,8 +165,38 @@ export default function Settings() {
                 return (
                     <div className="animate-fade" style={{ maxWidth: '600px' }}>
                         <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>APPEARANCE</h2>
-                        <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            Visual interface configurations will be available here.
+                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                            
+                            <div>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>THEME PREFERENCE</label>
+                                <div style={{ display: 'flex', gap: '15px' }}>
+                                    {['Cyber Dark', 'Neon Light', 'High Contrast'].map(t => (
+                                        <label key={t} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input type="radio" name="theme" defaultChecked={t === 'Cyber Dark'} />
+                                            {t}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>ACCENT COLOR</label>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    {['#B000FF', '#00D4FF', '#00FF88', '#FF006E', '#FFE600'].map(c => (
+                                        <div key={c} style={{ width: '32px', height: '32px', borderRadius: '50%', background: c, cursor: 'pointer', border: c === '#B000FF' ? '2px solid white' : '2px solid transparent', boxShadow: c === '#B000FF' ? `0 0 10px ${c}` : 'none' }} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>INTERFACE EFFECTS</label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '10px' }}>
+                                    <input type="checkbox" defaultChecked /> Enable Glitch Animations
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                    <input type="checkbox" defaultChecked /> Enable Hover Glow
+                                </label>
+                            </div>
                         </div>
                     </div>
                 );
@@ -157,8 +204,23 @@ export default function Settings() {
                 return (
                     <div className="animate-fade" style={{ maxWidth: '600px' }}>
                         <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>NOTIFICATIONS</h2>
-                        <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            Alert and transmission settings will be configured here.
+                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {[
+                                { title: 'Security Alerts', desc: 'Get notified when a new device connects' },
+                                { title: 'Direct Messages', desc: 'Alerts for incoming chat messages' },
+                                { title: 'Market Updates', desc: 'Daily summary of crypto & stock changes' },
+                                { title: 'System Announcements', desc: 'Updates from Nexus Core network' }
+                            ].map((opt, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '15px', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '4px' }}>{opt.title}</div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                                    </div>
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                        <input type="checkbox" defaultChecked={i < 2} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }} />
+                                    </label>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 );

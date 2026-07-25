@@ -176,8 +176,7 @@ export default function Symbols() {
             const size = r.isCustom ? 40 : r.end - r.start + 1;
             if (!started) { if (rem >= size) { rem -= size; continue; } started = true; }
             if (r.isCustom) {
-                // Placeholder emojis
-                const placeholders = ['😀','😂','🔥','✨','🚀','🌟','🍔','🍎','🐶','🐱','😎','🎉','💻','📱','🎵','❤️','💎','🏆','🌍','⚡'];
+                const placeholders = r.symbols || ['😀','😂','🔥','✨','🚀','🌟','🍔','🍎','🐶','🐱','😎','🎉','💻','📱','🎵','❤️','💎','🏆','🌍','⚡'];
                 for (let i = rem; i < 40 && items.length < PAGE_SIZE; i++) {
                     const char = placeholders[i % placeholders.length];
                     const code = `EMOJI-${i}`;
