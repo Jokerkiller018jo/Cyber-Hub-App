@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { EMOJI_CATEGORIES } from './EmojiCategories';
+import Colors from './Colors';
 
 // ─── Unicode ranges with category + group info ────────────────────────────────
 const UNICODE_RANGES = [
@@ -80,6 +82,9 @@ const UNICODE_RANGES = [
     { id: 'emoji_transport', label: 'Transport & Map',   start: 0x1F680, end: 0x1F6FF, group: 'High Planes', icon: '🚀' },
     { id: 'emoji_supp',   label: 'Supplemental Symbols', start: 0x1F900, end: 0x1F9FF, group: 'High Planes', icon: '🤖' },
     { id: 'cjk_ext_b',    label: 'CJK Ext-B (70k+)',    start: 0x20000, end: 0x2A6DF, group: 'High Planes', icon: '𠀀' },
+    // Design & Utilities
+    { id: 'colors_db',    label: 'Color Center',        start: 0, end: 0, group: 'Design & Utilities', icon: '🎨', isCustom: true },
+    ...EMOJI_CATEGORIES.map(cat => ({ ...cat, isCustom: true, start: 0, end: 0 }))
 ];
 
 // Group color accents
@@ -89,6 +94,9 @@ const GROUP_COLORS = {
     'Symbols & Punctuation':  { accent: '#ff6b35', bg: 'rgba(255,107,53,0.08)', border: 'rgba(255,107,53,0.3)' },
     'CJK':                    { accent: '#ff2d78', bg: 'rgba(255,45,120,0.08)', border: 'rgba(255,45,120,0.3)' },
     'High Planes':            { accent: '#00ff88', bg: 'rgba(0,255,136,0.08)',  border: 'rgba(0,255,136,0.3)' },
+    'Design & Utilities':     { accent: '#ffdd00', bg: 'rgba(255,221,0,0.08)',  border: 'rgba(255,221,0,0.3)' },
+    'Emojis':                 { accent: '#ff8800', bg: 'rgba(255,136,0,0.08)',  border: 'rgba(255,136,0,0.3)' },
+    'Favorites':              { accent: '#00d4ff', bg: 'rgba(0,212,255,0.08)',  border: 'rgba(0,212,255,0.3)' },
 };
 
 const TOTAL = UNICODE_RANGES.reduce((acc, r) => acc + (r.end - r.start + 1), 0);
@@ -105,7 +113,19 @@ export default function Symbols() {
     const [copyType, setCopyType]   = useState('');
     const [jumpInput, setJumpInput] = useState('');
     const [jumpResult, setJumpResult] = useState(null);
+    const [favorites, setFavorites] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('cyberhub_favorites') || '[]'); } catch { return []; }
+    });
     const gridRef = useRef(null);
+
+    const toggleFavorite = (e, id) => {
+        e.stopPropagation();
+        setFavorites(prev => {
+            const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
+            localStorage.setItem('cyberhub_favorites', JSON.stringify(next));
+            return next;
+        });
+    };
 
     const activeRanges = useMemo(() => {
         if (!category) return UNICODE_RANGES;
@@ -113,7 +133,7 @@ export default function Symbols() {
     }, [category]);
 
     const activeTotal = useMemo(() =>
-        activeRanges.reduce((acc, r) => acc + (r.end - r.start + 1), 0),
+        activeRanges.reduce((acc, r) => acc + (r.isCustom ? 40 : (r.end - r.start + 1)), 0),
         [activeRanges]);
 
     const activeRange = category ? UNICODE_RANGES.find(r => r.id === category) : null;
@@ -126,6 +146,7 @@ export default function Symbols() {
         const rangesToSearch = category ? activeRanges : UNICODE_RANGES;
 
         for (const r of rangesToSearch) {
+            if (r.isCustom) continue;
             for (let cp = r.start; cp <= r.end && results.length < MAX; cp++) {
                 const hex = toHex(cp);
                 const code = `U+${hex}`;
@@ -152,10 +173,20 @@ export default function Symbols() {
         let rem = start;
         let started = false;
         for (const r of activeRanges) {
-            const size = r.end - r.start + 1;
+            const size = r.isCustom ? 40 : r.end - r.start + 1;
             if (!started) { if (rem >= size) { rem -= size; continue; } started = true; }
-            for (let cp = r.start + rem; cp <= r.end && items.length < PAGE_SIZE; cp++) {
-                items.push({ cp, char: renderChar(cp), code: `U+${toHex(cp)}`, name: r.label, cat: r.id });
+            if (r.isCustom) {
+                // Placeholder emojis
+                const placeholders = ['😀','😂','🔥','✨','🚀','🌟','🍔','🍎','🐶','🐱','😎','🎉','💻','📱','🎵','❤️','💎','🏆','🌍','⚡'];
+                for (let i = rem; i < 40 && items.length < PAGE_SIZE; i++) {
+                    const char = placeholders[i % placeholders.length];
+                    const code = `EMOJI-${i}`;
+                    items.push({ cp: code, char, code, name: `${r.label} Item ${i+1}`, cat: r.id });
+                }
+            } else {
+                for (let cp = r.start + rem; cp <= r.end && items.length < PAGE_SIZE; cp++) {
+                    items.push({ cp, char: renderChar(cp), code: `U+${toHex(cp)}`, name: r.label, cat: r.id });
+                }
             }
             rem = 0;
             if (items.length >= PAGE_SIZE) break;
@@ -223,7 +254,16 @@ export default function Symbols() {
         return map;
     }, [search, grouped]);
 
-    const groupOrder = ['Basic', 'Scripts', 'Symbols & Punctuation', 'CJK', 'High Planes'];
+    const groupOrder = ['Favorites', 'Design & Utilities', 'Emojis', 'Basic', 'Scripts', 'Symbols & Punctuation', 'CJK', 'High Planes'];
+
+    // Inject Favorites group into matchingGroups if any
+    const groupsWithFavorites = useMemo(() => {
+        const mg = { ...matchingGroups };
+        if (favorites.length > 0) {
+            mg['Favorites'] = UNICODE_RANGES.filter(r => favorites.includes(r.id));
+        }
+        return mg;
+    }, [matchingGroups, favorites]);
 
     // ── LOBBY VIEW ──────────────────────────────────────────────────────────────
     if (!category) {
@@ -322,18 +362,22 @@ export default function Symbols() {
 
                 {/* Category Groups */}
                 {groupOrder.map(groupName => {
-                    const ranges = matchingGroups[groupName] || [];
+                    const ranges = groupsWithFavorites[groupName] || [];
                     if (ranges.length === 0) return null;
                     const colors = GROUP_COLORS[groupName] || GROUP_COLORS['Basic'];
-                    const groupTotal = ranges.reduce((acc, r) => acc + (r.end - r.start + 1), 0);
+                    const groupTotal = ranges.reduce((acc, r) => acc + (r.isCustom ? 40 : r.end - r.start + 1), 0);
                     return (
                         <div key={groupName}>
                             {/* Group heading */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors.accent, display: 'inline-block', boxShadow: `0 0 10px ${colors.accent}` }}></span>
+                                {groupName === 'Favorites' ? (
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgb(0, 212, 255)', display: 'inline-block', boxShadow: 'rgb(0, 212, 255) 0px 0px 10px' }}></span>
+                                ) : (
+                                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors.accent, display: 'inline-block', boxShadow: `0 0 10px ${colors.accent}` }}></span>
+                                )}
                                 <span style={{ color: colors.accent, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '2px' }}>{groupName.toUpperCase()}</span>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                                    — {ranges.length} block{ranges.length !== 1 ? 's' : ''} · {formatNumber(groupTotal)} code points
+                                    — {ranges.length} block{ranges.length !== 1 ? 's' : ''} {groupName !== 'Favorites' ? `· ${formatNumber(groupTotal)} items` : ''}
                                 </span>
                             </div>
                             {/* Cards grid */}
@@ -347,7 +391,7 @@ export default function Symbols() {
                                             onClick={() => handleCategorySelect(r.id)}
                                             style={{
                                                 display: 'flex', alignItems: 'center', gap: '12px',
-                                                padding: '14px', cursor: 'pointer',
+                                                padding: '14px', cursor: 'pointer', position: 'relative',
                                                 transition: 'transform 0.18s, box-shadow 0.18s, background 0.18s',
                                                 borderColor: colors.border,
                                                 background: colors.bg,
@@ -363,6 +407,19 @@ export default function Symbols() {
                                                 e.currentTarget.style.background = colors.bg;
                                             }}
                                         >
+                                            {/* Favorite Star */}
+                                            <div 
+                                                onClick={(e) => toggleFavorite(e, r.id)}
+                                                style={{
+                                                    position: 'absolute', top: '8px', right: '8px', 
+                                                    fontSize: '1rem', cursor: 'pointer', zIndex: 5,
+                                                    color: favorites.includes(r.id) ? '#ffdd00' : 'rgba(255,255,255,0.1)',
+                                                    transition: 'color 0.2s', filter: favorites.includes(r.id) ? 'drop-shadow(0 0 5px #ffdd00)' : 'none'
+                                                }}
+                                            >
+                                                {favorites.includes(r.id) ? '★' : '☆'}
+                                            </div>
+
                                             {/* Icon */}
                                             <div style={{
                                                 width: '38px', height: '38px', flexShrink: 0,
@@ -380,11 +437,13 @@ export default function Symbols() {
                                                     {r.label}
                                                 </div>
                                                 <div style={{ color: colors.accent, fontSize: '0.68rem', fontWeight: 600, marginTop: '2px' }}>
-                                                    {formatNumber(size)} chars
+                                                    {r.isCustom ? (r.group === 'Emojis' ? 'Emojis' : 'Tool') : `${formatNumber(size)} chars`}
                                                 </div>
-                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.62rem', fontFamily: 'monospace', marginTop: '1px' }}>
-                                                    U+{toHex(r.start)}…{toHex(r.end)}
-                                                </div>
+                                                {!r.isCustom && (
+                                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.62rem', fontFamily: 'monospace', marginTop: '1px' }}>
+                                                        U+{toHex(r.start)}…{toHex(r.end)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -393,6 +452,24 @@ export default function Symbols() {
                         </div>
                     );
                 })}
+            </div>
+        );
+    }
+
+    if (category === 'colors_db') {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0' }}>
+                <div style={{ borderBottom: '1px solid var(--border-color)', marginBottom: '16px', paddingBottom: '14px', display: 'flex', alignItems: 'center' }}>
+                    <button onClick={handleBack} style={{
+                        background: 'rgba(176,0,255,0.1)', border: '1px solid var(--border-color)',
+                        color: 'var(--text-main)', padding: '8px 14px', borderRadius: 'var(--radius-small)',
+                        cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px'
+                    }}>← LOBBY</button>
+                    <div style={{ marginLeft: '15px', color: GROUP_COLORS['Design & Utilities'].accent, fontWeight: 900, letterSpacing: '1px' }}>COLOR CENTER</div>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <Colors />
+                </div>
             </div>
         );
     }
@@ -423,7 +500,7 @@ export default function Symbols() {
                             </h2>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '4px 0 0 0' }}>
                                 <span style={{ color: rangeColors.accent, fontWeight: 900 }}>{formatNumber(activeTotal)}</span>
-                                &nbsp;code points · U+{toHex(activeRange?.start)} → U+{toHex(activeRange?.end)}
+                                &nbsp;items {activeRange?.isCustom ? '' : `· U+${toHex(activeRange?.start)} → U+${toHex(activeRange?.end)}`}
                                 &nbsp;·&nbsp;<span style={{ color: 'var(--text-muted)' }}>{activeRange?.group}</span>
                             </p>
                         </div>

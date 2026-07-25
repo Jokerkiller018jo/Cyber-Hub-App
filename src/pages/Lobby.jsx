@@ -176,8 +176,6 @@ export default function Lobby() {
                         { label: 'Market', path: '/market', icon: '📈' },
                         { label: 'Currencies', path: '/currencies', icon: '💲' },
                         { label: 'Symbols', path: '/symbols', icon: '🔣' },
-                        { label: 'Colors', path: '/colors', icon: '🎨' },
-                        { label: 'Emojis', path: '/emojis', icon: '😀' },
                         { label: 'Hex Editor', path: '/hex-editor', icon: '🔢' },
                         { label: 'Messages', path: '/chat', icon: '💬' },
                         { label: 'Settings', path: '/settings', icon: '⚙️' },

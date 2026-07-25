@@ -10,8 +10,6 @@ import AiNexus from './pages/AiNexus';
 import MarketDashboard from './pages/MarketDashboard';
 import CurrencyCenter from './pages/CurrencyCenter';
 import Symbols from './pages/Symbols';
-import Colors from './pages/Colors';
-import EmojiDatabase from './pages/EmojiDatabase';
 import HexEditor from './pages/HexEditor';
 import Settings from './pages/Settings';
 
@@ -132,8 +130,6 @@ export default function App() {
                         <Route path="/market" element={<MarketDashboard />} />
                         <Route path="/currencies" element={<CurrencyCenter />} />
                         <Route path="/symbols" element={<Symbols />} />
-                        <Route path="/colors" element={<Colors />} />
-                        <Route path="/emojis" element={<EmojiDatabase />} />
                         <Route path="/hex-editor" element={<HexEditor />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />

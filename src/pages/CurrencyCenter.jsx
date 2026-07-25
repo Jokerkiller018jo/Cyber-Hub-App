@@ -51,14 +51,7 @@ export default function CurrencyCenter() {
         } catch (e) {
             setError('Could not load live rates. Showing estimates.');
             // Fallback static rates (USD base)
-            setRates({
-                USD: 1, EUR: 0.92, GBP: 0.79, JPY: 149.5, CAD: 1.36, AUD: 1.53, CHF: 0.88,
-                CNY: 7.24, SEK: 10.4, NOK: 10.6, DKK: 6.89, NZD: 1.63, SGD: 1.34,
-                HKD: 7.82, KRW: 1335, INR: 83.2, BRL: 4.97, MXN: 17.2, SAR: 3.75,
-                AED: 3.67, PLN: 3.97, TWD: 31.8, THB: 35.4, MYR: 4.67, ILS: 3.72,
-                TRY: 32.1, ZAR: 18.9, IDR: 15750, PHP: 56.4, QAR: 3.64, KWD: 0.307,
-                EGP: 30.9, LBP: 89500, NGN: 1480, PKR: 279, BDT: 110, VND: 24800
-            });
+            setRates({"USD":1,"AED":3.6725,"AFN":65.94,"ALL":82.17,"AMD":366.12,"ANG":1.79,"AOA":925.52,"ARS":1494.37,"AUD":1.43,"AWG":1.79,"AZN":1.70,"BAM":1.71,"BBD":2,"BDT":123.41,"BGN":1.71,"BHD":0.376,"BIF":2994.34,"BMD":1,"BND":1.29,"BOB":10.99,"BRL":5.07,"BSD":1,"BTN":96.61,"BWP":14.16,"BYN":2.87,"BZD":2,"CAD":1.40,"CDF":2269.5,"CHF":0.81,"CLF":0.02,"CLP":943.62,"CNH":6.77,"CNY":6.78,"COP":3213.04,"CRC":454.11,"CUP":24,"CVE":96.91,"CZK":21.22,"DJF":177.72,"DKK":6.56,"DOP":58.19,"DZD":133.28,"EGP":51.32,"ERN":15,"ETB":160.35,"EUR":0.87,"FJD":2.25,"FKP":0.75,"FOK":6.56,"GBP":0.75,"GEL":2.62,"GGP":0.75,"GHS":11.65,"GIP":0.75,"GMD":74.43,"GNF":8780.9,"GTQ":7.63,"GYD":209.17,"HKD":7.84,"HNL":26.80,"HRK":6.62,"HTG":130.76,"HUF":318.02,"IDR":17923.7,"ILS":3.05,"IMP":0.75,"INR":96.61,"IQD":1309.99,"IRR":1364235.06,"ISK":125.67,"JEP":0.75,"JMD":158.43,"JOD":0.709,"JPY":163.82,"KES":129.43,"KGS":87.44,"KHR":4046.91,"KID":1.43,"KMF":432.42,"KRW":1462.59,"KWD":0.309,"KYD":0.83,"KZT":470.12,"LAK":22371.22,"LBP":89500,"LKR":336.05,"LRD":181.12,"LSL":16.82,"LYD":6.41,"MAD":9.36,"MDL":17.59,"MGA":4301.61,"MKD":53.98,"MMK":2099.03,"MNT":3571.59,"MOP":8.07,"MRU":40.12,"MUR":47.35,"MVR":15.45,"MWK":1746.13,"MXN":17.48,"MYR":4.09,"MZN":63.44,"NAD":16.82,"NGN":1363.97,"NIO":36.82,"NOK":9.57,"NPR":154.58,"NZD":1.72,"OMR":0.384,"PAB":1,"PEN":3.40,"PGK":4.45,"PHP":61.82,"PKR":277.69,"PLN":3.79,"PYG":6054.57,"QAR":3.64,"RON":4.59,"RSD":103.12,"RUB":78.24,"RWF":1472.37,"SAR":3.75,"SBD":8.07,"SCR":14.47,"SDG":510.21,"SEK":9.71,"SGD":1.29,"SHP":0.75,"SLE":24.36,"SLL":24364.14,"SOS":571.31,"SRD":37.80,"SSP":4900.6,"STN":21.53,"SYP":121.97,"SZL":16.82,"THB":33.69,"TJS":9.23,"TMT":3.50,"TND":2.95,"TOP":2.36,"TRY":47.32,"TTD":6.78,"TVD":1.43,"TWD":32.35,"TZS":2629.26,"UAH":44.82,"UGX":3706.64,"UYU":40.17,"UZS":12102.96,"VES":742.22,"VND":26278.14,"VUV":118.28,"WST":2.71,"XAF":576.56,"XCD":2.7,"XCG":1.79,"XDR":0.73,"XOF":576.56,"XPF":104.88,"YER":238.4,"ZAR":16.82,"ZMW":18.54,"ZWG":26.65,"ZWL":26.65});
         } finally {
             setLoading(false);
         }
