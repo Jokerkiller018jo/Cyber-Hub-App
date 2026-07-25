@@ -30,14 +30,13 @@ export default function Sidebar({ user, onLogout }) {
     };
 
     const navItems = [
-        { path: '/AIChat',      name: 'AI Chat',    icon: 'brain' },
+        { path: '/AIChat',      name: 'AI Chat',    icon: 'robot' },
         { path: '/lobby',       name: 'LOBBY',      icon: 'home' },
         { path: '/chat',        name: 'MESSAGES',   icon: 'message' },
         { path: '/market',      name: 'MARKET',     icon: 'chart' },
         { path: '/currencies',  name: 'CURRENCIES', icon: 'bank' },
-        { path: '/symbols',     name: 'SYMBOLS',    icon: 'symbol' },
+        { path: '/symbols',     name: 'TOOLBOX',    icon: 'database' },
         { path: '/hex-editor',  name: 'HEX EDITOR', icon: 'microscope' },
-        { path: '/settings',    name: 'SETTINGS',   icon: 'settings' },
     ];
 
     return (
@@ -183,7 +182,7 @@ export default function Sidebar({ user, onLogout }) {
                             marginRight: '10px',
                             flexShrink: 0,
                         }} />
-                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                             <span style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {user?.username || 'Guest'}
                             </span>
@@ -192,6 +191,18 @@ export default function Sidebar({ user, onLogout }) {
                                 Active Node
                             </span>
                         </div>
+                        <NavLink
+                            to="/settings"
+                            style={({ isActive }) => ({
+                                background: 'transparent', border: 'none', color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                                cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0
+                            })}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+                        >
+                            <Icon name="settings" size={20} />
+                        </NavLink>
                     </div>
                     <button
                         onClick={doLogout}
