@@ -1,0 +1,24 @@
+//thing to do:
+ [1]
+
+//Errors To Fix:
+ [1]
+
+// Things That Are Succeeded:
+ [✔️][1] the"AI" we make a good work to gather and i larne new thing about coding like the reactor coding sys this is new to my brain and i alway used "HTML".
+ [✔️][2]The Color tab its function good but i think there are missing color.
+ [✔️][3]remove other login methods and keep the recommended one is by email or (Google/Phone number)
+ [✔️][4]Lets add the "CAP" verification method instead of "cloudFlare".
+ [✔️][5]Add more emojis for the emojis tab and edit the search bar and make it when the user search for example "Hand" every single icon will appear.
+ [✔️][6]The currencies tab is actually not like i needed to be i like its convenor for the currencies keep it as it is but add like when you search in the symbols tab for currencies every single currency will appear.
+ [✔️][7]Change the web.app Icon.
+ [✔️][8]The chat time to work for the Message tab we had never touch it before i need to have in the massage tab like if didn't connect your phone number to the web when you click the massage it will pop up an connect you phone number to continue working on the chat.
+ [✔️][9]Make in the symbols tab this text Header 3 and bold it(108,351 code points across 105 Unicode blocks)
+ [✔️][10]Make the Massages tab look like Telegram a little bit.
+ [✔️][11]Make the Ai messages look perfect and make the AI with the massages he send emojis or symbols to explain the thing hes doing or making and fix the massage he sent when i tell him 'hi' he tells me this(...)
+ [✔️][12]Make in the Lobby tab another section under the "live Crypto feed" Called "Tabs" this section is for the Tabs like it name you click the tab that you need and it tack you there and i need you when the user is in the lobby the lobby take all the screen and the side bar disappear only in the lobby tab.
+ [✔️][13]In the currencies tab we have this error(⚠ Could not load live rates. Showing estimates.)
+ [✔️][14]The hex editor i can t write i cant fix any hex color in the image I put the image in the hex editor and i cant edit.
+
+//Thing i didn't know:
+ [1]
