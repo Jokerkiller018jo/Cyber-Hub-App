@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail, loginWithGoogle, registerUser } from '../services/auth-handler';
+import { loginWithEmail, loginWithGoogle, registerUser, setupRecaptcha } from '../services/auth-handler';
 import Icon from '../components/ui/Icon';
 import DnaBackground from '../components/canvas/DnaBackground';
 
@@ -14,20 +14,15 @@ export default function AuthPage({ onLogin }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [capToken, setCapToken] = useState(null);
-    const capRef = useRef(null);
 
     useEffect(() => {
-        const widget = capRef.current;
-        if (!widget) return;
-        const onSolve = (e) => setCapToken(e.detail.token);
-        const onReset = () => setCapToken(null);
-        widget.addEventListener('solve', onSolve);
-        widget.addEventListener('reset', onReset);
-        return () => {
-            widget.removeEventListener('solve', onSolve);
-            widget.removeEventListener('reset', onReset);
-        };
-    }, []);
+        // We use setTimeout to ensure the DOM is ready
+        setTimeout(() => {
+            setupRecaptcha('auth-recaptcha', (token) => {
+                setCapToken(token);
+            });
+        }, 100);
+    }, [isRegistering]); // Re-initialize if view changes
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -150,10 +145,7 @@ export default function AuthPage({ onLogin }) {
                     />
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', margin: '15px 0' }}>
-                        <cap-widget 
-                            ref={capRef} 
-                            data-cap-api-endpoint="https://cap.example.com/site-key/" 
-                        ></cap-widget>
+                        <div id="auth-recaptcha" style={{ minHeight: '60px' }}></div>
                     </div>
                     
                     <button type="submit" className="cyber-button" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>

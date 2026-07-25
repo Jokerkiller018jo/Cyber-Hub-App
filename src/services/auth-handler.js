@@ -42,11 +42,18 @@ export function observeAuth(callback) {
 
 let recaptchaVerifier = null;
 
-export function setupRecaptcha(containerId) {
-    if (recaptchaVerifier) return;
+export function setupRecaptcha(containerId, onSolve) {
+    if (recaptchaVerifier) {
+        try {
+            recaptchaVerifier.clear();
+        } catch(e) {}
+        recaptchaVerifier = null;
+    }
     recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
         size: 'normal',
-        callback: () => {},
+        callback: (response) => {
+            if (onSolve) onSolve(response);
+        },
         'expired-callback': () => { recaptchaVerifier = null; }
     });
     recaptchaVerifier.render();
