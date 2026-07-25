@@ -144,49 +144,37 @@ function parseHexSearch(s) {
     return null;
 }
 
-// ─── Stream the actual hex file and collect matching colors ──────────────────
-// The file has every hex color from #000000 to #FFFFFF, one per line (8 bytes each).
-// We use HTTP Range requests so we only download the relevant slice.
-async function streamHexFile({ colorDef, signal, onBatch, maxResults = 5000 }) {
-    const headers = {};
-    if (colorDef.byteEnd) {
-        headers['Range'] = `bytes=0-${colorDef.byteEnd}`;
-    }
-
-    const res = await fetch('/all_hex_colors.txt', { headers, signal });
-    if (!res.ok && res.status !== 206) throw new Error(`HTTP ${res.status}`);
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
+// ─── Generate matching colors locally ──────────────────────────────────────────
+async function generateColors({ colorDef, signal, onBatch, maxResults = 2500 }) {
     let found = 0;
     let batch = [];
-
-    while (found < maxResults) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep incomplete last line
-
-        for (const line of lines) {
-            const hex = line.trim();
-            if (hex.length !== 7 || hex[0] !== '#') continue;
-            const [r, g, b] = hexToRGB(hex);
-            if (colorDef.test(r, g, b)) {
-                batch.push({ name: hex, hex, rgb: [r, g, b], group: 'Search' });
-                found++;
-                if (batch.length >= 100) {
-                    onBatch([...batch]);
-                    batch = [];
+    
+    // We yield to the event loop occasionally so the UI doesn't freeze
+    for (let r = 0; r < 256; r++) {
+        for (let g = 0; g < 256; g++) {
+            for (let b = 0; b < 256; b++) {
+                if (signal.aborted) return found;
+                
+                if (colorDef.test(r, g, b)) {
+                    const hex = rgbToHex(r, g, b);
+                    batch.push({ name: hex, hex, rgb: [r, g, b], group: 'Search' });
+                    found++;
+                    
+                    if (batch.length >= 200) {
+                        onBatch([...batch]);
+                        batch = [];
+                        await new Promise(res => setTimeout(res, 0)); // yield
+                    }
+                    
+                    if (found >= maxResults) {
+                        if (batch.length > 0) onBatch([...batch]);
+                        return found;
+                    }
                 }
-                if (found >= maxResults) break;
             }
         }
     }
-
-    reader.cancel();
+    
     if (batch.length > 0) onBatch([...batch]);
     return found;
 }
@@ -263,10 +251,10 @@ export default function Colors() {
         (async () => {
             try {
                 for (const [, colorDef] of matchedDefs) {
-                    await streamHexFile({
+                    await generateColors({
                         colorDef,
                         signal: controller.signal,
-                        maxResults: 5000,
+                        maxResults: 2000,
                         onBatch: (batch) => {
                             const fresh = batch.filter(c => !seen.has(c.hex));
                             fresh.forEach(c => seen.add(c.hex));
@@ -311,10 +299,10 @@ export default function Colors() {
                             ? 'Mix any of 16,777,216 colors'
                             : isSearchMode
                                 ? isStreaming
-                                    ? `⟳ Scanning 16M+ hex file… ${activeResults.length.toLocaleString()} found so far`
+                                    ? `⟳ Scanning color spectrum… ${activeResults.length.toLocaleString()} found so far`
                                     : streamError
                                         ? `⚠ ${streamError}`
-                                        : `✓ ${activeResults.length.toLocaleString()} colors from the hex file`
+                                        : `✓ ${activeResults.length.toLocaleString()} matching colors found`
                                 : `${activeResults.length} curated colors`
                         }
                     </p>
