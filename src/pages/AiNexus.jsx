@@ -39,69 +39,43 @@ export default function AiNexus() {
         setIsTyping(true);
 
         try {
-            let replyText = "";
-            const localApiKey = import.meta.env.VITE_GROQ_API_KEY;
+            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+            if (!apiKey) throw new Error('VITE_GROQ_API_KEY is not set. Add it to your .env file.');
 
-            const safeParseJSON = async (res) => {
-                const text = await res.text();
-                if (!text) throw new Error(`Empty response from server (Status: ${res.status}). If testing locally, make sure you refreshed the page after adding the .env file.`);
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    throw new Error(`Server returned non-JSON response (Status: ${res.status}): ${text.substring(0, 50)}...`);
-                }
-            };
+            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.1-8b-instant',
+                    messages: [
+                        { role: 'system', content: 'You are the Cyber-Hub Nexus Core AI. You assist operatives in a futuristic command center. Respond concisely, authoritatively, and with a cybernetic/terminal theme. Use emojis and symbols (like ⚡️, 🛡️, 📡, 🤖, ⚠️) to explain the actions you are taking or making. If the user says "hi" or greets you, respond with a short, cool, emoji-filled greeting, rather than a long initializing protocol.' },
+                        ...updatedMessages.map(msg => ({
+                            role: msg.sender === 'user' ? 'user' : 'assistant',
+                            content: msg.text
+                        }))
+                    ],
+                    temperature: 1,
+                    max_tokens: 2048,
+                    top_p: 1,
+                    stream: false
+                })
+            });
 
-            // Use direct client-side fetch ONLY for local development to bypass Vercel Serverless requirement locally
-            if (localApiKey && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-                const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localApiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.1-8b-instant',
-                        messages: [
-                            { role: 'system', content: 'You are the Cyber-Hub Nexus Core AI. You assist operatives in a futuristic command center. Respond concisely, authoritatively, and with a cybernetic/terminal theme. Use emojis and symbols (like ⚡️, 🛡️, 📡, 🤖, ⚠️) to explain the actions you are taking or making. If the user says "hi" or greets you, respond with a short, cool, emoji-filled greeting, rather than a long initializing protocol.' },
-                            ...updatedMessages.map(msg => ({
-                                role: msg.sender === 'user' ? 'user' : 'assistant',
-                                content: msg.text
-                            }))
-                        ],
-                        temperature: 1,
-                        max_tokens: 2048,
-                        top_p: 1,
-                        stream: false
-                    })
-                });
-                
-                const data = await safeParseJSON(groqRes);
-                if (!groqRes.ok) throw new Error(data.error?.message || 'Failed Groq request');
-                replyText = data.choices?.[0]?.message?.content || 'No response generated.';
-            } else {
-                // Production: Securely call Vercel Serverless Function
-                const response = await fetch('/api/groq', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: updatedMessages })
-                });
+            const data = await groqRes.json();
+            if (!groqRes.ok) throw new Error(data.error?.message || `Groq API error ${groqRes.status}`);
 
-                const data = await safeParseJSON(response);
-                if (!response.ok) throw new Error(data.error || 'Failed to get response from serverless function');
-                replyText = data.reply;
-            }
-
-            const aiMsg = { id: Date.now() + 1, sender: 'ai', text: replyText };
-            setMessages(prev => [...prev, aiMsg]);
+            const replyText = data.choices?.[0]?.message?.content || 'No response generated.';
+            setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: replyText }]);
         } catch (err) {
             console.error(err);
-            const errMsg = { 
-                id: Date.now() + 1, 
-                sender: 'ai', 
-                text: `⚠️ NEXUS LINK ERROR: ${err.message}` 
-            };
-            setMessages(prev => [...prev, errMsg]);
+            setMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                sender: 'ai',
+                text: `⚠️ NEXUS LINK ERROR: ${err.message}`
+            }]);
         } finally {
             setIsTyping(false);
         }
