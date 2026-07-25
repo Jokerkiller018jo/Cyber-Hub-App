@@ -209,6 +209,20 @@ export default function Symbols() {
         return map;
     }, []);
 
+    // Filtered categories for lobby search
+    const matchingGroups = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return grouped;
+        const map = {};
+        for (const r of UNICODE_RANGES) {
+            if (r.label.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)) {
+                if (!map[r.group]) map[r.group] = [];
+                map[r.group].push(r);
+            }
+        }
+        return map;
+    }, [search, grouped]);
+
     const groupOrder = ['Basic', 'Scripts', 'Symbols & Punctuation', 'CJK', 'High Planes'];
 
     // ── LOBBY VIEW ──────────────────────────────────────────────────────────────
@@ -229,7 +243,7 @@ export default function Symbols() {
                             </p>
                         </div>
                         {/* Global search */}
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: '320px' }}>
                             <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 <input
                                     type="text"
@@ -249,10 +263,10 @@ export default function Symbols() {
                             <input
                                 type="text"
                                 className="input-field"
-                                placeholder="Search all symbols…"
+                                placeholder="Search categories, hex, or char…"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
-                                style={{ width: '210px' }}
+                                style={{ width: '100%', maxWidth: '350px' }}
                             />
                         </div>
                     </div>
@@ -306,9 +320,10 @@ export default function Symbols() {
                     </div>
                 )}
 
-                {/* Category Groups — only show when not searching */}
-                {!search.trim() && groupOrder.map(groupName => {
-                    const ranges = grouped[groupName] || [];
+                {/* Category Groups */}
+                {groupOrder.map(groupName => {
+                    const ranges = matchingGroups[groupName] || [];
+                    if (ranges.length === 0) return null;
                     const colors = GROUP_COLORS[groupName] || GROUP_COLORS['Basic'];
                     const groupTotal = ranges.reduce((acc, r) => acc + (r.end - r.start + 1), 0);
                     return (
@@ -318,7 +333,7 @@ export default function Symbols() {
                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors.accent, display: 'inline-block', boxShadow: `0 0 10px ${colors.accent}` }}></span>
                                 <span style={{ color: colors.accent, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '2px' }}>{groupName.toUpperCase()}</span>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                                    — {ranges.length} blocks · {formatNumber(groupTotal)} code points
+                                    — {ranges.length} block{ranges.length !== 1 ? 's' : ''} · {formatNumber(groupTotal)} code points
                                 </span>
                             </div>
                             {/* Cards grid */}
