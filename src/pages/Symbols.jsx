@@ -133,7 +133,7 @@ export default function Symbols() {
     }, [category]);
 
     const activeTotal = useMemo(() =>
-        activeRanges.reduce((acc, r) => acc + (r.isCustom ? 40 : (r.end - r.start + 1)), 0),
+        activeRanges.reduce((acc, r) => acc + (r.isCustom ? (r.symbols ? r.symbols.length : 0) : (r.end - r.start + 1)), 0),
         [activeRanges]);
 
     const activeRange = category ? UNICODE_RANGES.find(r => r.id === category) : null;
@@ -173,15 +173,19 @@ export default function Symbols() {
         let rem = start;
         let started = false;
         for (const r of activeRanges) {
-            const size = r.isCustom ? 40 : r.end - r.start + 1;
+            const size = r.isCustom ? (r.symbols ? r.symbols.length : 0) : r.end - r.start + 1;
             if (!started) { if (rem >= size) { rem -= size; continue; } started = true; }
             if (r.isCustom) {
-                const placeholders = r.symbols || ['😀','😂','🔥','✨','🚀','🌟','🍔','🍎','🐶','🐱','😎','🎉','💻','📱','🎵','❤️','💎','🏆','🌍','⚡'];
-                for (let i = rem; i < 40 && items.length < PAGE_SIZE; i++) {
-                    const char = placeholders[i % placeholders.length];
-                    const code = `EMOJI-${i}`;
-                    items.push({ cp: code, char, code, name: `${r.label} Item ${i+1}`, cat: r.id });
+                const placeholders = r.symbols || [];
+                const size = placeholders.length || 40;
+                for (let i = rem; i < size && items.length < PAGE_SIZE; i++) {
+                    const entry = placeholders[i];
+                    const char = (entry && typeof entry === 'object') ? entry.char : (entry || '?');
+                    const code = (entry && typeof entry === 'object') ? entry.code : `EMOJI-${i}`;
+                    const name = (entry && typeof entry === 'object') ? entry.name : `${r.label} Item ${i+1}`;
+                    items.push({ cp: code, char, code, name, cat: r.id });
                 }
+
             } else {
                 for (let cp = r.start + rem; cp <= r.end && items.length < PAGE_SIZE; cp++) {
                     items.push({ cp, char: renderChar(cp), code: `U+${toHex(cp)}`, name: r.label, cat: r.id });
@@ -364,7 +368,7 @@ export default function Symbols() {
                     const ranges = groupsWithFavorites[groupName] || [];
                     if (ranges.length === 0) return null;
                     const colors = GROUP_COLORS[groupName] || GROUP_COLORS['Basic'];
-                    const groupTotal = ranges.reduce((acc, r) => acc + (r.isCustom ? 40 : r.end - r.start + 1), 0);
+                    const groupTotal = ranges.reduce((acc, r) => acc + (r.isCustom ? (r.symbols ? r.symbols.length : 0) : r.end - r.start + 1), 0);
                     return (
                         <div key={groupName}>
                             {/* Group heading */}
