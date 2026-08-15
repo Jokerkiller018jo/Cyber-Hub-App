@@ -20,7 +20,10 @@ export default function DnaBackground() {
         const drawDNA = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Background is transparent because App background handles color
+            // Fetch current theme color dynamically
+            const computedStyle = getComputedStyle(document.documentElement);
+            const rawAccent = computedStyle.getPropertyValue('--accent-primary').trim() || '#06b6d4';
+            
             // DNA overall opacity
             ctx.globalAlpha = 0.25;
 
@@ -38,21 +41,21 @@ export default function DnaBackground() {
                 ctx.beginPath();
                 ctx.moveTo(x, y1);
                 ctx.lineTo(x, y2);
-                ctx.strokeStyle = 'rgba(176, 0, 255, 0.25)';
+                ctx.strokeStyle = rawAccent;
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
                 // Secondary glow effect on connecting lines
                 ctx.shadowBlur = 15;
-                ctx.shadowColor = 'rgba(106, 13, 173, 0.4)';
+                ctx.shadowColor = rawAccent;
 
                 // Highlight Nodes
                 const drawNode = (ny) => {
                     ctx.beginPath();
                     ctx.arc(x, ny, 3, 0, Math.PI * 2);
-                    ctx.fillStyle = '#D500F9';
+                    ctx.fillStyle = rawAccent;
                     ctx.shadowBlur = 20;
-                    ctx.shadowColor = '#D500F9';
+                    ctx.shadowColor = rawAccent;
                     ctx.fill();
                 };
 

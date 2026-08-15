@@ -34,7 +34,6 @@ export default function Sidebar({ user, onLogout }) {
         { path: '/market',      name: 'MARKET',     icon: 'chart' },
         { path: '/currencies',  name: 'CURRENCIES', icon: 'bank' },
         { path: '/symbols',     name: 'VAULT',      icon: 'database' },
-        { path: '/hex-editor',  name: 'HEX EDITOR', icon: 'microscope' },
     ];
 
     return (
@@ -202,31 +201,6 @@ export default function Sidebar({ user, onLogout }) {
                             <Icon name="settings" size={20} />
                         </NavLink>
                     </div>
-                    <button
-                        onClick={doLogout}
-                        style={{
-                            width: '100%',
-                            background: 'transparent',
-                            border: user?.email ? '1px solid #ff4444' : '1px solid var(--accent-success)',
-                            color: user?.email ? '#ff4444' : 'var(--accent-success)',
-                            padding: '8px',
-                            borderRadius: 'var(--radius-small)',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                            transition: 'all var(--transition-fast)',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.background = user?.email ? 'rgba(255, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
-                            e.target.style.boxShadow = user?.email ? '0 0 15px rgba(255,68,68,0.2)' : '0 0 15px rgba(16,185,129,0.2)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.background = 'transparent';
-                            e.target.style.boxShadow = 'none';
-                        }}
-                    >
-                        {user?.email ? 'DISCONNECT SOURCE' : 'ADD ACCOUNT'}
-                    </button>
                 </div>
             </aside>
 

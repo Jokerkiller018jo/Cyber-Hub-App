@@ -643,6 +643,33 @@ export default function Settings({ user, onLogout }) {
                 <div style={{ marginTop: 'auto' }}>
                     <div style={{ height: '1px', background: 'rgba(6,182,212,0.1)', marginBottom: '20px' }} />
                     <button
+                        onClick={handleSignOutAll}
+                        style={{
+                            width: '100%',
+                            background: 'transparent',
+                            border: user?.email ? '1px solid #ff4444' : '1px solid var(--accent-success)',
+                            color: user?.email ? '#ff4444' : 'var(--accent-success)',
+                            padding: '10px',
+                            marginBottom: '10px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            transition: 'all var(--transition-fast)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = user?.email ? 'rgba(255, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+                            e.target.style.boxShadow = user?.email ? '0 0 15px rgba(255,68,68,0.2)' : '0 0 15px rgba(16,185,129,0.2)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = 'transparent';
+                            e.target.style.boxShadow = 'none';
+                        }}
+                    >
+                        {user?.email ? 'DISCONNECT SOURCE' : 'ADD ACCOUNT'}
+                    </button>
+                    <button
                         onClick={() => navigate('/lobby')}
                         style={{
                             width: '100%', padding: '10px',
