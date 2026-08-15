@@ -1,14 +1,14 @@
 /**
  * ai.js
- * Service for communicating with Gemini API to fetch dynamic color palettes.
+ * Service for communicating with Groq API to fetch dynamic color palettes.
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const API_URL = `https://api.groq.com/openai/v1/chat/completions`;
 
 export async function getColorsFromAI(searchTerm) {
-    if (!GEMINI_API_KEY) {
-        throw new Error('Gemini API key is missing. Please add VITE_GEMINI_API_KEY to your .env.local file or Vercel environment.');
+    if (!GROQ_API_KEY) {
+        throw new Error('Groq API key is missing. Please add VITE_GROQ_API_KEY to your .env.local file or Vercel environment.');
     }
 
     const prompt = `You are a color palette generator for a UI application.
@@ -28,12 +28,19 @@ Example output format:
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.2,
-                }
+                model: 'llama3-8b-8192',
+                messages: [
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: 0.2,
             })
         });
 
@@ -43,8 +50,8 @@ Example output format:
         }
 
         const data = await response.json();
-        const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        
+        const textOutput = data?.choices?.[0]?.message?.content;
+
         if (!textOutput) {
             throw new Error('Empty response from AI.');
         }
@@ -68,7 +75,7 @@ Example output format:
         });
 
     } catch (err) {
-        console.error('Error fetching from Gemini API:', err);
+        console.error('Error fetching from Groq API:', err);
         throw err;
     }
 }
