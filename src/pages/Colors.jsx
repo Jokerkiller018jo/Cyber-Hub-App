@@ -37,7 +37,7 @@ const PALETTES = [
     { name: 'Gold',         hex: '#F7971E', rgb: [247,151,30],  group: 'Vibrant' },
 ];
 
-const GROUPS = ['All', 'Neon', 'Pastel', 'Dark', 'Material', 'Vibrant', '16M+ Generator'];
+const GROUPS = ['All', '16M+ Generator'];
 
 // ─── Color name → RGB filter function + file byte range hint ────────────────
 // byteEnd: approximate upper bound in the file so we stop reading early
