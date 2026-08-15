@@ -312,14 +312,14 @@ export default function Settings({ user, onLogout }) {
                             </div>
                             <div style={{
                                 fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em',
-                                color: '#00ff88',
-                                background: 'rgba(0,255,136,0.08)',
-                                border: '1px solid rgba(0,255,136,0.25)',
+                                color: user?.email ? '#00ff88' : '#ff4444',
+                                background: user?.email ? 'rgba(0,255,136,0.08)' : 'rgba(255,68,68,0.08)',
+                                border: user?.email ? '1px solid rgba(0,255,136,0.25)' : '1px solid rgba(255,68,68,0.25)',
                                 padding: '4px 12px', borderRadius: '20px',
                                 display: 'flex', alignItems: 'center', gap: '6px'
                             }}>
-                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 6px #00ff88' }} />
-                                VERIFIED
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: user?.email ? '#00ff88' : '#ff4444', boxShadow: user?.email ? '0 0 6px #00ff88' : '0 0 6px #ff4444' }} />
+                                {user?.email ? 'VERIFIED' : 'NOT CONNECTED'}
                             </div>
                         </div>
                     </SectionCard>
