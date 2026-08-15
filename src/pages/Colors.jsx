@@ -83,6 +83,79 @@ const COLOR_DEFS = {
     slate:    { test: (r,g,b) => r>=60  && r<=140 && g>=70  && g<=150 && b>=90  && b<=170, byteEnd: null },
 };
 
+// ─── Semantic Object Palettes ────────────────────────────────────────────────
+const SEMANTIC_PALETTES = {
+    apple: [
+        { name: 'Apple Red', hex: '#FF0800', rgb: [255,8,0], group: 'Semantic' },
+        { name: 'Apple Green', hex: '#8DB600', rgb: [141,182,0], group: 'Semantic' },
+        { name: 'Apple Yellow', hex: '#E2B714', rgb: [226,183,20], group: 'Semantic' },
+    ],
+    banana: [
+        { name: 'Banana Yellow', hex: '#FFE135', rgb: [255,225,53], group: 'Semantic' },
+        { name: 'Banana Green', hex: '#9CB134', rgb: [156,177,52], group: 'Semantic' },
+        { name: 'Banana Brown', hex: '#654321', rgb: [101,67,33], group: 'Semantic' },
+    ],
+    sky: [
+        { name: 'Deep Sky', hex: '#00BFFF', rgb: [0,191,255], group: 'Semantic' },
+        { name: 'Light Sky', hex: '#87CEFA', rgb: [135,206,250], group: 'Semantic' },
+        { name: 'Sunset Orange', hex: '#FF4500', rgb: [255,69,0], group: 'Semantic' },
+    ],
+    ocean: [
+        { name: 'Ocean Blue', hex: '#0077BE', rgb: [0,119,190], group: 'Semantic' },
+        { name: 'Deep Sea', hex: '#00008B', rgb: [0,0,139], group: 'Semantic' },
+        { name: 'Seafoam', hex: '#71EEB8', rgb: [113,238,184], group: 'Semantic' },
+    ],
+    fire: [
+        { name: 'Flame Red', hex: '#E25822', rgb: [226,88,34], group: 'Semantic' },
+        { name: 'Fire Orange', hex: '#FF4500', rgb: [255,69,0], group: 'Semantic' },
+        { name: 'Blaze Yellow', hex: '#FFD700', rgb: [255,215,0], group: 'Semantic' },
+    ],
+    blood: [
+        { name: 'Blood Red', hex: '#8A0303', rgb: [138,3,3], group: 'Semantic' },
+        { name: 'Crimson', hex: '#DC143C', rgb: [220,20,60], group: 'Semantic' },
+        { name: 'Dark Blood', hex: '#4A0404', rgb: [74,4,4], group: 'Semantic' },
+    ],
+    wood: [
+        { name: 'Wood Brown', hex: '#966F33', rgb: [150,111,51], group: 'Semantic' },
+        { name: 'Mahogany', hex: '#C04000', rgb: [192,64,0], group: 'Semantic' },
+        { name: 'Oak', hex: '#A0522D', rgb: [160,82,45], group: 'Semantic' },
+    ],
+    sun: [
+        { name: 'Sun Yellow', hex: '#FFD700', rgb: [255,215,0], group: 'Semantic' },
+        { name: 'Sunburst', hex: '#FF8C00', rgb: [255,140,0], group: 'Semantic' },
+        { name: 'Bright Sun', hex: '#FFFF00', rgb: [255,255,0], group: 'Semantic' },
+    ],
+    grass: [
+        { name: 'Grass Green', hex: '#7CFC00', rgb: [124,252,0], group: 'Semantic' },
+        { name: 'Lawn Green', hex: '#32CD32', rgb: [50,205,50], group: 'Semantic' },
+        { name: 'Forest', hex: '#228B22', rgb: [34,139,34], group: 'Semantic' },
+    ],
+    water: [
+        { name: 'Water Blue', hex: '#00FFFF', rgb: [0,255,255], group: 'Semantic' },
+        { name: 'Aqua', hex: '#7FFFD4', rgb: [127,255,212], group: 'Semantic' },
+        { name: 'Turquoise', hex: '#40E0D0', rgb: [64,224,208], group: 'Semantic' },
+    ],
+    earth: [
+        { name: 'Earth Green', hex: '#4B5320', rgb: [75,83,32], group: 'Semantic' },
+        { name: 'Earth Blue', hex: '#0000FF', rgb: [0,0,255], group: 'Semantic' },
+        { name: 'Earth Brown', hex: '#8B4513', rgb: [139,69,19], group: 'Semantic' },
+    ],
+    cherry: [
+        { name: 'Cherry Red', hex: '#D2042D', rgb: [210,4,45], group: 'Semantic' },
+        { name: 'Stem Green', hex: '#556B2F', rgb: [85,107,47], group: 'Semantic' },
+    ],
+    coffee: [
+        { name: 'Espresso', hex: '#362312', rgb: [54,35,18], group: 'Semantic' },
+        { name: 'Latte', hex: '#C68E58', rgb: [198,142,88], group: 'Semantic' },
+        { name: 'Caramel', hex: '#65350F', rgb: [101,53,15], group: 'Semantic' },
+    ],
+    night: [
+        { name: 'Midnight Blue', hex: '#191970', rgb: [25,25,112], group: 'Semantic' },
+        { name: 'Moonlight', hex: '#F6F1D5', rgb: [246,241,213], group: 'Semantic' },
+        { name: 'Dark Navy', hex: '#000080', rgb: [0,0,128], group: 'Semantic' },
+    ]
+};
+
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function hexToRGB(hex) {
     return [
@@ -231,6 +304,19 @@ export default function Colors() {
         if (hexMatch) {
             const [r,g,b] = hexToRGB(hexMatch);
             setStreamResults([{ name: hexMatch, hex: hexMatch, rgb:[r,g,b], group:'Search' }]);
+            setStreamDone(true);
+            return;
+        }
+
+        // Semantic object matching
+        let semanticMatches = [];
+        for (const [key, colors] of Object.entries(SEMANTIC_PALETTES)) {
+            if (key.includes(s) || s.includes(key)) {
+                semanticMatches.push(...colors);
+            }
+        }
+        if (semanticMatches.length > 0) {
+            setStreamResults(semanticMatches);
             setStreamDone(true);
             return;
         }
