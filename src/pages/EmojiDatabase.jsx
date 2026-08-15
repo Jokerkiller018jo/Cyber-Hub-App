@@ -3,13 +3,10 @@ import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
 import { CURATED_EMOJIS, CATEGORIES_META } from './EmojiCategories';
 
-// ─── Curated Single Emojis ───────────────────────────────────────────────────
-// Now imported from EmojiCategories.js which contains 1,800+ standard emojis.
-
 const CATEGORIES = [
-    { id: 'all', label: 'Curated' },
+    { id: 'all', label: 'All Curated' },
     ...CATEGORIES_META,
-    { id: 'millions', label: '2.9M+ Combinations' } // The huge local list
+    { id: 'millions', label: '2.9M+ Combinations' }
 ];
 
 const getHexCode = (char) => {

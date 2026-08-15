@@ -14,7 +14,7 @@ function SectionCard({ children, style = {} }) {
     return (
         <div style={{
             background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
-            border: '1px solid rgba(var(--accent-rgb),0.18)',
+            border: '1px solid rgba(6,182,212,0.18)',
             borderRadius: '16px',
             padding: '28px',
             marginBottom: '16px',
@@ -34,7 +34,7 @@ function SectionTitle({ icon, children }) {
             gap: '10px',
             marginBottom: '20px',
             paddingBottom: '14px',
-            borderBottom: '1px solid rgba(var(--accent-rgb),0.12)'
+            borderBottom: '1px solid rgba(6,182,212,0.12)'
         }}>
             <span style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center' }}>
                 <Icon name={icon} size={18} />
@@ -127,13 +127,29 @@ export default function Settings({ user, onLogout }) {
         setTheme({ accent: accentColor, glitch, glow });
     }, [accentColor, glitch, glow]);
 
-    // Notifications
-    const [notifs, setNotifs] = useState({
-        security: true,
-        messages: true,
-        market: false,
-        system: false,
+    // Notifications with localStorage persistence
+    const [notifs, setNotifs] = useState(() => {
+        try {
+            const saved = localStorage.getItem('cyberhub_notifications');
+            if (saved) return JSON.parse(saved);
+        } catch (_) {}
+        return {
+            security: true,
+            messages: true,
+            market: false,
+            system: false,
+        };
     });
+
+    const handleToggleNotif = (key, val) => {
+        setNotifs(prev => {
+            const next = { ...prev, [key]: val };
+            try {
+                localStorage.setItem('cyberhub_notifications', JSON.stringify(next));
+            } catch (_) {}
+            return next;
+        });
+    };
 
     const handleSaveName = async () => {
         setSaving(true);
@@ -192,16 +208,16 @@ export default function Settings({ user, onLogout }) {
                                         width: '72px', height: '72px', borderRadius: '50%',
                                         border: '2px solid var(--accent-primary)',
                                         objectFit: 'cover',
-                                        boxShadow: '0 0 20px rgba(var(--accent-rgb),0.35)'
+                                        boxShadow: '0 0 20px rgba(6,182,212,0.35)'
                                     }} />
                                 ) : (
                                     <div style={{
                                         width: '72px', height: '72px', borderRadius: '50%',
-                                        background: 'linear-gradient(135deg, rgba(var(--accent-rgb),0.3), rgba(0,212,255,0.2))',
+                                        background: 'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(0,212,255,0.2))',
                                         border: '2px solid var(--accent-primary)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         fontSize: '1.8rem',
-                                        boxShadow: '0 0 20px rgba(var(--accent-rgb),0.3)'
+                                        boxShadow: '0 0 20px rgba(6,182,212,0.3)'
                                     }}>👤</div>
                                 )}
                                 {/* Online dot */}
@@ -449,7 +465,7 @@ export default function Settings({ user, onLogout }) {
                                         padding: '14px 16px',
                                         borderRadius: 'var(--radius-medium)',
                                         border: searchBarStyleVal === opt.id ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                                        background: searchBarStyleVal === opt.id ? 'rgba(var(--accent-rgb),0.08)' : 'rgba(255,255,255,0.02)',
+                                        background: searchBarStyleVal === opt.id ? 'rgba(6,182,212,0.08)' : 'rgba(255,255,255,0.02)',
                                         cursor: 'pointer',
                                         transition: 'all 0.18s ease',
                                     }}
@@ -506,7 +522,7 @@ export default function Settings({ user, onLogout }) {
                                 </div>
                                 <Toggle
                                     checked={notifs[opt.key]}
-                                    onChange={v => setNotifs(n => ({ ...n, [opt.key]: v }))}
+                                    onChange={v => handleToggleNotif(opt.key, v)}
                                 />
                             </div>
                         ))}
@@ -535,7 +551,7 @@ export default function Settings({ user, onLogout }) {
                 width: '260px',
                 flexShrink: 0,
                 background: 'rgba(8,8,14,0.8)',
-                borderRight: '1px solid rgba(var(--accent-rgb),0.12)',
+                borderRight: '1px solid rgba(6,182,212,0.12)',
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '48px 16px 32px',
@@ -544,8 +560,8 @@ export default function Settings({ user, onLogout }) {
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '12px',
                     padding: '14px 16px', marginBottom: '32px',
-                    background: 'rgba(var(--accent-rgb),0.06)',
-                    border: '1px solid rgba(var(--accent-rgb),0.15)',
+                    background: 'rgba(6,182,212,0.06)',
+                    border: '1px solid rgba(6,182,212,0.15)',
                     borderRadius: '12px'
                 }}>
                     {user?.avatar ? (
@@ -556,7 +572,7 @@ export default function Settings({ user, onLogout }) {
                     ) : (
                         <div style={{
                             width: '38px', height: '38px', borderRadius: '50%',
-                            background: 'rgba(var(--accent-rgb),0.2)',
+                            background: 'rgba(6,182,212,0.2)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '1.1rem', flexShrink: 0
                         }}>👤</div>
@@ -593,7 +609,7 @@ export default function Settings({ user, onLogout }) {
                                     borderRadius: '10px',
                                     border: 'none',
                                     cursor: 'pointer',
-                                    background: isActive ? 'rgba(var(--accent-rgb),0.14)' : 'transparent',
+                                    background: isActive ? 'rgba(6,182,212,0.14)' : 'transparent',
                                     color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
                                     fontWeight: isActive ? '600' : '400',
                                     fontSize: '0.9rem',
@@ -625,7 +641,7 @@ export default function Settings({ user, onLogout }) {
 
                 {/* Spacer + back button */}
                 <div style={{ marginTop: 'auto' }}>
-                    <div style={{ height: '1px', background: 'rgba(var(--accent-rgb),0.1)', marginBottom: '20px' }} />
+                    <div style={{ height: '1px', background: 'rgba(6,182,212,0.1)', marginBottom: '20px' }} />
                     <button
                         onClick={() => navigate('/lobby')}
                         style={{

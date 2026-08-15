@@ -9388,3 +9388,22 @@ export const CATEGORIES_META = [
     "label": "Flags"
   }
 ];
+
+export const EMOJI_CATEGORIES = CATEGORIES_META.map(cat => {
+  const catEmojis = CURATED_EMOJIS.filter(e => e.cat === cat.id).map((e, idx) => ({
+    cp: `EMOJI-${cat.id}-${idx}`,
+    char: e.char,
+    code: Array.from(e.char).map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join(' '),
+    name: e.name,
+    cat: cat.id
+  }));
+
+  return {
+    id: `emoji_${cat.id}`,
+    label: cat.label,
+    group: 'Emojis',
+    icon: 'face',
+    isCustom: true,
+    symbols: catEmojis
+  };
+});

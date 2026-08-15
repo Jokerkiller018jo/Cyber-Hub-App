@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { EMOJI_CATEGORIES } from './EmojiCategories';
 import Colors from './Colors';
 import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
@@ -70,7 +71,7 @@ const UNICODE_RANGES = [
     { id: 'kangxi',       label: 'Kangxi Radicals',      start: 0x2F00, end: 0x2FDF, group: 'CJK', icon: '⼀' },
     { id: 'hangul',       label: 'Hangul Syllables',     start: 0xAC00, end: 0xD7AF, group: 'CJK', icon: '가' },
     { id: 'yi',           label: 'Yi Syllables',         start: 0xA000, end: 0xA48F, group: 'CJK', icon: 'ꀀ' },
-    // High Planes
+    // High Planes (Pure Historical & Technical Scripts)
     { id: 'linear_b',     label: 'Linear B',             start: 0x10000, end: 0x1007F, group: 'High Planes', icon: '𐀀' },
     { id: 'old_italic',   label: 'Old Italic',           start: 0x10300, end: 0x1032F, group: 'High Planes', icon: '𐌀' },
     { id: 'gothic',       label: 'Gothic',               start: 0x10330, end: 0x1034F, group: 'High Planes', icon: '𐌰' },
@@ -78,13 +79,11 @@ const UNICODE_RANGES = [
     { id: 'byzantine_music', label: 'Byzantine Music',   start: 0x1D000, end: 0x1D0FF, group: 'High Planes', icon: '𝀀' },
     { id: 'music',        label: 'Music Notation',       start: 0x1D100, end: 0x1D1FF, group: 'High Planes', icon: '𝄞' },
     { id: 'math_alpha',   label: 'Math Alphanumerics',   start: 0x1D400, end: 0x1D7FF, group: 'High Planes', icon: '𝕬' },
-    { id: 'emoji_misc',   label: 'Misc Pictograms',      start: 0x1F300, end: 0x1F5FF, group: 'High Planes', icon: '🌍' },
-    { id: 'emoji_dingbat',label: 'Emoticons & Dingbats', start: 0x1F600, end: 0x1F64F, group: 'High Planes', icon: '😀' },
-    { id: 'emoji_transport', label: 'Transport & Map',   start: 0x1F680, end: 0x1F6FF, group: 'High Planes', icon: '🚀' },
-    { id: 'emoji_supp',   label: 'Supplemental Symbols', start: 0x1F900, end: 0x1F9FF, group: 'High Planes', icon: '🤖' },
     { id: 'cjk_ext_b',    label: 'CJK Ext-B (70k+)',    start: 0x20000, end: 0x2A6DF, group: 'High Planes', icon: '𠀀' },
     // Design & Utilities
     { id: 'colors_db',    label: 'Color Center',        start: 0, end: 0, group: 'Design & Utilities', icon: '🎨', isCustom: true },
+    // Curated & Standardized Emojis (9 Distinct Categories)
+    ...EMOJI_CATEGORIES
 ];
 
 // Group color accents
@@ -169,7 +168,25 @@ export default function Symbols() {
         const rangesToSearch = category ? activeRanges : UNICODE_RANGES;
 
         for (const r of rangesToSearch) {
-            if (r.isCustom) continue;
+            if (r.isCustom) {
+                const items = r.symbols || [];
+                for (const item of items) {
+                    if (results.length >= MAX) break;
+                    const charMatch = item.char === search.trim();
+                    const nameMatch = item.name?.toLowerCase().includes(q);
+                    const codeMatch = item.code?.toLowerCase().includes(q);
+                    if (charMatch || nameMatch || codeMatch) {
+                        results.push({
+                            cp: item.cp || item.code,
+                            char: item.char,
+                            code: item.code,
+                            name: item.name,
+                            cat: r.id
+                        });
+                    }
+                }
+                continue;
+            }
             for (let cp = r.start; cp <= r.end && results.length < MAX; cp++) {
                 const hex = toHex(cp);
                 const code = `U+${hex}`;
@@ -508,19 +525,20 @@ export default function Symbols() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         {/* Back button */}
                         <button onClick={handleBack} style={{
-                            background: 'rgba(176,0,255,0.1)', border: '1px solid var(--border-color)',
+                            background: 'rgba(6,182,212,0.1)', border: '1px solid var(--border-color)',
                             color: 'var(--text-main)', padding: '8px 14px', borderRadius: 'var(--radius-small)',
                             cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px',
                             transition: 'all 0.15s'
                         }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(176,0,255,0.2)'; e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(176,0,255,0.1)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(6,182,212,0.2)'; e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(6,182,212,0.1)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
                         >
                             ← ALL BLOCKS
                         </button>
                         <div>
-                            <h2 style={{ color: rangeColors.accent, margin: 0, fontSize: '1.4rem', letterSpacing: '0.05em' }}>
-                                {activeRange?.icon} {activeRange?.label?.toUpperCase()}
+                            <h2 style={{ color: rangeColors.accent, margin: 0, fontSize: '1.4rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Icon name={BLOCK_ICONS[activeRange?.id] || GROUP_ICONS[activeRange?.group] || 'symbol'} size={24} />
+                                {activeRange?.label?.toUpperCase()}
                             </h2>
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '4px 0 0 0' }}>
                                 <span style={{ color: rangeColors.accent, fontWeight: 900 }}>{formatNumber(activeTotal)}</span>
@@ -530,30 +548,31 @@ export default function Symbols() {
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {/* Jump */}
-                        <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                            <input
-                                type="text"
-                                className="input-field"
-                                placeholder="Jump to U+…"
-                                value={jumpInput}
-                                onChange={e => setJumpInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleJump()}
-                                style={{ width: '120px', fontSize: '0.78rem' }}
-                            />
-                            <button onClick={handleJump} style={{
-                                background: `${rangeColors.bg}`, border: `1px solid ${rangeColors.accent}`,
-                                color: 'var(--text-main)', padding: '7px 12px', borderRadius: 'var(--radius-small)',
-                                cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700
-                            }}>GO</button>
-                        </div>
-                        <input
-                            type="text"
-                            className="input-field"
-                            placeholder="Search hex, char, or decimal…"
+                        {/* Jump (only for unicode range blocks) */}
+                        {!activeRange?.isCustom && (
+                            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                <SearchBar
+                                    value={jumpInput}
+                                    onChange={e => setJumpInput(e.target.value)}
+                                    onClear={() => setJumpInput('')}
+                                    placeholder="Jump to U+…"
+                                    style={{ width: '130px' }}
+                                    id="category-jump"
+                                />
+                                <button onClick={handleJump} style={{
+                                    background: `${rangeColors.bg}`, border: `1px solid ${rangeColors.accent}`,
+                                    color: 'var(--text-main)', padding: '7px 12px', borderRadius: 'var(--radius-small)',
+                                    cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700
+                                }}>GO</button>
+                            </div>
+                        )}
+                        <SearchBar
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            style={{ width: '230px' }}
+                            onClear={() => setSearch('')}
+                            placeholder="Search in this category…"
+                            style={{ width: '250px' }}
+                            id="category-search"
                         />
                     </div>
                 </div>
@@ -698,13 +717,13 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
 }
 
 const navBtn = {
-    background: 'rgba(176,0,255,0.08)', border: '1px solid var(--border-color)',
+    background: 'rgba(6,182,212,0.08)', border: '1px solid var(--border-color)',
     color: 'var(--text-main)', padding: '5px 10px', borderRadius: '5px',
     cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: 'all 0.15s',
 };
 
 const copyBtn = {
-    flex: 1, background: 'rgba(176,0,255,0.05)', border: '1px solid var(--border-color)',
+    flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-color)',
     borderRadius: '5px', color: 'var(--text-main)', fontSize: '0.62rem',
     padding: '5px 3px', cursor: 'pointer', fontWeight: 700, transition: 'all 0.15s',
 };

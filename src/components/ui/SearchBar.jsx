@@ -16,7 +16,10 @@ export function getSearchBarStyle() {
 }
 
 export function setSearchBarStyle(v) {
-    try { localStorage.setItem('cyberhub_searchbar_style', v); } catch {}
+    try {
+        localStorage.setItem('cyberhub_searchbar_style', v);
+        window.dispatchEvent(new Event('cyberhub_searchbar_style_change'));
+    } catch {}
 }
 
 export default function SearchBar({
@@ -30,7 +33,17 @@ export default function SearchBar({
 }) {
     const inputRef = useRef(null);
     const [focused, setFocused] = useState(false);
-    const variant = getSearchBarStyle();
+    const [variant, setVariant] = useState(() => getSearchBarStyle());
+
+    React.useEffect(() => {
+        const update = () => setVariant(getSearchBarStyle());
+        window.addEventListener('cyberhub_searchbar_style_change', update);
+        window.addEventListener('storage', update);
+        return () => {
+            window.removeEventListener('cyberhub_searchbar_style_change', update);
+            window.removeEventListener('storage', update);
+        };
+    }, []);
 
     /* ── Base style per variant ── */
     const baseStyles = {
