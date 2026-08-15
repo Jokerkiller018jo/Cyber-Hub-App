@@ -209,8 +209,8 @@ export default function Sidebar({ user, onLogout }) {
                         style={{
                             width: '100%',
                             background: 'transparent',
-                            border: '1px solid #ff4444',
-                            color: '#ff4444',
+                            border: user?.email ? '1px solid #ff4444' : '1px solid #00ff88',
+                            color: user?.email ? '#ff4444' : '#00ff88',
                             padding: '8px',
                             borderRadius: 'var(--radius-small)',
                             cursor: 'pointer',
@@ -219,15 +219,15 @@ export default function Sidebar({ user, onLogout }) {
                             transition: 'all var(--transition-fast)',
                         }}
                         onMouseEnter={(e) => {
-                            e.target.style.background = 'rgba(255, 68, 68, 0.1)';
-                            e.target.style.boxShadow = '0 0 15px rgba(255,68,68,0.2)';
+                            e.target.style.background = user?.email ? 'rgba(255, 68, 68, 0.1)' : 'rgba(0, 255, 136, 0.1)';
+                            e.target.style.boxShadow = user?.email ? '0 0 15px rgba(255,68,68,0.2)' : '0 0 15px rgba(0,255,136,0.2)';
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.background = 'transparent';
                             e.target.style.boxShadow = 'none';
                         }}
                     >
-                        DISCONNECT SOURCE
+                        {user?.email ? 'DISCONNECT SOURCE' : 'ADD ACCOUNT'}
                     </button>
                 </div>
             </aside>
