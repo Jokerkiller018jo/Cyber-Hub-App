@@ -22,7 +22,6 @@ function mapFirebaseError(err) {
 
 export async function loginWithGoogle() {
     try {
-        const { signInWithPopup } = await import('firebase/auth');
         const result = await signInWithPopup(auth, googleProvider);
         return result.user;
     } catch (err) {
