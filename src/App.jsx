@@ -6,7 +6,7 @@ import { observeAuth } from './services/auth-handler';
 
 // Pages
 import Lobby from './pages/Lobby';
-import AiNexus from './pages/AiNexus';
+
 import MarketDashboard from './pages/MarketDashboard';
 import CurrencyCenter from './pages/CurrencyCenter';
 import Symbols from './pages/Symbols';
@@ -107,7 +107,7 @@ export default function App() {
                     <Route element={<AppLayout user={user} onLogout={handleLogout} />}>
                         <Route path="/" element={<Navigate to="/lobby" />} />
                         <Route path="/nexus" element={<Navigate to="/lobby" />} />
-                        <Route path="/AIChat" element={<AiNexus />} />
+                        <Route path="/AIChat" element={<Navigate to="/lobby" />} />
                         <Route path="/lobby" element={<Lobby />} />
                         <Route path="/chat" element={<Messages user={user} />} />
                         <Route path="/market" element={<MarketDashboard />} />

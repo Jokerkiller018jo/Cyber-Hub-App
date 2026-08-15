@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import SearchBar from '../components/ui/SearchBar';
-import { getColorsFromAI } from '../services/ai';
 
 // ─── Curated palettes (shown when no search is active) ────────────────────────
 const PALETTES = [
@@ -327,27 +326,7 @@ export default function Colors() {
             name.includes(s) || s.includes(name)
         );
 
-        if (matchedDefs.length === 0) {
-            // NO MATCHES FOUND locally, call the AI!
-            const controller = new AbortController();
-            abortRef.current = controller;
-            
-            setIsStreaming(true);
-            setStreamError('');
-            
-            getColorsFromAI(search).then(colors => {
-                if (controller.signal.aborted) return;
-                setStreamResults(colors);
-                setStreamDone(true);
-            }).catch(err => {
-                if (controller.signal.aborted) return;
-                setStreamError('AI Error: ' + err.message);
-            }).finally(() => {
-                if (!controller.signal.aborted) setIsStreaming(false);
-            });
-            
-            return () => controller.abort();
-        }
+        if (matchedDefs.length === 0) return;
 
         const controller = new AbortController();
         abortRef.current = controller;
