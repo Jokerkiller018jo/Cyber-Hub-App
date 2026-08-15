@@ -15,21 +15,7 @@ import Settings from './pages/Settings';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 function Messages({ user }) {
-    if (!user?.phone && !user?.phoneNumber) {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '15px' }}>
-                <div style={{ fontSize: '3rem' }}>📱</div>
-                <h2 style={{ color: 'var(--accent-primary)', margin: 0 }}>CONNECTION REQUIRED</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', maxWidth: '300px' }}>
-                    You need to connect your phone number to access secure real-time messaging.
-                </p>
-                <button className="cyber-button" onClick={() => alert("Phone connection module opening...")}>
-                    CONNECT PHONE NUMBER
-                </button>
-            </div>
-        );
-    }
-
+    // Phone connection requirement removed
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', background: 'var(--bg-base)', color: 'var(--text-main)', borderRadius: 'var(--radius-large)', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
             {/* Sidebar */}

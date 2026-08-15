@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, RecaptchaVerifier, PhoneAuthProvider, linkWithCredential, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut, onAuthStateChanged, updateProfile, linkWithPopup, OAuthProvider, GithubAuthProvider, sendPasswordResetEmail } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCpKDls4Vs04kHu5CVV421-rQS3Vi3ia0s",
@@ -18,17 +18,8 @@ export {
     app, 
     auth, 
     googleProvider,
-    RecaptchaVerifier, 
-    PhoneAuthProvider, 
-    linkWithCredential, 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
     signInWithPopup, 
     signOut, 
     onAuthStateChanged, 
-    updateProfile, 
-    linkWithPopup, 
-    OAuthProvider, 
-    GithubAuthProvider,
-    sendPasswordResetEmail
+    updateProfile 
 };
