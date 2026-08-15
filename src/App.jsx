@@ -12,6 +12,7 @@ import CurrencyCenter from './pages/CurrencyCenter';
 import Symbols from './pages/Symbols';
 import HexEditor from './pages/HexEditor';
 import Settings from './pages/Settings';
+import LoadingScreen from './components/ui/LoadingScreen';
 
 function Messages({ user }) {
     if (!user?.phone && !user?.phoneNumber) {
@@ -105,11 +106,7 @@ export default function App() {
     const handleLogout = () => { setUser(null); };
 
     if (loading) {
-        return (
-            <div style={{ height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-base)', color: 'var(--accent-primary)', fontSize: '1rem', letterSpacing: '3px', fontWeight: 700 }}>
-                INITIALIZING NEXUS CORE...
-            </div>
-        );
+        return <LoadingScreen />;
     }
 
     return (
@@ -131,7 +128,7 @@ export default function App() {
                         <Route path="/currencies" element={<CurrencyCenter />} />
                         <Route path="/symbols" element={<Symbols />} />
                         <Route path="/hex-editor" element={<HexEditor />} />
-                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
                         <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />
                     </Route>
                 ) : (

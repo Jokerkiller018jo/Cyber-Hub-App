@@ -39,19 +39,31 @@ export default function AiNexus() {
         setIsTyping(true);
 
         try {
-            const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-            if (!apiKey) throw new Error('VITE_GROQ_API_KEY is not set. Add it to your .env file.');
+            const vercelKey = import.meta.env.VITE_VERCEL_AI_KEY;
+            const groqKey   = import.meta.env.VITE_GROQ_API_KEY;
 
-            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            const useVercel = !!vercelKey;
+            const apiKey    = useVercel ? vercelKey : groqKey;
+            if (!apiKey) throw new Error('No AI API key found. Add VITE_VERCEL_AI_KEY or VITE_GROQ_API_KEY to your .env file.');
+
+            const endpoint = useVercel
+                ? 'https://ai-gateway.vercel.sh/v1/chat/completions'
+                : 'https://api.groq.com/openai/v1/chat/completions';
+
+            const model = useVercel ? 'openai/gpt-4o-mini' : 'llama-3.1-8b-instant';
+
+            const systemPrompt = 'You are the Cyber-Hub Nexus Core AI. You assist operatives in a futuristic command center. Respond concisely, authoritatively, and with a cybernetic/terminal theme. Use emojis and symbols (like ⚡️, 🛡️, 📡, 🤖, ⚠️) to explain the actions you are taking or making. If the user says "hi" or greets you, respond with a short, cool, emoji-filled greeting, rather than a long initializing protocol.';
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'llama-3.1-8b-instant',
+                    model,
                     messages: [
-                        { role: 'system', content: 'You are the Cyber-Hub Nexus Core AI. You assist operatives in a futuristic command center. Respond concisely, authoritatively, and with a cybernetic/terminal theme. Use emojis and symbols (like ⚡️, 🛡️, 📡, 🤖, ⚠️) to explain the actions you are taking or making. If the user says "hi" or greets you, respond with a short, cool, emoji-filled greeting, rather than a long initializing protocol.' },
+                        { role: 'system', content: systemPrompt },
                         ...updatedMessages.map(msg => ({
                             role: msg.sender === 'user' ? 'user' : 'assistant',
                             content: msg.text
@@ -64,8 +76,8 @@ export default function AiNexus() {
                 })
             });
 
-            const data = await groqRes.json();
-            if (!groqRes.ok) throw new Error(data.error?.message || `Groq API error ${groqRes.status}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error?.message || `API error ${res.status}`);
 
             const replyText = data.choices?.[0]?.message?.content || 'No response generated.';
             setMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: replyText }]);

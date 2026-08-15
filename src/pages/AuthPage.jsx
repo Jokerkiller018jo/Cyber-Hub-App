@@ -1,64 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithEmail, loginWithGoogle, registerUser, setupRecaptcha } from '../services/auth-handler';
+import { loginWithGoogle } from '../services/auth-handler';
 import Icon from '../components/ui/Icon';
 import DnaBackground from '../components/canvas/DnaBackground';
 
 export default function AuthPage({ onLogin }) {
     const navigate = useNavigate();
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [username, setUsername] = useState('');
-    const [phone, setPhone] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [capToken, setCapToken] = useState(null);
-
-    useEffect(() => {
-        // We use setTimeout to ensure the DOM is ready
-        setTimeout(() => {
-            setupRecaptcha('auth-recaptcha', (token) => {
-                setCapToken(token);
-            });
-        }, 100);
-    }, [isRegistering]); // Re-initialize if view changes
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        if (!capToken) {
-            setError("Please complete the security check.");
-            setLoading(false);
-            return;
-        }
-
-        try {
-            if (isRegistering) {
-                if (!phone) throw new Error("Phone number is required for Node Registration.");
-                const user = await registerUser(email, password, username || email.split('@')[0], phone);
-                onLogin(user);
-            } else {
-                const user = await loginWithEmail(email, password);
-                onLogin(user);
-            }
-            navigate('/nexus');
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleGoogle = async () => {
+        setLoading(true);
+        setError('');
         try {
             const user = await loginWithGoogle();
             onLogin(user);
             navigate('/nexus');
         } catch (err) {
-            setError("Google Auth Failed: " + err.message);
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -73,32 +34,44 @@ export default function AuthPage({ onLogin }) {
             overflow: 'hidden'
         }}>
             <DnaBackground />
-            
+
             <div className="glass-panel" style={{
                 position: 'relative',
                 zIndex: 10,
                 width: '400px',
-                padding: '40px',
+                padding: '48px 40px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 animation: 'slideUp var(--transition-smooth) forwards'
             }}>
-                <h1 style={{ color: 'var(--text-main)', marginBottom: '5px', textAlign: 'center' }}>
-                    {isRegistering ? "CREATE NODE" : "CYBER-HUB"}
+                {/* Logo / Title */}
+                <h1 style={{
+                    color: 'var(--text-main)',
+                    marginBottom: '6px',
+                    textAlign: 'center',
+                    letterSpacing: '0.1em'
+                }}>
+                    CYBER-HUB
                 </h1>
-                <p style={{ color: 'var(--text-muted)', marginBottom: '30px', fontSize: '0.9rem' }}>
+                <p style={{
+                    color: 'var(--text-muted)',
+                    marginBottom: '40px',
+                    fontSize: '0.9rem',
+                    textAlign: 'center'
+                }}>
                     Awaiting secure credentials...
                 </p>
 
+                {/* Error message */}
                 {error && (
                     <div style={{
                         background: 'rgba(255, 68, 68, 0.1)',
                         border: '1px solid #ff4444',
                         color: '#ff4444',
-                        padding: '10px',
+                        padding: '10px 14px',
                         borderRadius: 'var(--radius-small)',
-                        marginBottom: '20px',
+                        marginBottom: '24px',
                         width: '100%',
                         fontSize: '0.85rem',
                         textAlign: 'center'
@@ -107,98 +80,67 @@ export default function AuthPage({ onLogin }) {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {isRegistering && (
+                {/* Google Sign-In button */}
+                <button
+                    className="cyber-button"
+                    onClick={handleGoogle}
+                    disabled={loading}
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        padding: '14px',
+                        fontSize: '0.95rem',
+                        letterSpacing: '0.08em'
+                    }}
+                >
+                    {loading ? (
+                        'AUTHENTICATING...'
+                    ) : (
                         <>
-                            <input 
-                                type="text" 
-                                className="input-field" 
-                                placeholder="Codename (Username)" 
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                            />
-                            <input 
-                                type="text" 
-                                className="input-field" 
-                                placeholder="Phone Link (+1 ...)" 
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                            />
+                            <Icon name="google" size={20} />
+                            SIGN IN WITH GOOGLE
                         </>
                     )}
-                    
-                    <input 
-                        type="email" 
-                        className="input-field" 
-                        placeholder="Email Address" 
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                    />
-                    <input 
-                        type="password" 
-                        className="input-field" 
-                        placeholder="Passkey" 
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                    />
+                </button>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', margin: '15px 0' }}>
-                        <div id="auth-recaptcha" style={{ minHeight: '60px' }}></div>
-                    </div>
-                    
-                    <button type="submit" className="cyber-button" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
-                        {loading ? "PROCESSING..." : isRegistering ? "REGISTER" : "AUTHORIZE"}
-                    </button>
-                </form>
-
+                {/* Divider */}
                 <div style={{
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    margin: '25px 0',
+                    margin: '28px 0',
                     color: 'var(--text-muted)'
                 }}>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-                    <span style={{ margin: '0 10px', fontSize: '0.8rem' }}>OR</span>
+                    <span style={{ margin: '0 12px', fontSize: '0.75rem', opacity: 0.5 }}>OR</span>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button className="cyber-button" onClick={handleGoogle} style={{ flex: 1, padding: '8px', minWidth: '100px' }}>
-                        <Icon name="google" size={18} />
-                    </button>
-                </div>
-
-                <p 
-                    onClick={() => setIsRegistering(!isRegistering)}
-                    style={{
-                        marginTop: '30px',
-                        color: 'var(--accent-primary)',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        transition: 'color var(--transition-fast)'
-                    }}
-                    onMouseEnter={(e) => e.target.style.color = 'var(--accent-hover)'}
-                    onMouseLeave={(e) => e.target.style.color = 'var(--accent-primary)'}
-                >
-                    {isRegistering ? "Back to Secure Login" : "Sign up for a new Node Access"}
-                </p>
-                
-                <p 
+                {/* Demo mode bypass */}
+                <p
                     onClick={() => {
                         onLogin({ username: 'Guest Operative', avatar: '' });
                         navigate('/nexus');
                     }}
                     style={{
-                        marginTop: '15px',
                         color: 'var(--text-muted)',
                         cursor: 'pointer',
                         fontSize: '0.7rem',
                         border: '1px solid var(--border-color)',
-                        padding: '5px 15px',
-                        borderRadius: 'var(--radius-small)'
+                        padding: '6px 20px',
+                        borderRadius: 'var(--radius-small)',
+                        transition: 'border-color var(--transition-fast), color var(--transition-fast)'
+                    }}
+                    onMouseEnter={e => {
+                        e.target.style.borderColor = 'var(--accent-primary)';
+                        e.target.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={e => {
+                        e.target.style.borderColor = 'var(--border-color)';
+                        e.target.style.color = 'var(--text-muted)';
                     }}
                 >
                     BYPASS TO DEMO MODE

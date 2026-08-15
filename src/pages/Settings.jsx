@@ -1,331 +1,658 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setupRecaptcha, sendSMS, verifySMS } from '../services/auth-handler';
+import { logout } from '../services/auth-handler';
+import { auth } from '../services/firebase';
+import { loadTheme, setTheme, ACCENT_COLORS } from '../services/theme';
 import Icon from '../components/ui/Icon';
 
-export default function Settings() {
+/* ─────────────────────────────────────────────────────────────
+   Shared micro-components
+───────────────────────────────────────────────────────────── */
+function SectionCard({ children, style = {} }) {
+    return (
+        <div style={{
+            background: 'linear-gradient(145deg, rgba(20,20,32,0.9), rgba(12,12,20,0.95))',
+            border: '1px solid rgba(176,0,255,0.18)',
+            borderRadius: '16px',
+            padding: '28px',
+            marginBottom: '16px',
+            backdropFilter: 'blur(10px)',
+            ...style
+        }}>
+            {children}
+        </div>
+    );
+}
+
+function SectionTitle({ icon, children }) {
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginBottom: '20px',
+            paddingBottom: '14px',
+            borderBottom: '1px solid rgba(176,0,255,0.12)'
+        }}>
+            <span style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center' }}>
+                <Icon name={icon} size={18} />
+            </span>
+            <span style={{
+                fontSize: '0.78rem',
+                fontWeight: '700',
+                letterSpacing: '0.12em',
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase'
+            }}>
+                {children}
+            </span>
+        </div>
+    );
+}
+
+function FieldLabel({ children }) {
+    return (
+        <label style={{
+            display: 'block',
+            fontSize: '0.72rem',
+            fontWeight: '700',
+            letterSpacing: '0.1em',
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            marginBottom: '8px'
+        }}>
+            {children}
+        </label>
+    );
+}
+
+function Toggle({ checked, onChange }) {
+    return (
+        <div
+            onClick={() => onChange(!checked)}
+            style={{
+                width: '42px',
+                height: '24px',
+                borderRadius: '12px',
+                background: checked ? 'var(--accent-primary)' : 'rgba(255,255,255,0.12)',
+                position: 'relative',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'background 0.25s ease',
+                boxShadow: checked ? '0 0 12px var(--accent-primary)' : 'none',
+            }}
+        >
+            <div style={{
+                position: 'absolute',
+                top: '3px',
+                left: checked ? '21px' : '3px',
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.22s cubic-bezier(.4,0,.2,1)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.4)'
+            }} />
+        </div>
+    );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Main Settings component
+───────────────────────────────────────────────────────── */
+export default function Settings({ user, onLogout }) {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('Security');
-    
-    // SMS Verification State
-    const [phone, setPhone] = useState('');
-    const [code, setCode] = useState('');
-    const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [verificationId, setVerificationId] = useState(null);
+    const [activeTab, setActiveTab] = useState('account');
 
-    useEffect(() => {
-        if (activeTab === 'Security' && step === 1) {
-            // Need a slight delay to ensure the DOM element is rendered
-            setTimeout(() => {
-                const container = document.getElementById('recaptcha-container');
-                if (container && !container.innerHTML) {
-                    setupRecaptcha('recaptcha-container');
-                }
-            }, 100);
-        }
-    }, [activeTab, step]);
+    // My Account
+    const [displayName, setDisplayName] = useState(user?.username || '');
+    const [saveStatus, setSaveStatus] = useState('');
+    const [saving, setSaving] = useState(false);
 
-    const handleSendSMS = async () => {
-        if (!phone.trim()) return setError("Enter a valid phone number (+1...)");
-        setLoading(true);
-        setError('');
+    // Security
+    const [signingOut, setSigningOut] = useState(false);
+    const [securityMsg, setSecurityMsg] = useState('');
+
+    // Appearance (load initial state from theme service)
+    const initialTheme = React.useMemo(() => loadTheme(), []);
+    const [accentColor, setAccentColor] = useState(initialTheme.accent);
+    const [glitch, setGlitch] = useState(initialTheme.glitch);
+    const [glow, setGlow] = useState(initialTheme.glow);
+
+    // Apply and save theme changes
+    React.useEffect(() => {
+        setTheme({ accent: accentColor, glitch, glow });
+    }, [accentColor, glitch, glow]);
+
+    // Notifications
+    const [notifs, setNotifs] = useState({
+        security: true,
+        messages: true,
+        market: false,
+        system: false,
+    });
+
+    const handleSaveName = async () => {
+        setSaving(true);
+        setSaveStatus('');
         try {
-            const vid = await sendSMS(phone);
-            setVerificationId(vid);
-            setStep(2);
-            setSuccess("SMS Verification Code Sent!");
+            const { updateProfile } = await import('firebase/auth');
+            if (auth.currentUser) {
+                await updateProfile(auth.currentUser, { displayName });
+                setSaveStatus('saved');
+            }
         } catch (err) {
-            setError(err.message);
+            setSaveStatus('error');
         } finally {
-            setLoading(false);
+            setSaving(false);
+            setTimeout(() => setSaveStatus(''), 3000);
         }
     };
 
-    const handleVerifyCode = async () => {
-        if (!code.trim()) return setError("Enter the 6-digit code");
-        setLoading(true);
-        setError('');
+    const handleSignOutAll = async () => {
+        setSigningOut(true);
+        setSecurityMsg('');
         try {
-            await verifySMS(verificationId, code);
-            setStep(3);
-            setSuccess("Phone Linked Successfully!");
+            await logout();
+            if (onLogout) onLogout();
+            navigate('/login');
         } catch (err) {
-            setError("Verification Failed: " + err.message);
-        } finally {
-            setLoading(false);
+            setSecurityMsg('Error: ' + err.message);
+            setSigningOut(false);
         }
     };
 
     const tabs = [
-        { id: 'My Account', label: 'My Account' },
-        { id: 'Security', label: 'Security' },
-        { id: 'Appearance', label: 'Appearance' },
-        { id: 'Notifications', label: 'Notifications' },
+        { id: 'account',       icon: 'user',       label: 'My Account' },
+        { id: 'security',      icon: 'shield',     label: 'Security' },
+        { id: 'appearance',    icon: 'appearance', label: 'Appearance' },
+        { id: 'notifications', icon: 'bell',       label: 'Notifications' },
     ];
 
-    const renderContent = () => {
+
+    /* ── Tab content ─────────────────────────────────────────── */
+    const renderTab = () => {
         switch (activeTab) {
-            case 'Security':
-                return (
-                    <div className="animate-fade" style={{ maxWidth: '600px' }}>
-                        <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>SECURITY SETTINGS</h2>
-                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px' }}>
-                            <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent-primary)' }}>
-                                <Icon name="phone" size={20} />
-                                Link Secure Device
-                            </h3>
 
-                            {error && (
-                                <div style={{ background: 'rgba(255, 68, 68, 0.1)', color: '#ff4444', padding: '12px', borderRadius: 'var(--radius-small)', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(255, 68, 68, 0.3)' }}>
-                                    {error}
-                                </div>
-                            )}
+            case 'account': return (
+                <div className="animate-fade">
+                    <PageHeading>My Account</PageHeading>
 
-                            {success && (
-                                <div style={{ background: 'rgba(0, 255, 136, 0.1)', color: '#00ff88', padding: '12px', borderRadius: 'var(--radius-small)', marginBottom: '20px', fontSize: '0.9rem', border: '1px solid rgba(0, 255, 136, 0.3)' }}>
-                                    {success}
-                                </div>
-                            )}
+                    <SectionCard>
+                        <SectionTitle icon="user">Profile</SectionTitle>
 
-                            {step === 1 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>PHONE NUMBER</label>
-                                        <input 
-                                            type="text" 
-                                            className="input-field" 
-                                            placeholder="Phone Number (+1...)" 
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                        />
-                                    </div>
-                                    <div id="recaptcha-container" style={{ minHeight: '60px' }}></div>
-                                    <button className="cyber-button" onClick={handleSendSMS} disabled={loading} style={{ alignSelf: 'flex-start' }}>
-                                        {loading ? "SENDING..." : "SEND SECURE SMS"}
-                                    </button>
-                                </div>
-                            )}
-
-                            {step === 2 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>VERIFICATION CODE</label>
-                                        <input 
-                                            type="text" 
-                                            className="input-field" 
-                                            placeholder="6-Digit Verification Code" 
-                                            value={code}
-                                            onChange={(e) => setCode(e.target.value)}
-                                        />
-                                    </div>
-                                    <button className="cyber-button" onClick={handleVerifyCode} disabled={loading} style={{ alignSelf: 'flex-start' }}>
-                                        {loading ? "VERIFYING..." : "VERIFY SECURE LINK"}
-                                    </button>
-                                </div>
-                            )}
-
-                            {step === 3 && (
-                                <div style={{ textAlign: 'center', color: '#00ff88', padding: '30px', border: '1px solid rgba(0, 255, 136, 0.5)', borderRadius: 'var(--radius-small)', background: 'rgba(0, 255, 136, 0.05)' }}>
-                                    <h3 style={{ margin: 0, fontSize: '1.2rem', letterSpacing: '2px' }}>SECURE DEVICE LINKED</h3>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            case 'My Account':
-                return (
-                    <div className="animate-fade" style={{ maxWidth: '600px' }}>
-                        <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>MY ACCOUNT</h2>
-                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
-                                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#333', border: '2px solid var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
-                                    👤
-                                </div>
-                                <button className="cyber-button" style={{ padding: '8px 15px', fontSize: '0.8rem' }}>CHANGE AVATAR</button>
+                        {/* Avatar + identity */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px' }}>
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="avatar" style={{
+                                        width: '72px', height: '72px', borderRadius: '50%',
+                                        border: '2px solid var(--accent-primary)',
+                                        objectFit: 'cover',
+                                        boxShadow: '0 0 20px rgba(176,0,255,0.35)'
+                                    }} />
+                                ) : (
+                                    <div style={{
+                                        width: '72px', height: '72px', borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, rgba(176,0,255,0.3), rgba(0,212,255,0.2))',
+                                        border: '2px solid var(--accent-primary)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1.8rem',
+                                        boxShadow: '0 0 20px rgba(176,0,255,0.3)'
+                                    }}>👤</div>
+                                )}
+                                {/* Online dot */}
+                                <div style={{
+                                    position: 'absolute', bottom: '3px', right: '3px',
+                                    width: '14px', height: '14px', borderRadius: '50%',
+                                    background: '#00ff88',
+                                    border: '2px solid var(--bg-base)',
+                                    boxShadow: '0 0 8px rgba(0,255,136,0.6)'
+                                }} />
                             </div>
-                            
                             <div>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>USERNAME</label>
-                                <input type="text" className="input-field" defaultValue="Guest Operator" />
-                            </div>
-                            
-                            <div>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '8px', fontWeight: '600' }}>EMAIL ADDRESS</label>
-                                <input type="email" className="input-field" defaultValue="guest@nexus.core" />
-                            </div>
-                            
-                            <button className="cyber-button" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>SAVE CHANGES</button>
-                        </div>
-                    </div>
-                );
-            case 'Appearance':
-                return (
-                    <div className="animate-fade" style={{ maxWidth: '600px' }}>
-                        <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>APPEARANCE</h2>
-                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                            
-                            <div>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>THEME PREFERENCE</label>
-                                <div style={{ display: 'flex', gap: '15px' }}>
-                                    {['Cyber Dark', 'Neon Light', 'High Contrast'].map(t => (
-                                        <label key={t} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                            <input type="radio" name="theme" defaultChecked={t === 'Cyber Dark'} />
-                                            {t}
-                                        </label>
-                                    ))}
+                                <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                                    {user?.username || 'Operative'}
                                 </div>
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>ACCENT COLOR</label>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    {['#B000FF', '#00D4FF', '#00FF88', '#FF006E', '#FFE600'].map(c => (
-                                        <div key={c} style={{ width: '32px', height: '32px', borderRadius: '50%', background: c, cursor: 'pointer', border: c === '#B000FF' ? '2px solid white' : '2px solid transparent', boxShadow: c === '#B000FF' ? `0 0 10px ${c}` : 'none' }} />
-                                    ))}
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
+                                <div style={{
+                                    marginTop: '8px', fontSize: '0.7rem', fontWeight: '600',
+                                    letterSpacing: '0.08em', color: '#00ff88',
+                                    display: 'flex', alignItems: 'center', gap: '5px'
+                                }}>
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 6px #00ff88' }} />
+                                    ACTIVE NODE
                                 </div>
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '12px', fontWeight: '600' }}>INTERFACE EFFECTS</label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '10px' }}>
-                                    <input type="checkbox" defaultChecked /> Enable Glitch Animations
-                                </label>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.9rem' }}>
-                                    <input type="checkbox" defaultChecked /> Enable Hover Glow
-                                </label>
                             </div>
                         </div>
-                    </div>
-                );
-            case 'Notifications':
-                return (
-                    <div className="animate-fade" style={{ maxWidth: '600px' }}>
-                        <h2 style={{ color: 'var(--text-main)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: '800' }}>NOTIFICATIONS</h2>
-                        <div className="card" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-medium)', padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {[
-                                { title: 'Security Alerts', desc: 'Get notified when a new device connects' },
-                                { title: 'Direct Messages', desc: 'Alerts for incoming chat messages' },
-                                { title: 'Market Updates', desc: 'Daily summary of crypto & stock changes' },
-                                { title: 'System Announcements', desc: 'Updates from Nexus Core network' }
-                            ].map((opt, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '15px', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                                    <div>
-                                        <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '4px' }}>{opt.title}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
-                                    </div>
-                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                        <input type="checkbox" defaultChecked={i < 2} style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }} />
-                                    </label>
+
+                        {/* Display name input */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <FieldLabel>Display Name</FieldLabel>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={displayName}
+                                onChange={e => { setDisplayName(e.target.value); setSaveStatus(''); }}
+                                placeholder="Your operative codename"
+                                style={{ fontSize: '0.95rem' }}
+                            />
+                        </div>
+
+                        {/* Email (read-only) */}
+                        <div style={{ marginBottom: '24px' }}>
+                            <FieldLabel>Email Address</FieldLabel>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    value={user?.email || ''}
+                                    readOnly
+                                    style={{ opacity: 0.5, cursor: 'not-allowed', paddingRight: '90px' }}
+                                />
+                                <span style={{
+                                    position: 'absolute', right: '12px', top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    fontSize: '0.65rem', fontWeight: '700', letterSpacing: '0.1em',
+                                    color: 'var(--text-muted)',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    padding: '3px 8px', borderRadius: '6px'
+                                }}>READ ONLY</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <button className="cyber-button" onClick={handleSaveName} disabled={saving}>
+                                {saving ? 'SAVING...' : 'SAVE CHANGES'}
+                            </button>
+                            {saveStatus === 'saved' && (
+                                <span style={{ fontSize: '0.82rem', color: '#00ff88', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    ✓ Saved successfully
+                                </span>
+                            )}
+                            {saveStatus === 'error' && (
+                                <span style={{ fontSize: '0.82rem', color: '#ff4444' }}>
+                                    ✕ Failed to save
+                                </span>
+                            )}
+                        </div>
+                    </SectionCard>
+                </div>
+            );
+
+            case 'security': return (
+                <div className="animate-fade">
+                    <PageHeading>Security</PageHeading>
+
+                    {/* Connected accounts */}
+                    <SectionCard>
+                        <SectionTitle icon="google">Connected Accounts</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: '1.6' }}>
+                            Your Cyber-Hub identity is authenticated through the following provider.
+                        </p>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '16px 18px',
+                            borderRadius: '12px',
+                            background: 'rgba(66,133,244,0.07)',
+                            border: '1px solid rgba(66,133,244,0.2)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{
+                                    width: '40px', height: '40px', borderRadius: '10px',
+                                    background: 'rgba(66,133,244,0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    <Icon name="google" size={20} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '3px' }}>Google</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
+                                </div>
+                            </div>
+                            <div style={{
+                                fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em',
+                                color: '#00ff88',
+                                background: 'rgba(0,255,136,0.08)',
+                                border: '1px solid rgba(0,255,136,0.25)',
+                                padding: '4px 12px', borderRadius: '20px',
+                                display: 'flex', alignItems: 'center', gap: '6px'
+                            }}>
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 6px #00ff88' }} />
+                                VERIFIED
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    {/* Session management */}
+                    <SectionCard>
+                        <SectionTitle icon="shield">Session Management</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '22px', lineHeight: '1.6' }}>
+                            Terminate all active sessions for your account. You will be redirected to the login screen.
+                        </p>
+
+                        {securityMsg && (
+                            <div style={{
+                                background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)',
+                                color: '#ff4444', padding: '10px 14px', borderRadius: '8px',
+                                fontSize: '0.84rem', marginBottom: '16px'
+                            }}>
+                                {securityMsg}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleSignOutAll}
+                            disabled={signingOut}
+                            style={{
+                                background: 'rgba(255,68,68,0.07)',
+                                border: '1px solid rgba(255,68,68,0.4)',
+                                color: '#ff6666',
+                                padding: '11px 22px',
+                                borderRadius: '10px',
+                                fontWeight: '700',
+                                fontSize: '0.8rem',
+                                letterSpacing: '0.1em',
+                                cursor: signingOut ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s ease',
+                                display: 'flex', alignItems: 'center', gap: '8px'
+                            }}
+                            onMouseEnter={e => {
+                                if (!signingOut) {
+                                    e.currentTarget.style.background = 'rgba(255,68,68,0.15)';
+                                    e.currentTarget.style.boxShadow = '0 0 20px rgba(255,68,68,0.2)';
+                                }
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = 'rgba(255,68,68,0.07)';
+                                e.currentTarget.style.boxShadow = 'none';
+                            }}
+                        >
+                            <Icon name="close" size={16} />
+                            {signingOut ? 'DISCONNECTING...' : 'SIGN OUT ALL DEVICES'}
+                        </button>
+                    </SectionCard>
+                </div>
+            );
+
+            case 'appearance': return (
+                <div className="animate-fade">
+                    <PageHeading>Appearance</PageHeading>
+
+                    <SectionCard>
+                        <SectionTitle icon="appearance">Accent Color</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.6' }}>
+                            Choose your interface highlight color.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            {ACCENT_COLORS.map(c => (
+                                <div key={c.hex} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                    <div
+                                        onClick={() => setAccentColor(c.hex)}
+                                        style={{
+                                            width: '38px', height: '38px', borderRadius: '50%',
+                                            background: c.hex,
+                                            cursor: 'pointer',
+                                            border: accentColor === c.hex ? '3px solid #fff' : '3px solid transparent',
+                                            boxShadow: accentColor === c.hex ? `0 0 18px ${c.hex}99` : `0 0 8px ${c.hex}44`,
+                                            transition: 'all 0.2s ease',
+                                            transform: accentColor === c.hex ? 'scale(1.15)' : 'scale(1)'
+                                        }}
+                                        onMouseEnter={e => { if (accentColor !== c.hex) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                                        onMouseLeave={e => { if (accentColor !== c.hex) e.currentTarget.style.transform = 'scale(1)'; }}
+                                    />
+                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{c.name}</span>
                                 </div>
                             ))}
                         </div>
-                    </div>
-                );
-            default:
-                return null;
+                    </SectionCard>
+
+                    <SectionCard>
+                        <SectionTitle icon="appearance">Interface Effects</SectionTitle>
+                        {[
+                            { label: 'Glitch Animations', desc: 'Adds CRT-style glitch effects on UI elements', key: 'glitch', val: glitch, set: setGlitch },
+                            { label: 'Hover Glow',        desc: 'Purple glow on interactive elements',         key: 'glow',   val: glow,   set: setGlow   },
+                        ].map(opt => (
+                            <div key={opt.key} style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '14px 0',
+                                borderBottom: '1px solid rgba(255,255,255,0.05)'
+                            }}>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '0.9rem', marginBottom: '3px' }}>{opt.label}</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                                </div>
+                                <Toggle checked={opt.val} onChange={opt.set} />
+                            </div>
+                        ))}
+                    </SectionCard>
+                </div>
+            );
+
+            case 'notifications': return (
+                <div className="animate-fade">
+                    <PageHeading>Notifications</PageHeading>
+
+                    <SectionCard>
+                        <SectionTitle icon="bell">Alert Preferences</SectionTitle>
+                        {[
+                            { key: 'security', title: 'Security Alerts',      desc: 'New device or suspicious login detected' },
+                            { key: 'messages', title: 'Direct Messages',       desc: 'Incoming secure transmissions' },
+                            { key: 'market',   title: 'Market Updates',        desc: 'Daily crypto & stock movement summary' },
+                            { key: 'system',   title: 'System Announcements',  desc: 'Network-wide broadcasts from Nexus Core' },
+                        ].map((opt, i, arr) => (
+                            <div key={opt.key} style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '16px 0',
+                                borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+                            }}>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '0.92rem', marginBottom: '4px' }}>{opt.title}</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                                </div>
+                                <Toggle
+                                    checked={notifs[opt.key]}
+                                    onChange={v => setNotifs(n => ({ ...n, [opt.key]: v }))}
+                                />
+                            </div>
+                        ))}
+                    </SectionCard>
+                </div>
+            );
+
+            default: return null;
         }
     };
 
+    /* ── Layout ─────────────────────────────────────────────── */
     return (
-        <div style={{ 
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'var(--bg-base)',
             display: 'flex',
-            zIndex: 9999, // Ensure it covers everything like Discord settings
-            color: 'var(--text-main)'
+            zIndex: 9999,
+            color: 'var(--text-main)',
+            fontFamily: "'Inter', sans-serif"
         }}>
-            {/* Sidebar */}
-            <div style={{ 
-                width: '35%', 
-                maxWidth: '400px',
-                minWidth: '250px',
-                background: 'rgba(10, 10, 16, 0.5)',
-                borderRight: '1px solid var(--border-color)',
+
+            {/* ── Sidebar ── */}
+            <div style={{
+                width: '260px',
+                flexShrink: 0,
+                background: 'rgba(8,8,14,0.8)',
+                borderRight: '1px solid rgba(176,0,255,0.12)',
                 display: 'flex',
-                justifyContent: 'flex-end',
-                padding: '60px 20px'
+                flexDirection: 'column',
+                padding: '48px 16px 32px',
             }}>
-                <div style={{ width: '220px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '800', padding: '0 10px', marginBottom: '5px', letterSpacing: '1px' }}>
-                        USER SETTINGS
-                    </div>
-                    {tabs.map(tab => (
-                        <div 
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                padding: '10px 15px',
-                                borderRadius: 'var(--radius-small)',
-                                cursor: 'pointer',
-                                background: activeTab === tab.id ? 'rgba(176, 0, 255, 0.15)' : 'transparent',
-                                color: activeTab === tab.id ? 'var(--text-main)' : 'var(--text-muted)',
-                                fontWeight: activeTab === tab.id ? '600' : '400',
-                                transition: 'all var(--transition-fast)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px'
-                            }}
-                            onMouseEnter={(e) => { if(activeTab !== tab.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-                            onMouseLeave={(e) => { if(activeTab !== tab.id) e.currentTarget.style.background = 'transparent' }}
-                        >
-                            <span style={{ fontSize: '0.95rem' }}>{tab.label}</span>
+                {/* User mini-card */}
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '14px 16px', marginBottom: '32px',
+                    background: 'rgba(176,0,255,0.06)',
+                    border: '1px solid rgba(176,0,255,0.15)',
+                    borderRadius: '12px'
+                }}>
+                    {user?.avatar ? (
+                        <img src={user.avatar} alt="avatar" style={{
+                            width: '38px', height: '38px', borderRadius: '50%',
+                            objectFit: 'cover', border: '1.5px solid var(--accent-primary)', flexShrink: 0
+                        }} />
+                    ) : (
+                        <div style={{
+                            width: '38px', height: '38px', borderRadius: '50%',
+                            background: 'rgba(176,0,255,0.2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.1rem', flexShrink: 0
+                        }}>👤</div>
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: '700', fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user?.username || 'Operative'}
                         </div>
-                    ))}
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user?.email || '—'}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section label */}
+                <div style={{
+                    fontSize: '0.68rem', fontWeight: '700', letterSpacing: '0.15em',
+                    color: 'rgba(136,136,153,0.6)', padding: '0 12px', marginBottom: '8px'
+                }}>
+                    USER SETTINGS
+                </div>
+
+                {/* Nav tabs */}
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    {tabs.map(tab => {
+                        const isActive = activeTab === tab.id;
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '12px',
+                                    padding: '10px 14px',
+                                    borderRadius: '10px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isActive ? 'rgba(176,0,255,0.14)' : 'transparent',
+                                    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                                    fontWeight: isActive ? '600' : '400',
+                                    fontSize: '0.9rem',
+                                    textAlign: 'left',
+                                    width: '100%',
+                                    transition: 'all 0.18s ease',
+                                    position: 'relative',
+                                    overflow: 'hidden'
+                                }}
+                                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                            >
+                                {isActive && (
+                                    <div style={{
+                                        position: 'absolute', left: 0, top: '20%', bottom: '20%',
+                                        width: '3px', borderRadius: '0 3px 3px 0',
+                                        background: 'var(--accent-primary)',
+                                        boxShadow: '0 0 8px var(--accent-primary)'
+                                    }} />
+                                )}
+                                <span style={{ color: isActive ? 'var(--accent-primary)' : 'inherit', display: 'flex' }}>
+                                    <Icon name={tab.icon} size={17} />
+                                </span>
+                                {tab.label}
+                            </button>
+                        );
+                    })}
+                </nav>
+
+                {/* Spacer + back button */}
+                <div style={{ marginTop: 'auto' }}>
+                    <div style={{ height: '1px', background: 'rgba(176,0,255,0.1)', marginBottom: '20px' }} />
+                    <button
+                        onClick={() => navigate('/lobby')}
+                        style={{
+                            width: '100%', padding: '10px',
+                            borderRadius: '10px',
+                            background: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.82rem', fontWeight: '600', letterSpacing: '0.05em',
+                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                            e.currentTarget.style.color = 'var(--text-main)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--text-muted)';
+                        }}
+                    >
+                        ← Back to Hub
+                    </button>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div style={{ 
-                flex: 1, 
-                background: 'var(--bg-base)',
-                padding: '60px 40px',
+            {/* ── Main content ── */}
+            <div style={{
+                flex: 1,
                 overflowY: 'auto',
-                position: 'relative'
+                padding: '52px 56px',
+                position: 'relative',
             }}>
-                <div style={{ maxWidth: '800px' }}>
-                    {renderContent()}
-                </div>
-                
-                {/* Close Button */}
-                <div 
+                {/* Close button */}
+                <button
                     onClick={() => navigate('/lobby')}
                     style={{
-                        position: 'absolute',
-                        top: '60px',
-                        right: '40px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '5px',
-                        cursor: 'pointer',
-                        color: 'var(--text-muted)'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-main)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
-                >
-                    <div style={{
-                        width: '36px',
-                        height: '36px',
+                        position: 'absolute', top: '24px', right: '32px',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.1)',
                         borderRadius: '50%',
-                        border: '2px solid currentColor',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '1.2rem',
-                        fontWeight: '300'
-                    }}>
-                        ✕
-                    </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>ESC</span>
+                        width: '38px', height: '38px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.95rem',
+                        transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                        e.currentTarget.style.color = 'var(--text-main)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                    }}
+                    title="Close (ESC)"
+                >
+                    ✕
+                </button>
+
+                {/* Tab content */}
+                <div style={{ maxWidth: '580px' }}>
+                    {renderTab()}
                 </div>
             </div>
         </div>
+    );
+}
+
+/* ── Inline helper for page headings ── */
+function PageHeading({ children }) {
+    return (
+        <h2 style={{
+            fontSize: '1.6rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
+            color: 'var(--text-main)',
+            marginBottom: '24px',
+        }}>
+            {children}
+        </h2>
     );
 }
