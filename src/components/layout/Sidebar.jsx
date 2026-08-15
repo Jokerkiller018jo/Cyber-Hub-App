@@ -147,7 +147,7 @@ export default function Sidebar({ user, onLogout }) {
                                 padding: '10px 15px',
                                 borderRadius: 'var(--radius-small)',
                                 color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-                                background: isActive ? 'rgba(176,0,255,0.1)' : 'transparent',
+                                background: isActive ? 'rgba(6,182,212,0.1)' : 'transparent',
                                 textDecoration: 'none',
                                 fontWeight: 600,
                                 fontSize: '0.85rem',
@@ -184,8 +184,8 @@ export default function Sidebar({ user, onLogout }) {
                             <span style={{ fontSize: '0.85rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {user?.username || 'Guest'}
                             </span>
-                            <span style={{ fontSize: '0.7rem', color: '#00ff88', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <div style={{ width: '6px', height: '6px', background: '#00ff88', borderRadius: '50%', flexShrink: 0 }} />
+                            <span style={{ fontSize: '0.7rem', color: 'var(--accent-success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div style={{ width: '6px', height: '6px', background: 'var(--accent-success)', borderRadius: '50%', flexShrink: 0 }} />
                                 Active Node
                             </span>
                         </div>
@@ -207,8 +207,8 @@ export default function Sidebar({ user, onLogout }) {
                         style={{
                             width: '100%',
                             background: 'transparent',
-                            border: user?.email ? '1px solid #ff4444' : '1px solid #00ff88',
-                            color: user?.email ? '#ff4444' : '#00ff88',
+                            border: user?.email ? '1px solid #ff4444' : '1px solid var(--accent-success)',
+                            color: user?.email ? '#ff4444' : 'var(--accent-success)',
                             padding: '8px',
                             borderRadius: 'var(--radius-small)',
                             cursor: 'pointer',
@@ -217,8 +217,8 @@ export default function Sidebar({ user, onLogout }) {
                             transition: 'all var(--transition-fast)',
                         }}
                         onMouseEnter={(e) => {
-                            e.target.style.background = user?.email ? 'rgba(255, 68, 68, 0.1)' : 'rgba(0, 255, 136, 0.1)';
-                            e.target.style.boxShadow = user?.email ? '0 0 15px rgba(255,68,68,0.2)' : '0 0 15px rgba(0,255,136,0.2)';
+                            e.target.style.background = user?.email ? 'rgba(255, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+                            e.target.style.boxShadow = user?.email ? '0 0 15px rgba(255,68,68,0.2)' : '0 0 15px rgba(16,185,129,0.2)';
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.background = 'transparent';
@@ -245,7 +245,7 @@ export default function Sidebar({ user, onLogout }) {
                         left: 0;
                         height: 100dvh !important;
                         transform: ${mobileOpen ? 'translateX(0)' : 'translateX(-100%)'};
-                        box-shadow: ${mobileOpen ? '4px 0 40px rgba(176,0,255,0.25)' : 'none'};
+                        box-shadow: ${mobileOpen ? '4px 0 40px rgba(6,182,212,0.25)' : 'none'};
                     }
                 }
             `}</style>

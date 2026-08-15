@@ -6,15 +6,15 @@
 const STORAGE_KEY = 'cyberhub_theme';
 
 export const ACCENT_COLORS = [
-    { hex: '#B000FF', hover: '#D500F9', dark: '#6A0DAD', name: 'Cyber Violet' },
-    { hex: '#00D4FF', hover: '#33DDFF', dark: '#007FA8', name: 'Neon Cyan' },
-    { hex: '#00FF88', hover: '#33FFAA', dark: '#00994D', name: 'Matrix Green' },
-    { hex: '#FF006E', hover: '#FF3389', dark: '#99003E', name: 'Hot Crimson' },
-    { hex: '#FFB800', hover: '#FFC933', dark: '#997000', name: 'Solar Gold' },
+    { hex: '#06b6d4', hover: '#22d3ee', dark: '#0891b2', name: 'Electric Cyan' },
+    { hex: '#10b981', hover: '#34d399', dark: '#059669', name: 'Emerald Node' },
+    { hex: '#f59e0b', hover: '#fbbf24', dark: '#d97706', name: 'Solar Flare' },
+    { hex: '#6366f1', hover: '#818cf8', dark: '#4f46e5', name: 'Indigo Core' },
+    { hex: '#e2e8f0', hover: '#f8fafc', dark: '#94a3b8', name: 'Monochrome' },
 ];
 
 export const DEFAULT_THEME = {
-    accent: '#B000FF',
+    accent: '#06b6d4',
     glitch: true,
     glow: true,
 };
