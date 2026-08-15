@@ -110,14 +110,14 @@ export default function MarketDashboard() {
             if (!res.ok) throw new Error('Rate limited');
             const data = await res.json();
             setCoins(prev => append ? [...prev, ...data.filter(d => !prev.find(p => p.id === d.id))] : data);
-            if (!selectedCoin && data.length > 0 && !append) setSelectedCoin(data[0]);
+            setSelectedCoin(prev => (!prev && data.length > 0 && !append) ? data[0] : prev);
             setLastUpdated(new Date());
         } catch (e) {
             setError('Live data unavailable — showing last snapshot.');
         } finally {
             setLoading(false);
         }
-    }, [selectedCoin]);
+    }, []);
 
     const fetchGlobal = async () => {
         try {
@@ -142,8 +142,12 @@ export default function MarketDashboard() {
         } catch {}
     };
 
-    useEffect(() => { fetchCoins(1); fetchGlobal(); }, []);
-    useEffect(() => { const i = setInterval(() => { fetchCoins(1); fetchGlobal(); }, 60000); return () => clearInterval(i); }, []);
+    useEffect(() => {
+        fetchCoins(1);
+        fetchGlobal();
+        const i = setInterval(() => { fetchCoins(1); fetchGlobal(); }, 60000);
+        return () => clearInterval(i);
+    }, [fetchCoins]);
     useEffect(() => { if (selectedCoin) fetchChart(selectedCoin.id, timeRange); }, [selectedCoin, timeRange]);
     useEffect(() => { localStorage.setItem('mkt_watchlist', JSON.stringify(watchlist)); }, [watchlist]);
     useEffect(() => { localStorage.setItem('mkt_portfolio', JSON.stringify(portfolio)); }, [portfolio]);

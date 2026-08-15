@@ -57,7 +57,11 @@ export default function CurrencyCenter() {
         }
     };
 
-    useEffect(() => { fetchRates(); }, [baseCurrency]);
+    useEffect(() => {
+        fetchRates();
+        const interval = setInterval(fetchRates, 60000);
+        return () => clearInterval(interval);
+    }, [baseCurrency]);
 
     const currencies = useMemo(() => {
         return Object.entries(rates).map(([code, rate]) => ({
