@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../services/auth-handler';
-import { auth } from '../services/firebase';
+import { auth, loadUserSettings, saveUserSettings } from '../services/firebase';
 import { loadTheme, setTheme, ACCENT_COLORS } from '../services/theme';
 import { getSearchBarStyle, setSearchBarStyle } from '../components/ui/SearchBar';
 import SearchBar from '../components/ui/SearchBar';
@@ -106,6 +106,9 @@ export default function Settings({ user, onLogout }) {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('account');
 
+    // Guest detection — no email means logged in anonymously or not at all
+    const isGuest = !user?.email;
+
     // My Account
     const [displayName, setDisplayName] = useState(user?.username || '');
     const [saveStatus, setSaveStatus] = useState('');
@@ -118,14 +121,47 @@ export default function Settings({ user, onLogout }) {
     // Appearance (load initial state from theme service)
     const initialTheme = React.useMemo(() => loadTheme(), []);
     const [accentColor, setAccentColor] = useState(initialTheme.accent);
+    const [customColor, setCustomColor] = useState(initialTheme.accent);
     const [glitch, setGlitch] = useState(initialTheme.glitch);
     const [glow, setGlow] = useState(initialTheme.glow);
     const [searchBarStyleVal, setSearchBarStyleVal] = useState(() => getSearchBarStyle());
+    const [cloudSyncing, setCloudSyncing] = useState(false);
+    const [cloudMsg, setCloudMsg] = useState('');
+
+    // Load settings from Firestore on mount for logged-in users
+    useEffect(() => {
+        if (isGuest || !user?.uid) return;
+        loadUserSettings(user.uid).then(data => {
+            if (!data) return;
+            if (data.accent)  { setAccentColor(data.accent); setCustomColor(data.accent); }
+            if (data.glitch !== undefined) setGlitch(data.glitch);
+            if (data.glow   !== undefined) setGlow(data.glow);
+            if (data.searchBarStyle) { setSearchBarStyleVal(data.searchBarStyle); setSearchBarStyle(data.searchBarStyle); }
+            if (data.notifications) setNotifs(data.notifications);
+        });
+    }, [user?.uid]);
 
     // Apply and save theme changes
-    React.useEffect(() => {
+    useEffect(() => {
         setTheme({ accent: accentColor, glitch, glow });
     }, [accentColor, glitch, glow]);
+
+    // Save all settings to Firestore (logged-in only)
+    const handleSaveToCloud = async () => {
+        if (isGuest || !user?.uid) return;
+        setCloudSyncing(true);
+        setCloudMsg('');
+        const ok = await saveUserSettings(user.uid, {
+            accent: accentColor,
+            glitch,
+            glow,
+            searchBarStyle: searchBarStyleVal,
+            notifications: notifs,
+        });
+        setCloudMsg(ok ? 'saved' : 'error');
+        setCloudSyncing(false);
+        setTimeout(() => setCloudMsg(''), 3000);
+    };
 
     // Notifications with localStorage persistence
     const [notifs, setNotifs] = useState(() => {
@@ -403,7 +439,7 @@ export default function Settings({ user, onLogout }) {
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.6' }}>
                             Choose your interface highlight color.
                         </p>
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                             {ACCENT_COLORS.map(c => (
                                 <div key={c.hex} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                     <div
@@ -423,6 +459,68 @@ export default function Settings({ user, onLogout }) {
                                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{c.name}</span>
                                 </div>
                             ))}
+
+                            {/* Custom color picker */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ position: 'relative', width: '38px', height: '38px' }}>
+                                    <div style={{
+                                        width: '38px', height: '38px', borderRadius: '50%',
+                                        background: customColor,
+                                        border: !ACCENT_COLORS.find(c => c.hex === accentColor) ? '3px solid #fff' : '3px solid transparent',
+                                        boxShadow: !ACCENT_COLORS.find(c => c.hex === accentColor) ? `0 0 18px ${customColor}99` : `0 0 8px ${customColor}44`,
+                                        transition: 'all 0.2s ease',
+                                        cursor: 'pointer',
+                                        overflow: 'hidden',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1rem',
+                                    }}>
+                                        <input
+                                            type="color"
+                                            value={customColor}
+                                            onChange={e => {
+                                                setCustomColor(e.target.value);
+                                                setAccentColor(e.target.value);
+                                            }}
+                                            style={{
+                                                position: 'absolute', inset: 0,
+                                                opacity: 0, width: '100%', height: '100%',
+                                                cursor: 'pointer', border: 'none', padding: 0
+                                            }}
+                                            title="Pick custom color"
+                                        />
+                                        🎨
+                                    </div>
+                                </div>
+                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Custom</span>
+                            </div>
+                        </div>
+
+                        {/* Save to cloud button for logged-in users */}
+                        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {isGuest ? (
+                                <div style={{
+                                    fontSize: '0.8rem', color: '#f59e0b',
+                                    background: 'rgba(245,158,11,0.08)',
+                                    border: '1px solid rgba(245,158,11,0.25)',
+                                    borderRadius: '8px', padding: '8px 14px',
+                                    display: 'flex', alignItems: 'center', gap: '8px'
+                                }}>
+                                    ⚠️ Changes are saved locally only. Sign in to sync across devices.
+                                </div>
+                            ) : (
+                                <>
+                                    <button
+                                        className="cyber-button"
+                                        onClick={handleSaveToCloud}
+                                        disabled={cloudSyncing}
+                                        style={{ fontSize: '0.78rem', padding: '9px 18px' }}
+                                    >
+                                        {cloudSyncing ? 'SYNCING...' : '☁ SAVE TO CLOUD'}
+                                    </button>
+                                    {cloudMsg === 'saved' && <span style={{ fontSize: '0.82rem', color: '#00ff88' }}>✓ Synced to your account</span>}
+                                    {cloudMsg === 'error' && <span style={{ fontSize: '0.82rem', color: '#ff4444' }}>✕ Sync failed</span>}
+                                </>
+                            )}
                         </div>
                     </SectionCard>
 
@@ -709,6 +807,27 @@ export default function Settings({ user, onLogout }) {
                 >
                     ✕
                 </button>
+
+                {/* Guest banner */}
+                {isGuest && (
+                    <div style={{
+                        marginBottom: '20px',
+                        padding: '12px 18px',
+                        background: 'rgba(245,158,11,0.07)',
+                        border: '1px solid rgba(245,158,11,0.3)',
+                        borderRadius: '12px',
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        maxWidth: '580px'
+                    }}>
+                        <span style={{ fontSize: '1.3rem' }}>⚠️</span>
+                        <div>
+                            <div style={{ fontWeight: '700', fontSize: '0.85rem', color: '#f59e0b', marginBottom: '3px' }}>Guest Mode</div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                                You are not signed in. Settings are saved on this device only and will reset if you clear your browser data. <strong style={{ color: '#f59e0b' }}>Sign in to sync your settings across all devices.</strong>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tab content */}
                 <div style={{ maxWidth: '580px' }}>

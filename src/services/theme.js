@@ -35,15 +35,39 @@ export function saveTheme(theme) {
     } catch (_) {}
 }
 
+/** Derive hover/dark variants from any arbitrary hex color */
+function deriveVariants(hex) {
+    // Try to find a preset match first
+    const preset = ACCENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+    if (preset) return { hover: preset.hover, dark: preset.dark };
+
+    // Otherwise derive programmatically
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    // Hover = lighten by ~15%
+    const lighten = v => Math.min(255, Math.round(v + (255 - v) * 0.18));
+    // Dark = darken by ~15%
+    const darken  = v => Math.max(0,   Math.round(v * 0.82));
+
+    const toHex = (r, g, b) => '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+    return {
+        hover: toHex(lighten(r), lighten(g), lighten(b)),
+        dark:  toHex(darken(r),  darken(g),  darken(b)),
+    };
+}
+
 /** Apply a theme object to the document CSS variables immediately */
 export function applyTheme(theme) {
     const root = document.documentElement;
-    const colorDef = ACCENT_COLORS.find(c => c.hex === theme.accent) || ACCENT_COLORS[0];
+    const hex = theme.accent || DEFAULT_THEME.accent;
+    const { hover, dark } = deriveVariants(hex);
 
-    root.style.setProperty('--accent-primary', colorDef.hex);
-    root.style.setProperty('--accent-hover',   colorDef.hover);
-    root.style.setProperty('--accent-dark',    colorDef.dark);
-    root.style.setProperty('--border-color',   hexToRgba(colorDef.hex, 0.25));
+    root.style.setProperty('--accent-primary', hex);
+    root.style.setProperty('--accent-hover',   hover);
+    root.style.setProperty('--accent-dark',    dark);
+    root.style.setProperty('--border-color',   hexToRgba(hex, 0.25));
 
     // Glitch animation toggle
     if (theme.glitch) {
@@ -55,7 +79,7 @@ export function applyTheme(theme) {
     // Glow effect toggle — zero out hover shadow when off
     root.style.setProperty(
         '--hover-glow',
-        theme.glow ? `0 0 25px ${hexToRgba(colorDef.hex, 0.35)}` : 'none'
+        theme.glow ? `0 0 25px ${hexToRgba(hex, 0.35)}` : 'none'
     );
 }
 
