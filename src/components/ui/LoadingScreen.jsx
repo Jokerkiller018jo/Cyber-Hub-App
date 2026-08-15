@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import './LoadingScreen.css';
 
-const LoadingScreen = () => {
+const LoadingScreen = ({ onComplete }) => {
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState('Establishing secure connection...');
 
@@ -18,13 +18,19 @@ const LoadingScreen = () => {
         let p = 0;
         const interval = setInterval(() => {
             p += Math.random() * 18 + 4;
-            if (p >= 100) { p = 100; clearInterval(interval); }
+            if (p >= 100) { 
+                p = 100; 
+                clearInterval(interval);
+                setTimeout(() => {
+                    if (onComplete) onComplete();
+                }, 400); // Give it a small pause at 100%
+            }
             setProgress(Math.min(p, 100));
             const idx = Math.min(Math.floor((p / 100) * (statuses.length - 1)), statuses.length - 1);
             setStatusText(statuses[idx]);
         }, 220);
         return () => clearInterval(interval);
-    }, []);
+    }, [onComplete]);
 
     return (
         <div className="ls-root">

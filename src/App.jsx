@@ -70,7 +70,8 @@ function Messages({ user }) {
 
 export default function App() {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [authReady, setAuthReady] = useState(false);
+    const [introDone, setIntroDone] = useState(false);
 
     useEffect(() => {
         const unsubscribe = observeAuth((u) => {
@@ -82,7 +83,7 @@ export default function App() {
                     avatar: u.photoURL
                 });
             }
-            setLoading(false);
+            setAuthReady(true);
         });
         return () => unsubscribe();
     }, []);
@@ -90,8 +91,8 @@ export default function App() {
     const handleLogin = (u) => { setUser(u); };
     const handleLogout = () => { setUser(null); };
 
-    if (loading) {
-        return <LoadingScreen />;
+    if (!authReady || !introDone) {
+        return <LoadingScreen onComplete={() => setIntroDone(true)} />;
     }
 
     return (
