@@ -536,26 +536,10 @@ export default function Settings({ user, onLogout }) {
 
     /* ── Layout ─────────────────────────────────────────────── */
     return (
-        <div style={{
-            width: '100%', height: '100%',
-            background: 'var(--bg-base)',
-            display: 'flex',
-            color: 'var(--text-main)',
-            fontFamily: "'Inter', sans-serif",
-            borderRadius: '12px',
-            overflow: 'hidden'
-        }}>
+        <div className="settings-layout">
 
             {/* ── Sidebar ── */}
-            <div style={{
-                width: '260px',
-                flexShrink: 0,
-                background: 'rgba(8,8,14,0.8)',
-                borderRight: '1px solid rgba(6,182,212,0.12)',
-                display: 'flex',
-                flexDirection: 'column',
-                padding: '48px 16px 32px',
-            }}>
+            <div className="settings-sidebar">
                 {/* User mini-card */}
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '12px',
@@ -696,13 +680,8 @@ export default function Settings({ user, onLogout }) {
                 </div>
             </div>
 
-            {/* ── Main content ── */}
-            <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '52px 56px',
-                position: 'relative',
-            }}>
+            {/* ── Content Area ── */}
+            <div className="settings-content">
                 {/* Close button */}
                 <button
                     onClick={() => navigate('/lobby')}
