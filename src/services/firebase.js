@@ -29,10 +29,10 @@ export async function loadUserSettings(uid) {
 export async function saveUserSettings(uid, settings) {
     try {
         await setDoc(doc(db, 'userSettings', uid), settings, { merge: true });
-        return true;
+        return { ok: true };
     } catch (e) {
         console.error('Failed to save settings to Firestore:', e);
-        return false;
+        return { ok: false, error: e.message || 'Unknown error' };
     }
 }
 

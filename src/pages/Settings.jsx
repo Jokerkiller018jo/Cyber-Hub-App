@@ -151,16 +151,16 @@ export default function Settings({ user, onLogout }) {
         if (isGuest || !user?.uid) return;
         setCloudSyncing(true);
         setCloudMsg('');
-        const ok = await saveUserSettings(user.uid, {
+        const result = await saveUserSettings(user.uid, {
             accent: accentColor,
             glitch,
             glow,
             searchBarStyle: searchBarStyleVal,
             notifications: notifs,
         });
-        setCloudMsg(ok ? 'saved' : 'error');
+        setCloudMsg(result.ok ? 'saved' : (result.error || 'error'));
         setCloudSyncing(false);
-        setTimeout(() => setCloudMsg(''), 3000);
+        setTimeout(() => setCloudMsg(''), 6000);
     };
 
     // Notifications with localStorage persistence
@@ -518,7 +518,15 @@ export default function Settings({ user, onLogout }) {
                                         {cloudSyncing ? 'SYNCING...' : '☁ SAVE TO CLOUD'}
                                     </button>
                                     {cloudMsg === 'saved' && <span style={{ fontSize: '0.82rem', color: '#00ff88' }}>✓ Synced to your account</span>}
-                                    {cloudMsg === 'error' && <span style={{ fontSize: '0.82rem', color: '#ff4444' }}>✕ Sync failed</span>}
+                                    {cloudMsg && cloudMsg !== 'saved' && (
+                                        <span style={{ fontSize: '0.78rem', color: '#ff4444', maxWidth: '300px', lineHeight: '1.4' }}>
+                                            ✕ {cloudMsg.includes('permission') || cloudMsg.includes('PERMISSION')
+                                                ? 'Firestore not set up. Enable it in Firebase Console → Firestore Database.'
+                                                : cloudMsg.includes('not-found') || cloudMsg.includes('NOT_FOUND')
+                                                ? 'Firestore database not created yet. Go to Firebase Console → Firestore Database → Create.'
+                                                : cloudMsg}
+                                        </span>
+                                    )}
                                 </>
                             )}
                         </div>
