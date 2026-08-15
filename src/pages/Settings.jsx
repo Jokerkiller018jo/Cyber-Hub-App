@@ -467,12 +467,13 @@ export default function Settings({ user, onLogout }) {
     /* ── Layout ─────────────────────────────────────────────── */
     return (
         <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            width: '100%', height: '100%',
             background: 'var(--bg-base)',
             display: 'flex',
-            zIndex: 9999,
             color: 'var(--text-main)',
-            fontFamily: "'Inter', sans-serif"
+            fontFamily: "'Inter', sans-serif",
+            borderRadius: '12px',
+            overflow: 'hidden'
         }}>
 
             {/* ── Sidebar ── */}
