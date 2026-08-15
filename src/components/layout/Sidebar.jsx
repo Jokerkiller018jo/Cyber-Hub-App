@@ -31,8 +31,6 @@ export default function Sidebar({ user, onLogout }) {
 
     const navItems = [
         { path: '/lobby',       name: 'LOBBY',      icon: 'home' },
-        { path: '/AIChat',      name: 'AI Chat',    icon: 'robot' },
-        { path: '/chat',        name: 'MESSAGES',   icon: 'message' },
         { path: '/market',      name: 'MARKET',     icon: 'chart' },
         { path: '/currencies',  name: 'CURRENCIES', icon: 'bank' },
         { path: '/symbols',     name: 'VAULT',      icon: 'database' },
