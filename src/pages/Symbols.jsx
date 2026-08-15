@@ -82,7 +82,7 @@ const UNICODE_RANGES = [
     { id: 'cjk_ext_b',    label: 'CJK Ext-B (70k+)',    start: 0x20000, end: 0x2A6DF, group: 'High Planes', icon: '𠀀' },
     // Design & Utilities
     { id: 'colors_db',    label: 'Color Center',        start: 0, end: 0, group: 'Design & Utilities', icon: '🎨', isCustom: true },
-    // Curated & Standardized Emojis (9 Distinct Categories)
+    // Curated & Standardized Emojis
     ...EMOJI_CATEGORIES
 ];
 
@@ -181,7 +181,8 @@ export default function Symbols() {
                             char: item.char,
                             code: item.code,
                             name: item.name,
-                            cat: r.id
+                            cat: r.id,
+                            subCatLabel: item.subCatLabel
                         });
                     }
                 }
@@ -223,7 +224,8 @@ export default function Symbols() {
                     const char = (entry && typeof entry === 'object') ? entry.char : (entry || '?');
                     const code = (entry && typeof entry === 'object') ? entry.code : `EMOJI-${i}`;
                     const name = (entry && typeof entry === 'object') ? entry.name : `${r.label} Item ${i+1}`;
-                    items.push({ cp: code, char, code, name, cat: r.id });
+                    const subCatLabel = (entry && typeof entry === 'object') ? entry.subCatLabel : null;
+                    items.push({ cp: code, char, code, name, cat: r.id, subCatLabel });
                 }
 
             } else {
@@ -535,16 +537,48 @@ export default function Symbols() {
                         >
                             ← ALL BLOCKS
                         </button>
-                        <div>
-                            <h2 style={{ color: rangeColors.accent, margin: 0, fontSize: '1.4rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Icon name={BLOCK_ICONS[activeRange?.id] || GROUP_ICONS[activeRange?.group] || 'symbol'} size={24} />
-                                {activeRange?.label?.toUpperCase()}
-                            </h2>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '4px 0 0 0' }}>
-                                <span style={{ color: rangeColors.accent, fontWeight: 900 }}>{formatNumber(activeTotal)}</span>
-                                &nbsp;items {activeRange?.isCustom ? '' : `· U+${toHex(activeRange?.start)} → U+${toHex(activeRange?.end)}`}
-                                &nbsp;·&nbsp;<span style={{ color: 'var(--text-muted)' }}>{activeRange?.group}</span>
-                            </p>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                            <div>
+                                <h2 style={{ color: rangeColors.accent, margin: 0, fontSize: '1.4rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Icon name={BLOCK_ICONS[activeRange?.id] || GROUP_ICONS[activeRange?.group] || 'symbol'} size={24} />
+                                    {activeRange?.label?.toUpperCase()}
+                                </h2>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '4px 0 0 0' }}>
+                                    <span style={{ color: rangeColors.accent, fontWeight: 900 }}>{formatNumber(activeTotal)}</span>
+                                    &nbsp;items {activeRange?.isCustom ? '' : `· U+${toHex(activeRange?.start)} → U+${toHex(activeRange?.end)}`}
+                                    &nbsp;·&nbsp;<span style={{ color: 'var(--text-muted)' }}>{activeRange?.group}</span>
+                                </p>
+                            </div>
+
+                            {/* Pagination Controls Beside Title */}
+                            {!searchResults && totalPages > 1 && (
+                                <div style={{ 
+                                    display: 'flex', alignItems: 'center', gap: '8px', 
+                                    background: rangeColors.bg, padding: '4px 12px', 
+                                    borderRadius: '20px', border: `1px solid ${rangeColors.border}` 
+                                }}>
+                                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ 
+                                        background: 'transparent', border: 'none', color: rangeColors.accent, 
+                                        cursor: page === 0 ? 'default' : 'pointer', opacity: page === 0 ? 0.35 : 1,
+                                        fontSize: '1.1rem', display: 'flex', alignItems: 'center', padding: '0 4px',
+                                        transition: 'opacity 0.2s'
+                                    }}>
+                                        <Icon name="chevron-left" size={18} />
+                                    </button>
+                                    <span style={{ color: 'var(--text-main)', fontSize: '0.8rem', fontWeight: 700, minWidth: '45px', textAlign: 'center' }}>
+                                        {page + 1} <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>/ {totalPages}</span>
+                                    </span>
+                                    <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ 
+                                        background: 'transparent', border: 'none', color: rangeColors.accent, 
+                                        cursor: page >= totalPages - 1 ? 'default' : 'pointer', opacity: page >= totalPages - 1 ? 0.35 : 1,
+                                        fontSize: '1.1rem', display: 'flex', alignItems: 'center', padding: '0 4px',
+                                        transition: 'opacity 0.2s'
+                                    }}>
+                                        <Icon name="chevron-right" size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -604,9 +638,42 @@ export default function Symbols() {
                         )}
                     </div>
                 )}
+
+                {/* Sub-Navigation Tabs for related categories in the same group */}
+                {activeRange && (
+                    <div style={{
+                        display: 'flex', gap: '8px', marginTop: '16px', overflowX: 'auto',
+                        paddingBottom: '8px', scrollbarWidth: 'thin'
+                    }}>
+                        {UNICODE_RANGES.filter(r => r.group === activeRange.group).map(r => (
+                            <button
+                                key={r.id}
+                                onClick={() => handleCategorySelect(r.id)}
+                                style={{
+                                    whiteSpace: 'nowrap',
+                                    padding: '6px 14px',
+                                    borderRadius: '16px',
+                                    border: `1px solid ${r.id === activeRange.id ? rangeColors.accent : 'var(--border-color)'}`,
+                                    background: r.id === activeRange.id ? rangeColors.bg : 'rgba(0,0,0,0.3)',
+                                    color: r.id === activeRange.id ? 'var(--text-main)' : 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    fontSize: '0.75rem',
+                                    fontWeight: r.id === activeRange.id ? 700 : 500,
+                                    transition: 'all 0.2s',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <Icon name={BLOCK_ICONS[r.id] || GROUP_ICONS[r.group] || 'symbol'} size={14} />
+                                {r.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            {/* Status bar + pagination */}
+            {/* Status bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexShrink: 0, flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
                     {searchResults
@@ -616,13 +683,7 @@ export default function Symbols() {
                 </div>
                 {!searchResults && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={() => setPage(0)} disabled={page === 0} style={{ ...navBtn, opacity: page === 0 ? 0.35 : 1 }}>«</button>
-                        <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={{ ...navBtn, opacity: page === 0 ? 0.35 : 1 }}>‹</button>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', minWidth: '80px', textAlign: 'center' }}>
-                            {formatNumber(page + 1)} / {formatNumber(totalPages)}
-                        </span>
-                        <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} style={{ ...navBtn, opacity: page >= totalPages - 1 ? 0.35 : 1 }}>›</button>
-                        <button onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1} style={{ ...navBtn, opacity: page >= totalPages - 1 ? 0.35 : 1 }}>»</button>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>Go to page:</span>
                         <input
                             type="number" min={1} max={totalPages} placeholder="Page #"
                             onKeyDown={e => {
@@ -643,18 +704,62 @@ export default function Symbols() {
 
             {/* Symbol Grid */}
             <div ref={gridRef} style={{
-                flex: 1, overflowY: 'auto', display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                gap: '10px', alignContent: 'start', paddingBottom: '20px'
+                flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '20px'
             }}>
-                {displaySymbols.map((sym, idx) => (
-                    <SymbolCard key={`${sym.cp}-${idx}`} sym={sym} copied={copied} copyType={copyType} copy={copy} accentColor={rangeColors.accent} />
-                ))}
-                {displaySymbols.length === 0 && (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--text-muted)', padding: '60px 20px', fontSize: '0.85rem' }}>
-                        No symbols found for "<span style={{ color: 'var(--text-main)' }}>{search}</span>"
-                    </div>
-                )}
+                {(() => {
+                    if (displaySymbols.length === 0) {
+                        return (
+                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 20px', fontSize: '0.85rem' }}>
+                                No symbols found for "<span style={{ color: 'var(--text-main)' }}>{search}</span>"
+                            </div>
+                        );
+                    }
+
+                    // Group by subCatLabel (if custom) or category label
+                    const groupedSymbols = {};
+                    displaySymbols.forEach(sym => {
+                        let groupKey;
+                        if (searchResults) {
+                            const range = UNICODE_RANGES.find(r => r.id === sym.cat);
+                            groupKey = sym.subCatLabel || (range ? range.label : 'Symbols');
+                        } else {
+                            groupKey = sym.subCatLabel || 'Default';
+                        }
+                        
+                        if (!groupedSymbols[groupKey]) groupedSymbols[groupKey] = [];
+                        groupedSymbols[groupKey].push(sym);
+                    });
+
+                    return Object.entries(groupedSymbols).map(([groupKey, symbols]) => {
+                        const showSeparator = groupKey !== 'Default';
+                        return (
+                            <div key={groupKey}>
+                                {showSeparator && (
+                                    <div style={{ 
+                                        padding: '10px 0', 
+                                        marginBottom: '15px', 
+                                        borderBottom: `1px solid ${rangeColors.accent}55`, 
+                                        display: 'flex', alignItems: 'center', gap: '10px' 
+                                    }}>
+                                        <div style={{ width: '8px', height: '8px', background: rangeColors.accent, borderRadius: '50%', boxShadow: `0 0 8px ${rangeColors.accent}` }}></div>
+                                        <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.1rem', letterSpacing: '1px' }}>
+                                            {groupKey.toUpperCase()}
+                                        </h3>
+                                    </div>
+                                )}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                    gap: '10px'
+                                }}>
+                                    {symbols.map((sym, idx) => (
+                                        <SymbolCard key={`${sym.cp}-${idx}`} sym={sym} copied={copied} copyType={copyType} copy={copy} accentColor={rangeColors.accent} />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    });
+                })()}
             </div>
         </div>
     );
