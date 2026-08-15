@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import Icon from '../components/ui/Icon';
+import SearchBar from '../components/ui/SearchBar';
 
 // ─── Curated Single Emojis ───────────────────────────────────────────────────
 const CURATED_EMOJIS = [
@@ -171,20 +173,26 @@ export default function EmojiDatabase() {
             }}>
                 <div>
                     <h2 style={{ color: 'var(--accent-primary)', margin: 0, fontSize: '1.4rem' }}>EMOJI DECRYPTION SYSTEM</h2>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '5px 0 0 0' }}>
-                        {activeCat === 'millions'
-                            ? (isStreaming ? `⟳ Querying massive local vector file... ${displayItems.length} found` : `✓ Found ${displayItems.length} combinations`)
-                            : `Linked to Curated Vector Database: ${displayItems.length} active.`}
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '5px 0 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {activeCat === 'millions' ? (
+                            isStreaming ? (
+                                <><span style={{ color: 'var(--accent-primary)', display:'flex', alignItems:'center' }}><Icon name="refresh" size={14} /></span> Querying massive local vector file… {displayItems.length} found</>
+                            ) : (
+                                <><span style={{ color: 'var(--accent-success)', display:'flex', alignItems:'center' }}><Icon name="check-circle" size={14} /></span> Found {displayItems.length} combinations</>
+                            )
+                        ) : (
+                            <><span style={{ color: 'var(--accent-primary)', display:'flex', alignItems:'center' }}><Icon name="database" size={14} /></span> Curated Vector Database — {displayItems.length} active</>
+                        )}
                     </p>
                 </div>
 
-                <input
-                    type="text"
-                    className="input-field"
-                    placeholder="Search emoji or hex..."
+                <SearchBar
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    onClear={() => setSearch('')}
+                    placeholder="Search emoji or hex…"
                     style={{ width: '280px' }}
+                    id="emoji-search"
                 />
             </div>
 
@@ -201,7 +209,7 @@ export default function EmojiDatabase() {
                         key={cat.id}
                         onClick={() => setActiveCat(cat.id)}
                         style={{
-                            background: activeCat === cat.id ? 'rgba(176,0,255,0.15)' : 'rgba(0,0,0,0.3)',
+                            background: activeCat === cat.id ? 'rgba(6,182,212,0.15)' : 'rgba(0,0,0,0.3)',
                             border: `1px solid ${activeCat === cat.id ? 'var(--accent-primary)' : 'var(--border-color)'}`,
                             color: activeCat === cat.id ? 'var(--text-main)' : 'var(--text-muted)',
                             padding: '8px 16px',
@@ -210,7 +218,7 @@ export default function EmojiDatabase() {
                             fontSize: '0.8rem',
                             fontWeight: 'bold',
                             whiteSpace: 'nowrap',
-                            boxShadow: activeCat === cat.id && cat.id === 'millions' ? '0 0 15px rgba(176,0,255,0.4)' : 'none',
+                            boxShadow: activeCat === cat.id && cat.id === 'millions' ? '0 0 15px rgba(6,182,212,0.3)' : 'none',
                             transition: 'all var(--transition-fast)'
                         }}
                     >

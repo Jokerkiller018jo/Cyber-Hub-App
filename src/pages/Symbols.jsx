@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { EMOJI_CATEGORIES } from './EmojiCategories';
 import Colors from './Colors';
+import Icon from '../components/ui/Icon';
+import SearchBar from '../components/ui/SearchBar';
 
 // ─── Unicode ranges with category + group info ────────────────────────────────
 const UNICODE_RANGES = [
@@ -101,6 +103,29 @@ const GROUP_COLORS = {
 
 const TOTAL = UNICODE_RANGES.reduce((acc, r) => acc + (r.end - r.start + 1), 0);
 const PAGE_SIZE = 200;
+
+// Map each group to the SVG icon name shown in block cards
+const GROUP_ICONS = {
+    'Basic':                  'text',
+    'Scripts':                'text',
+    'Symbols & Punctuation':  'type',
+    'CJK':                   'grid',
+    'High Planes':            'globe',
+    'Design & Utilities':    'wrench',
+    'Emojis':                'face',
+    'Favorites':             'star',
+};
+// Per-block icon overrides (use specific SVG icons where meaningful)
+const BLOCK_ICONS = {
+    'ascii':       'code',
+    'music':       'palette',
+    'math_alpha':  'symbol',
+    'colors_db':   'palette',
+    'arrows':      'trending-up',
+    'currency':    'dollar',
+    'braille':     'grid',
+    'runic':       'text',
+};
 
 function toHex(cp) { return cp.toString(16).toUpperCase().padStart(4, '0'); }
 function renderChar(cp) { try { return String.fromCodePoint(cp); } catch { return '?'; } }
@@ -288,28 +313,27 @@ export default function Symbols() {
                         {/* Global search */}
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: '320px' }}>
                             <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    placeholder="Jump to U+…"
+                                <SearchBar
                                     value={jumpInput}
                                     onChange={e => setJumpInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleJump()}
-                                    style={{ width: '120px', fontSize: '0.78rem' }}
+                                    onClear={() => setJumpInput('')}
+                                    placeholder="Jump to U+…"
+                                    style={{ width: '130px' }}
+                                    id="symbols-jump"
                                 />
                                 <button onClick={handleJump} style={{
-                                    background: 'rgba(176,0,255,0.15)', border: '1px solid var(--accent-primary)',
+                                    background: 'rgba(6,182,212,0.15)', border: '1px solid var(--accent-primary)',
                                     color: 'var(--text-main)', padding: '7px 12px', borderRadius: 'var(--radius-small)',
                                     cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700
                                 }}>GO</button>
                             </div>
-                            <input
-                                type="text"
-                                className="input-field"
-                                placeholder="Search categories, hex, or char…"
+                            <SearchBar
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
+                                onClear={() => setSearch('')}
+                                placeholder="Search categories, hex, or char…"
                                 style={{ width: '100%', maxWidth: '350px' }}
+                                id="symbols-search"
                             />
                         </div>
                     </div>
@@ -423,16 +447,15 @@ export default function Symbols() {
                                                 {favorites.includes(r.id) ? '★' : '☆'}
                                             </div>
 
-                                            {/* Icon */}
+                                            {/* Icon — SVG per group/block */}
                                             <div style={{
                                                 width: '38px', height: '38px', flexShrink: 0,
                                                 borderRadius: '8px', background: colors.bg.replace('0.08', '0.18'),
                                                 border: `1px solid ${colors.border}`,
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: '1.3rem', lineHeight: 1, color: colors.accent,
-                                                fontFamily: 'monospace',
+                                                color: colors.accent,
                                             }}>
-                                                {r.icon}
+                                                <Icon name={BLOCK_ICONS[r.id] || GROUP_ICONS[r.group] || 'symbol'} size={20} />
                                             </div>
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
