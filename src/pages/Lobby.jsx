@@ -15,7 +15,6 @@ export default function Lobby() {
         { label: 'Market',     path: '/market',     icon: 'trending-up', color: '#06b6d4' },
         { label: 'Currencies', path: '/currencies', icon: 'dollar',       color: '#10b981' },
         { label: 'Vault',      path: '/symbols',    icon: 'database',     color: '#f59e0b' },
-        { label: 'Hex Editor', path: '/hex-editor', icon: 'code',         color: '#818cf8' },
         { label: 'Settings',   path: '/settings',   icon: 'settings',     color: '#94a3b8' },
     ];
 
