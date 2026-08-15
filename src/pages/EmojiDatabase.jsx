@@ -1,43 +1,14 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
+import { CURATED_EMOJIS, CATEGORIES_META } from './EmojiCategories';
 
 // ─── Curated Single Emojis ───────────────────────────────────────────────────
-const CURATED_EMOJIS = [
-    { char: '😀', name: 'Grinning Face', cat: 'smileys' },
-    { char: '😂', name: 'Face with Tears of Joy', cat: 'smileys' },
-    { char: '😎', name: 'Smiling Face with Sunglasses', cat: 'smileys' },
-    { char: '👽', name: 'Alien', cat: 'smileys' },
-    { char: '👾', name: 'Alien Monster', cat: 'smileys' },
-    { char: '🤖', name: 'Robot', cat: 'smileys' },
-    { char: '🔥', name: 'Fire', cat: 'smileys' },
-    { char: '✨', name: 'Sparkles', cat: 'smileys' },
-    { char: '🐱', name: 'Cat Face', cat: 'animals' },
-    { char: '🐶', name: 'Dog Face', cat: 'animals' },
-    { char: '🦊', name: 'Fox', cat: 'animals' },
-    { char: '🐉', name: 'Dragon', cat: 'animals' },
-    { char: '🍎', name: 'Red Apple', cat: 'food' },
-    { char: '🍕', name: 'Pizza', cat: 'food' },
-    { char: '🍔', name: 'Hamburger', cat: 'food' },
-    { char: '☕', name: 'Hot Beverage', cat: 'food' },
-    { char: '💻', name: 'Laptop', cat: 'objects' },
-    { char: '📱', name: 'Mobile Phone', cat: 'objects' },
-    { char: '🔮', name: 'Crystal Ball', cat: 'objects' },
-    { char: '🎮', name: 'Video Game', cat: 'symbols' },
-    { char: '⚡', name: 'High Voltage', cat: 'symbols' },
-    { char: '☣', name: 'Biohazard', cat: 'symbols' },
-    { char: '🇺🇸', name: 'United States', cat: 'flags' },
-    { char: '☠️', name: 'Pirate Flag', cat: 'flags' }
-];
+// Now imported from EmojiCategories.js which contains 1,800+ standard emojis.
 
 const CATEGORIES = [
     { id: 'all', label: 'Curated' },
-    { id: 'smileys', label: 'Smileys' },
-    { id: 'animals', label: 'Fauna' },
-    { id: 'food', label: 'Nutrients' },
-    { id: 'objects', label: 'Hardware' },
-    { id: 'symbols', label: 'Identifiers' },
-    { id: 'flags', label: 'Domains' },
+    ...CATEGORIES_META,
     { id: 'millions', label: '2.9M+ Combinations' } // The huge local list
 ];
 

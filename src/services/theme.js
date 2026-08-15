@@ -43,7 +43,14 @@ export function applyTheme(theme) {
     root.style.setProperty('--accent-primary', colorDef.hex);
     root.style.setProperty('--accent-hover',   colorDef.hover);
     root.style.setProperty('--accent-dark',    colorDef.dark);
-    root.style.setProperty('--border-color',   hexToRgba(colorDef.hex, 0.25));
+    
+    // Extract RGB values for alpha blending usage
+    const r = parseInt(colorDef.hex.slice(1, 3), 16);
+    const g = parseInt(colorDef.hex.slice(3, 5), 16);
+    const b = parseInt(colorDef.hex.slice(5, 7), 16);
+    root.style.setProperty('--accent-rgb', `${r}, ${g}, ${b}`);
+
+    root.style.setProperty('--border-color',   `rgba(${r}, ${g}, ${b}, 0.25)`);
 
     // Glitch animation toggle
     if (theme.glitch) {

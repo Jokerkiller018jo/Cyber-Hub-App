@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { EMOJI_CATEGORIES } from './EmojiCategories';
 import Colors from './Colors';
 import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
@@ -86,7 +85,6 @@ const UNICODE_RANGES = [
     { id: 'cjk_ext_b',    label: 'CJK Ext-B (70k+)',    start: 0x20000, end: 0x2A6DF, group: 'High Planes', icon: '𠀀' },
     // Design & Utilities
     { id: 'colors_db',    label: 'Color Center',        start: 0, end: 0, group: 'Design & Utilities', icon: '🎨', isCustom: true },
-    ...EMOJI_CATEGORIES.map(cat => ({ ...cat, isCustom: true, start: 0, end: 0 }))
 ];
 
 // Group color accents
