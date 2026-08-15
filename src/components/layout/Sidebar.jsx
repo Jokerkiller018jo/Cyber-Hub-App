@@ -129,9 +129,25 @@ export default function Sidebar({ user, onLogout }) {
                     textAlign: 'center',
                     marginBottom: '30px',
                     color: 'var(--text-main)',
-                    letterSpacing: '1px'
+                    letterSpacing: '1px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
                 }}>
                     NEXUS CORE
+                    <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        color: 'var(--accent-primary)',
+                        background: 'rgba(6,182,212,0.1)',
+                        border: '1px solid rgba(6,182,212,0.3)',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        letterSpacing: '0.05em'
+                    }}>
+                        v0.1.8
+                    </span>
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
