@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import SearchBar from '../components/ui/SearchBar';
 
 // ─── Curated palettes (shown when no search is active) ────────────────────────
 const PALETTES = [
@@ -312,13 +313,13 @@ export default function Colors() {
                         {isStreaming && (
                             <div style={{ width:'8px', height:'8px', borderRadius:'50%', background:'var(--accent-primary)', animation:'pulse 1s infinite' }} />
                         )}
-                        <input
-                            type="text"
-                            className="input-field"
-                            placeholder="Type 'black', 'red', 'navy', '#FF00AA'…"
+                        <SearchBar
+                            id="colors-search"
                             value={search}
                             onChange={e => { setSearch(e.target.value); setSelected(null); }}
-                            style={{ width:'290px' }}
+                            onClear={() => { setSearch(''); setSelected(null); }}
+                            placeholder="Type 'black', 'red', 'navy', '#FF00AA'…"
+                            style={{ width: '290px' }}
                         />
                     </div>
                 )}
@@ -328,12 +329,13 @@ export default function Colors() {
             <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'5px' }}>
                 {GROUPS.map(g => (
                     <button key={g} onClick={() => { setGroup(g); setSelected(null); setSearch(''); }} style={{
-                        background: group===g ? 'rgba(176,0,255,0.15)' : 'rgba(0,0,0,0.3)',
+                        background: group===g ? 'rgba(6,182,212,0.15)' : 'rgba(0,0,0,0.3)',
                         border: `1px solid ${group===g ? 'var(--accent-primary)' : 'var(--border-color)'}`,
                         color: group===g ? 'var(--text-main)' : 'var(--text-muted)',
                         padding:'7px 16px', borderRadius:'var(--radius-small)', cursor:'pointer',
                         fontSize:'0.8rem', fontWeight:600, whiteSpace:'nowrap',
-                        boxShadow: group===g && g==='16M+ Generator' ? '0 0 15px rgba(176,0,255,0.4)' : 'none',
+                        boxShadow: group===g && g==='16M+ Generator' ? '0 0 15px rgba(6,182,212,0.3)' : 'none',
+                        transition: 'all 0.15s ease',
                     }}>{g}</button>
                 ))}
             </div>
@@ -341,46 +343,61 @@ export default function Colors() {
             {/* ── 16M+ GENERATOR ── */}
             {group === '16M+ Generator' && (
                 <div style={{ display:'flex', flexDirection:'column', gap:'20px', overflowY:'auto' }}>
-                    <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'40px', background:'rgba(0,0,0,0.4)' }}>
-                        <div style={{ width:'200px', height:'200px', borderRadius:'50%', background:generatedHex, border:'4px solid rgba(255,255,255,0.1)', boxShadow:`0 0 80px ${generatedHex}80`, marginBottom:'25px', transition:'background 0.08s' }} />
-                        <div style={{ display:'flex', gap:'12px', flexWrap:'wrap', justifyContent:'center' }}>
+
+                    {/* Top: color preview + format copy buttons */}
+                    <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'32px', background:'rgba(0,0,0,0.4)' }}>
+                        <div style={{ width:'160px', height:'160px', borderRadius:'50%', background:generatedHex, border:'4px solid rgba(255,255,255,0.1)', boxShadow:`0 0 80px ${generatedHex}80`, marginBottom:'20px', transition:'background 0.05s' }} />
+                        <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', justifyContent:'center' }}>
                             {[
                                 { label:'HEX', value:generatedHex },
                                 { label:'RGB', value:`rgb(${genRGB.r}, ${genRGB.g}, ${genRGB.b})` },
                                 { label:'HSL', value:`hsl(${generatedHSL.h}, ${generatedHSL.s}%, ${generatedHSL.l}%)` },
                             ].map(fmt => (
-                                <button key={fmt.label} onClick={() => copy(fmt.value,'gen-'+fmt.label)} style={{ background:'rgba(0,0,0,0.5)', border:'1px solid var(--border-color)', color:'var(--text-main)', padding:'10px 20px', borderRadius:'var(--radius-medium)', cursor:'pointer', fontSize:'0.9rem', fontFamily:'monospace', fontWeight:600, transition:'all 0.15s' }}
-                                    onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-primary)'; e.currentTarget.style.background='rgba(176,0,255,0.1)'; }}
+                                <button key={fmt.label} onClick={() => copy(fmt.value,'gen-'+fmt.label)} style={{ background:'rgba(0,0,0,0.5)', border:'1px solid var(--border-color)', color:'var(--text-main)', padding:'10px 20px', borderRadius:'var(--radius-medium)', cursor:'pointer', fontSize:'0.88rem', fontFamily:'monospace', fontWeight:600, transition:'all 0.15s' }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-primary)'; e.currentTarget.style.background='rgba(6,182,212,0.1)'; }}
                                     onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-color)'; e.currentTarget.style.background='rgba(0,0,0,0.5)'; }}>
                                     {copied==='gen-'+fmt.label ? '✓ COPIED!' : `${fmt.label}: ${fmt.value}`}
                                 </button>
                             ))}
                         </div>
                     </div>
+
+                    {/* Middle row: Canvas Color Wheel + RGB/HSL sliders */}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'20px' }}>
-                        <div className="card">
-                            <h3 style={{ margin:'0 0 18px 0', color:'var(--text-main)', fontSize:'0.9rem', letterSpacing:'0.1em' }}>RGB MIXER</h3>
-                            {[{k:'r',label:'Red',color:'#FF4444'},{k:'g',label:'Green',color:'#44FF88'},{k:'b',label:'Blue',color:'#4488FF'}].map(({k,label,color}) => (
-                                <div key={k} style={{ marginBottom:'16px' }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
-                                        <span style={{ color, fontWeight:700, fontSize:'0.85rem' }}>{label}</span>
-                                        <span style={{ fontFamily:'monospace', color:'var(--text-muted)', fontSize:'0.85rem' }}>{genRGB[k]}</span>
+
+                        {/* ── Canvas Wheel ── */}
+                        <ColorWheelPicker genRGB={genRGB} setGenRGB={setGenRGB} hslToHex={hslToHex} hexToRGB={hexToRGB} hexToHSLObj={hexToHSLObj} generatedHex={generatedHex} generatedHSL={generatedHSL} />
+
+                        {/* ── Right column: RGB + HSL ── */}
+                        <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+                            <div className="card">
+                                <h3 style={{ margin:'0 0 16px 0', color:'var(--text-main)', fontSize:'0.82rem', letterSpacing:'0.12em' }}>RGB MIXER</h3>
+                                {[{k:'r',label:'Red',color:'#FF5555'},{k:'g',label:'Green',color:'#44FF88'},{k:'b',label:'Blue',color:'#5599FF'}].map(({k,label,color}) => (
+                                    <div key={k} style={{ marginBottom:'14px' }}>
+                                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
+                                            <span style={{ color, fontWeight:700, fontSize:'0.82rem' }}>{label}</span>
+                                            <input
+                                                type="number" min="0" max="255" value={genRGB[k]}
+                                                onChange={e => handleRGBChange(k, e.target.value)}
+                                                style={{ width:'52px', background:'rgba(0,0,0,0.4)', border:'1px solid var(--border-color)', borderRadius:'4px', color:'var(--text-main)', textAlign:'center', fontSize:'0.82rem', outline:'none', padding:'2px 4px' }}
+                                            />
+                                        </div>
+                                        <input type="range" min="0" max="255" value={genRGB[k]} onChange={e => handleRGBChange(k,e.target.value)} style={{ width:'100%', cursor:'pointer', accentColor:color }} />
                                     </div>
-                                    <input type="range" min="0" max="255" value={genRGB[k]} onChange={e => handleRGBChange(k,e.target.value)} style={{ width:'100%', cursor:'pointer', accentColor:color }} />
-                                </div>
-                            ))}
-                        </div>
-                        <div className="card">
-                            <h3 style={{ margin:'0 0 18px 0', color:'var(--text-main)', fontSize:'0.9rem', letterSpacing:'0.1em' }}>HSL ADJUSTER</h3>
-                            {[{k:'h',label:'Hue',max:360,val:generatedHSL.h,unit:'°',color:'#B000FF'},{k:'s',label:'Saturation',max:100,val:generatedHSL.s,unit:'%',color:'#00D4FF'},{k:'l',label:'Lightness',max:100,val:generatedHSL.l,unit:'%',color:'#FFE600'}].map(({k,label,max,val,unit,color}) => (
-                                <div key={k} style={{ marginBottom:'16px' }}>
-                                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'6px' }}>
-                                        <span style={{ color, fontWeight:700, fontSize:'0.85rem' }}>{label}</span>
-                                        <span style={{ fontFamily:'monospace', color:'var(--text-muted)', fontSize:'0.85rem' }}>{val}{unit}</span>
+                                ))}
+                            </div>
+                            <div className="card">
+                                <h3 style={{ margin:'0 0 16px 0', color:'var(--text-main)', fontSize:'0.82rem', letterSpacing:'0.12em' }}>HSL ADJUSTER</h3>
+                                {[{k:'h',label:'Hue',max:360,val:generatedHSL.h,unit:'°',color:'#a78bfa'},{k:'s',label:'Saturation',max:100,val:generatedHSL.s,unit:'%',color:'#06b6d4'},{k:'l',label:'Lightness',max:100,val:generatedHSL.l,unit:'%',color:'#fbbf24'}].map(({k,label,max,val,unit,color}) => (
+                                    <div key={k} style={{ marginBottom:'14px' }}>
+                                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'5px' }}>
+                                            <span style={{ color, fontWeight:700, fontSize:'0.82rem' }}>{label}</span>
+                                            <span style={{ fontFamily:'monospace', color:'var(--text-muted)', fontSize:'0.82rem' }}>{val}{unit}</span>
+                                        </div>
+                                        <input type="range" min="0" max={max} value={val} onChange={e => { const nH=k==='h'?+e.target.value:generatedHSL.h; const nS=k==='s'?+e.target.value:generatedHSL.s; const nL=k==='l'?+e.target.value:generatedHSL.l; handleHSLChange(nH,nS,nL); }} style={{ width:'100%', cursor:'pointer', accentColor:color }} />
                                     </div>
-                                    <input type="range" min="0" max={max} value={val} onChange={e => { const nH=k==='h'?+e.target.value:generatedHSL.h; const nS=k==='s'?+e.target.value:generatedHSL.s; const nL=k==='l'?+e.target.value:generatedHSL.l; handleHSLChange(nH,nS,nL); }} style={{ width:'100%', cursor:'pointer', accentColor:color }} />
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -397,7 +414,7 @@ export default function Colors() {
                                 <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
                                     {[{label:'HEX',value:selected.hex},{label:'RGB',value:`rgb(${selected.rgb.join(', ')})`},{label:'HSL',value:hexToHSLStr(selected.hex)}].map(fmt => (
                                         <button key={fmt.label} onClick={() => copy(fmt.value,'preview-'+fmt.label)} style={{ background:'rgba(0,0,0,0.3)', border:'1px solid var(--border-color)', color:'var(--text-main)', padding:'6px 14px', borderRadius:'var(--radius-small)', cursor:'pointer', fontSize:'0.78rem', fontFamily:'monospace', fontWeight:600, transition:'all 0.15s' }}
-                                            onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-primary)'; e.currentTarget.style.background='rgba(176,0,255,0.1)'; }}
+                                            onMouseEnter={e => { e.currentTarget.style.borderColor='var(--accent-primary)'; e.currentTarget.style.background='rgba(6,182,212,0.1)'; }}
                                             onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border-color)'; e.currentTarget.style.background='rgba(0,0,0,0.3)'; }}>
                                             {copied==='preview-'+fmt.label ? '✓ Copied!' : `${fmt.label}: ${fmt.value}`}
                                         </button>
@@ -459,7 +476,7 @@ export default function Colors() {
                                                     <button key={fmt}
                                                         onClick={e => { e.stopPropagation(); copy(val,`${color.hex}-${fmt}`); }}
                                                         style={{ flex:1, background:'transparent', border:'none', borderRight: fmt==='HEX'?'1px solid rgba(255,255,255,0.05)':'none', color:'var(--text-muted)', fontSize:'0.68rem', padding:'6px', cursor:'pointer', fontWeight:700, transition:'all 0.12s' }}
-                                                        onMouseEnter={e => { e.currentTarget.style.background='rgba(176,0,255,0.1)'; e.currentTarget.style.color='var(--text-main)'; }}
+                                                        onMouseEnter={e => { e.currentTarget.style.background='rgba(6,182,212,0.1)'; e.currentTarget.style.color='var(--text-main)'; }}
                                                         onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--text-muted)'; }}>
                                                         {copied===`${color.hex}-${fmt}` ? '✓' : fmt}
                                                     </button>
@@ -481,6 +498,163 @@ export default function Colors() {
                     </div>
                 </>
             )}
+        </div>
+    );
+}
+
+/* ── Canvas-based 2D Color Wheel + Hue strip ───────────────────────────────── */
+function ColorWheelPicker({ genRGB, setGenRGB, hslToHex, hexToRGB, hexToHSLObj, generatedHex, generatedHSL }) {
+    const wheelRef  = useRef(null);
+    const stripRef  = useRef(null);
+    const dragging  = useRef(null);
+    const SIZE = 240;
+    const STRIP_H = 20;
+
+    /* Draw the SL square for current Hue */
+    useEffect(() => {
+        const canvas = wheelRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        // White → current hue gradient (left–right)
+        const hueHex = hslToHex(generatedHSL.h, 100, 50);
+        const gH = ctx.createLinearGradient(0, 0, SIZE, 0);
+        gH.addColorStop(0, '#fff');
+        gH.addColorStop(1, hueHex);
+        ctx.fillStyle = gH;
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        // Transparent → black gradient (top–bottom)
+        const gV = ctx.createLinearGradient(0, 0, 0, SIZE);
+        gV.addColorStop(0, 'rgba(0,0,0,0)');
+        gV.addColorStop(1, 'rgba(0,0,0,1)');
+        ctx.fillStyle = gV;
+        ctx.fillRect(0, 0, SIZE, SIZE);
+    }, [generatedHSL.h]);
+
+    /* Draw the rainbow hue strip */
+    useEffect(() => {
+        const canvas = stripRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, SIZE, 0);
+        for (let i = 0; i <= 360; i += 30)
+            g.addColorStop(i / 360, `hsl(${i},100%,50%)`);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, SIZE, STRIP_H);
+    }, []);
+
+    /* Pointer on the SL square */
+    const slX = (generatedHSL.s / 100) * SIZE;
+    const slY = (1 - generatedHSL.l / 100) * SIZE;  // approximate
+
+    function pickFromWheel(e) {
+        const canvas = wheelRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const cx = Math.max(0, Math.min(SIZE, (e.clientX - rect.left) * (SIZE / rect.width)));
+        const cy = Math.max(0, Math.min(SIZE, (e.clientY - rect.top)  * (SIZE / rect.height)));
+        const s  = Math.round((cx / SIZE) * 100);
+        const l  = Math.round((1 - cy / SIZE) * 100);
+        const hex = hslToHex(generatedHSL.h, s, l);
+        const [r, g, b] = hexToRGB(hex);
+        setGenRGB({ r, g, b });
+    }
+
+    function pickFromStrip(e) {
+        const canvas = stripRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const cx = Math.max(0, Math.min(SIZE, (e.clientX - rect.left) * (SIZE / rect.width)));
+        const h  = Math.round((cx / SIZE) * 360);
+        const hex = hslToHex(h, generatedHSL.s, generatedHSL.l);
+        const [r, g, b] = hexToRGB(hex);
+        setGenRGB({ r, g, b });
+    }
+
+    function onMouseDown(target, e) {
+        dragging.current = target;
+        if (target === 'wheel') pickFromWheel(e);
+        else pickFromStrip(e);
+    }
+
+    useEffect(() => {
+        function onMove(e) {
+            if (!dragging.current) return;
+            if (dragging.current === 'wheel') pickFromWheel(e);
+            else pickFromStrip(e);
+        }
+        function onUp() { dragging.current = null; }
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+        return () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+    });
+
+    return (
+        <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'12px', userSelect:'none' }}>
+            <h3 style={{ margin:'0 0 4px 0', color:'var(--text-main)', fontSize:'0.82rem', letterSpacing:'0.12em', alignSelf:'flex-start' }}>COLOR WHEEL</h3>
+
+            {/* SL Square */}
+            <div style={{ position:'relative', width:SIZE, height:SIZE, borderRadius:'var(--radius-small)', overflow:'hidden', cursor:'crosshair', boxShadow:'0 4px 20px rgba(0,0,0,0.5)' }}
+                onMouseDown={e => onMouseDown('wheel', e)}>
+                <canvas ref={wheelRef} width={SIZE} height={SIZE} style={{ display:'block', width:SIZE, height:SIZE }} />
+                {/* Cursor */}
+                <div style={{
+                    position:'absolute',
+                    left: `${slX}px`,
+                    top:  `${slY}px`,
+                    transform: 'translate(-50%,-50%)',
+                    width: '14px', height: '14px',
+                    borderRadius: '50%',
+                    border: '2px solid #fff',
+                    boxShadow: '0 0 0 1px rgba(0,0,0,0.5)',
+                    pointerEvents: 'none',
+                    background: generatedHex,
+                }} />
+            </div>
+
+            {/* Hue Strip */}
+            <div style={{ position:'relative', width:SIZE, height:STRIP_H, borderRadius:'4px', overflow:'hidden', cursor:'ew-resize', boxShadow:'0 2px 8px rgba(0,0,0,0.4)' }}
+                onMouseDown={e => onMouseDown('strip', e)}>
+                <canvas ref={stripRef} width={SIZE} height={STRIP_H} style={{ display:'block', width:SIZE, height:STRIP_H }} />
+                {/* Hue cursor */}
+                <div style={{
+                    position:'absolute',
+                    left: `${(generatedHSL.h / 360) * SIZE}px`,
+                    top: '50%',
+                    transform: 'translate(-50%,-50%)',
+                    width: '10px', height: '10px',
+                    borderRadius: '50%',
+                    border: '2px solid #fff',
+                    boxShadow: '0 0 0 1px rgba(0,0,0,0.5)',
+                    pointerEvents: 'none',
+                    background: `hsl(${generatedHSL.h},100%,50%)`,
+                }} />
+            </div>
+
+            {/* Hex direct input */}
+            <div style={{ display:'flex', gap:'8px', alignItems:'center', width:'100%' }}>
+                <span style={{ fontSize:'0.75rem', color:'var(--text-muted)', fontWeight:700 }}>HEX</span>
+                <input
+                    type="text"
+                    value={generatedHex}
+                    onChange={e => {
+                        const val = e.target.value.trim();
+                        const clean = val.startsWith('#') ? val : '#' + val;
+                        if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+                            const [r,g,b] = hexToRGB(clean.toUpperCase());
+                            setGenRGB({ r, g, b });
+                        }
+                    }}
+                    style={{
+                        flex:1, background:'rgba(0,0,0,0.4)', border:'1px solid var(--border-color)',
+                        borderRadius:'var(--radius-small)', color:'var(--text-main)',
+                        fontFamily:'monospace', fontSize:'0.9rem', padding:'6px 10px', outline:'none',
+                        letterSpacing:'0.05em',
+                    }}
+                    maxLength={7}
+                />
+                <div style={{ width:'32px', height:'32px', borderRadius:'var(--radius-small)', background:generatedHex, border:'1px solid rgba(255,255,255,0.15)', flexShrink:0 }} />
+            </div>
         </div>
     );
 }

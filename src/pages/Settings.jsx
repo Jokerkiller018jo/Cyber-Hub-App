@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { logout } from '../services/auth-handler';
 import { auth } from '../services/firebase';
 import { loadTheme, setTheme, ACCENT_COLORS } from '../services/theme';
+import { getSearchBarStyle, setSearchBarStyle } from '../components/ui/SearchBar';
+import SearchBar from '../components/ui/SearchBar';
 import Icon from '../components/ui/Icon';
 
 /* ─────────────────────────────────────────────────────────────
@@ -118,6 +120,7 @@ export default function Settings({ user, onLogout }) {
     const [accentColor, setAccentColor] = useState(initialTheme.accent);
     const [glitch, setGlitch] = useState(initialTheme.glitch);
     const [glow, setGlow] = useState(initialTheme.glow);
+    const [searchBarStyleVal, setSearchBarStyleVal] = useState(() => getSearchBarStyle());
 
     // Apply and save theme changes
     React.useEffect(() => {
@@ -411,7 +414,7 @@ export default function Settings({ user, onLogout }) {
                         <SectionTitle icon="appearance">Interface Effects</SectionTitle>
                         {[
                             { label: 'Glitch Animations', desc: 'Adds CRT-style glitch effects on UI elements', key: 'glitch', val: glitch, set: setGlitch },
-                            { label: 'Hover Glow',        desc: 'Purple glow on interactive elements',         key: 'glow',   val: glow,   set: setGlow   },
+                            { label: 'Hover Glow',        desc: 'Glow on interactive elements',               key: 'glow',   val: glow,   set: setGlow   },
                         ].map(opt => (
                             <div key={opt.key} style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -425,6 +428,57 @@ export default function Settings({ user, onLogout }) {
                                 <Toggle checked={opt.val} onChange={opt.set} />
                             </div>
                         ))}
+                    </SectionCard>
+
+                    <SectionCard>
+                        <SectionTitle icon="settings">Search Bar Style</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.6' }}>
+                            Choose how search bars look across the app. Changes apply immediately.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {[
+                                { id: 'glass',     label: 'Glass',     desc: 'Frosted-glass box with focus glow' },
+                                { id: 'pill',      label: 'Pill',      desc: 'Fully rounded capsule shape' },
+                                { id: 'underline', label: 'Underline', desc: 'Minimal flat with bottom border only' },
+                            ].map(opt => (
+                                <div
+                                    key={opt.id}
+                                    onClick={() => { setSearchBarStyleVal(opt.id); setSearchBarStyle(opt.id); }}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        padding: '14px 16px',
+                                        borderRadius: 'var(--radius-medium)',
+                                        border: searchBarStyleVal === opt.id ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                        background: searchBarStyleVal === opt.id ? 'rgba(6,182,212,0.08)' : 'rgba(255,255,255,0.02)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.18s ease',
+                                    }}
+                                    onMouseEnter={e => { if (searchBarStyleVal !== opt.id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                                    onMouseLeave={e => { if (searchBarStyleVal !== opt.id) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                                >
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '0.9rem', marginBottom: '3px', color: searchBarStyleVal === opt.id ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                                            {opt.label}
+                                        </div>
+                                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center', gap: '7px',
+                                        padding: '6px 12px',
+                                        background: opt.id === 'glass' ? 'rgba(0,0,0,0.25)' : opt.id === 'pill' ? 'rgba(255,255,255,0.04)' : 'transparent',
+                                        border: opt.id === 'underline' ? 'none' : '1px solid var(--border-color)',
+                                        borderBottom: opt.id === 'underline' ? '2px solid var(--border-color)' : undefined,
+                                        borderRadius: opt.id === 'pill' ? '999px' : opt.id === 'glass' ? 'var(--radius-small)' : '0',
+                                        color: 'var(--text-muted)', fontSize: '0.78rem', width: '120px', pointerEvents: 'none',
+                                    }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width={12} height={12} fill="currentColor">
+                                            <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                                        </svg>
+                                        Preview…
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </SectionCard>
                 </div>
             );
