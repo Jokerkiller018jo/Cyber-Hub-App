@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import DnaBackground from '../canvas/DnaBackground';
+import MatrixBackground from '../canvas/MatrixBackground';
 
 export default function AppLayout({ user, onLogout }) {
     const location = useLocation();
@@ -9,7 +9,7 @@ export default function AppLayout({ user, onLogout }) {
 
     return (
         <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-            <DnaBackground />
+            <MatrixBackground />
 
             {!isLobby && <Sidebar user={user} onLogout={onLogout} />}
 

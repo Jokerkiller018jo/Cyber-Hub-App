@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginWithGoogle } from '../services/auth-handler';
 import Icon from '../components/ui/Icon';
-import DnaBackground from '../components/canvas/DnaBackground';
+import MatrixBackground from '../components/canvas/MatrixBackground';
 
 export default function AuthPage({ onLogin }) {
     const navigate = useNavigate();
@@ -33,7 +33,7 @@ export default function AuthPage({ onLogin }) {
             alignItems: 'center',
             overflow: 'hidden'
         }}>
-            <DnaBackground />
+            <MatrixBackground />
 
             <div className="glass-panel" style={{
                 position: 'relative',
