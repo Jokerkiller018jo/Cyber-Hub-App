@@ -103,6 +103,56 @@ export default function SearchBar({
                 transition: 'border-color 0.15s ease',
             },
         },
+        neumorphic: {
+            wrapper: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: 'var(--bg-primary)',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '0 16px',
+                height: '46px',
+                transition: 'all 0.2s ease',
+                boxShadow: focused
+                    ? 'inset 4px 4px 8px rgba(0,0,0,0.4), inset -4px -4px 8px rgba(255,255,255,0.02), 0 0 0 1px var(--accent-primary)'
+                    : '4px 4px 8px rgba(0,0,0,0.4), -4px -4px 8px rgba(255,255,255,0.02)',
+            },
+        },
+        terminal: {
+            wrapper: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: '#000',
+                border: focused
+                    ? '2px solid var(--accent-primary)'
+                    : '2px solid #333',
+                borderRadius: '0',
+                padding: '0 14px',
+                height: '42px',
+                fontFamily: 'monospace',
+                transition: 'border-color 0.1s',
+            },
+        },
+        cyber: {
+            wrapper: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                background: focused ? 'rgba(6,182,212,0.1)' : 'rgba(0,0,0,0.4)',
+                border: 'none',
+                borderLeft: `4px solid ${focused ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                borderRight: `1px solid ${focused ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                borderTop: `1px solid ${focused ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                borderBottom: `1px solid ${focused ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                borderRadius: '0',
+                clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)',
+                padding: '0 16px',
+                height: '44px',
+                transition: 'all 0.15s ease',
+            },
+        },
     };
 
     const wrapperStyle = {
