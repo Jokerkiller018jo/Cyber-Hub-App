@@ -27,20 +27,20 @@ export default function DnaBackground() {
             // DNA overall opacity
             ctx.globalAlpha = 0.25;
 
-            const centerY = canvas.height / 2;
-            const amplitude = 100;
+            const centerX = canvas.width / 2;
+            const amplitude = 120;
             const frequency = 0.02;
-            // Slower animation speed
-            time += 0.015;
+            // Faster animation speed
+            time += 0.035;
 
-            for (let x = 0; x < canvas.width; x += 30) {
-                const y1 = centerY + Math.sin(x * frequency + time) * amplitude;
-                const y2 = centerY + Math.sin(x * frequency + time + Math.PI) * amplitude;
+            for (let y = 0; y < canvas.height; y += 30) {
+                const x1 = centerX + Math.sin(y * frequency + time) * amplitude;
+                const x2 = centerX + Math.sin(y * frequency + time + Math.PI) * amplitude;
 
                 // Base Strands
                 ctx.beginPath();
-                ctx.moveTo(x, y1);
-                ctx.lineTo(x, y2);
+                ctx.moveTo(x1, y);
+                ctx.lineTo(x2, y);
                 ctx.strokeStyle = rawAccent;
                 ctx.lineWidth = 1;
                 ctx.stroke();
@@ -50,17 +50,17 @@ export default function DnaBackground() {
                 ctx.shadowColor = rawAccent;
 
                 // Highlight Nodes
-                const drawNode = (ny) => {
+                const drawNode = (nx) => {
                     ctx.beginPath();
-                    ctx.arc(x, ny, 3, 0, Math.PI * 2);
+                    ctx.arc(nx, y, 3, 0, Math.PI * 2);
                     ctx.fillStyle = rawAccent;
                     ctx.shadowBlur = 20;
                     ctx.shadowColor = rawAccent;
                     ctx.fill();
                 };
 
-                drawNode(y1);
-                drawNode(y2);
+                drawNode(x1);
+                drawNode(x2);
                 
                 // Reset shadow for next iteration
                 ctx.shadowBlur = 0;
