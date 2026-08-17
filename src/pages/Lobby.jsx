@@ -12,8 +12,8 @@ export default function Lobby() {
     }, []);
 
     const navTabs = [
-        { label: 'Market',     path: '/market',     icon: 'trending-up', color: '#06b6d4' },
-        { label: 'Currencies', path: '/currencies', icon: 'dollar',       color: '#10b981' },
+        { label: 'Market',     path: '/market',     icon: 'trending-up', color: '#d81313' },
+        { label: 'Currencies', path: '/currencies', icon: 'dollar',       color: '#10e059' },
         { label: 'Vault',      path: '/symbols',    icon: 'database',     color: '#f59e0b' },
         { label: 'Settings',   path: '/settings',   icon: 'settings',     color: '#94a3b8' },
     ];

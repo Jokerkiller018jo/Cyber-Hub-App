@@ -6,7 +6,7 @@
 const STORAGE_KEY = 'cyberhub_theme';
 
 export const ACCENT_COLORS = [
-    { hex: '#06b6d4', hover: '#22d3ee', dark: '#0891b2', name: 'Electric Cyan' },
+    { hex: '#2fd90d', hover: '#22d3ee', dark: '#0891b2', name: 'Electric Cyan' },
     { hex: '#10b981', hover: '#34d399', dark: '#059669', name: 'Emerald Node' },
     { hex: '#f59e0b', hover: '#fbbf24', dark: '#d97706', name: 'Solar Flare' },
     { hex: '#6366f1', hover: '#818cf8', dark: '#4f46e5', name: 'Indigo Core' },
