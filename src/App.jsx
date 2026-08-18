@@ -112,7 +112,7 @@ export default function App() {
                         <Route path="/chat" element={<Messages user={user} />} />
                         <Route path="/market" element={<MarketDashboard />} />
                         <Route path="/currencies" element={<CurrencyCenter />} />
-                        <Route path="/symbols" element={<Symbols />} />
+                        <Route path="/symbols" element={<Symbols user={user} />} />
                         <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
                         <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />
                     </Route>

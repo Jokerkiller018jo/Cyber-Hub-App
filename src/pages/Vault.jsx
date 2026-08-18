@@ -3,6 +3,7 @@ import { EMOJI_CATEGORIES } from './EmojiCategories';
 import Colors from './Colors';
 import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
+import { loadUserSettings, saveUserSettings } from '../services/firebase';
 
 // ─── Unicode ranges with category + group info ────────────────────────────────
 const UNICODE_RANGES = [
@@ -127,7 +128,7 @@ const BLOCK_ICONS = {
 function toHex(cp) { return cp.toString(16).toUpperCase().padStart(4, '0'); }
 function renderChar(cp) { try { return String.fromCodePoint(cp); } catch { return '?'; } }
 
-export default function Symbols() {
+export default function Symbols({ user }) {
     const [search, setSearch]       = useState('');
     const [category, setCategory]   = useState(null); // null = lobby view
     const [page, setPage]           = useState(0);
@@ -138,6 +139,25 @@ export default function Symbols() {
     const [favorites, setFavorites] = useState(() => {
         try { return JSON.parse(localStorage.getItem('cyberhub_favorites') || '[]'); } catch { return []; }
     });
+
+    // Cloud Sync on Mount
+    useEffect(() => {
+        if (user?.uid) {
+            loadUserSettings(user.uid).then(data => {
+                if (data && data.favorites && Array.isArray(data.favorites)) {
+                    setFavorites(data.favorites);
+                    localStorage.setItem('cyberhub_favorites', JSON.stringify(data.favorites));
+                }
+            });
+        }
+    }, [user?.uid]);
+    
+    // Helper to sync to cloud
+    const syncFavs = (newFavs) => {
+        if (user?.uid) {
+            saveUserSettings(user.uid, { favorites: newFavs }).catch(e => console.error('Fav sync error', e));
+        }
+    };
     const [draggedItem, setDraggedItem] = useState(null);
     const [dragOverItem, setDragOverItem] = useState(null);
 
@@ -160,6 +180,7 @@ export default function Symbols() {
             newFavs.splice(targetIdx, 0, draggedItem);
             setFavorites(newFavs);
             localStorage.setItem('cyberhub_favorites', JSON.stringify(newFavs));
+            syncFavs(newFavs);
         }
         setDraggedItem(null);
         setDragOverItem(null);
@@ -175,6 +196,7 @@ export default function Symbols() {
         setFavorites(prev => {
             const next = prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id];
             localStorage.setItem('cyberhub_favorites', JSON.stringify(next));
+            syncFavs(next);
             return next;
         });
     };
