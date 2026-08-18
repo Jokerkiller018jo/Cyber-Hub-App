@@ -138,6 +138,36 @@ export default function Symbols() {
     const [favorites, setFavorites] = useState(() => {
         try { return JSON.parse(localStorage.getItem('cyberhub_favorites') || '[]'); } catch { return []; }
     });
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [dragOverItem, setDragOverItem] = useState(null);
+
+    const handleDragStart = (e, id) => {
+        setDraggedItem(id);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+    };
+    const handleDragOver = (e, id) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem !== id) setDragOverItem(id);
+    };
+    const handleDrop = (e, targetId) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem !== targetId) {
+            const newFavs = [...favorites];
+            const draggedIdx = newFavs.indexOf(draggedItem);
+            const targetIdx = newFavs.indexOf(targetId);
+            newFavs.splice(draggedIdx, 1);
+            newFavs.splice(targetIdx, 0, draggedItem);
+            setFavorites(newFavs);
+            localStorage.setItem('cyberhub_favorites', JSON.stringify(newFavs));
+        }
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
+    const handleDragEnd = () => {
+        setDraggedItem(null);
+        setDragOverItem(null);
+    };
     const gridRef = useRef(null);
 
     const toggleFavorite = (e, id) => {
@@ -305,7 +335,7 @@ export default function Symbols() {
     const groupsWithFavorites = useMemo(() => {
         const mg = { ...matchingGroups };
         if (favorites.length > 0) {
-            mg['Favorites'] = UNICODE_RANGES.filter(r => favorites.includes(r.id));
+            mg['Favorites'] = favorites.map(favId => UNICODE_RANGES.find(r => r.id === favId)).filter(Boolean);
         }
         return mg;
     }, [matchingGroups, favorites]);

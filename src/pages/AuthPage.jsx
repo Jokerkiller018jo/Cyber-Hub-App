@@ -119,7 +119,7 @@ export default function AuthPage({ onLogin }) {
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
                 </div>
 
-                {/* Demo mode bypass */}
+                {/* Join as Guest */}
                 <p
                     onClick={() => {
                         onLogin({ username: 'Guest Operative', avatar: '' });
@@ -143,7 +143,7 @@ export default function AuthPage({ onLogin }) {
                         e.target.style.color = 'var(--text-muted)';
                     }}
                 >
-                    BYPASS TO DEMO MODE
+                    Join as Guest
                 </p>
             </div>
         </div>
