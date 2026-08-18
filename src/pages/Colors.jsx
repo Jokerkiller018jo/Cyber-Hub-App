@@ -4,15 +4,15 @@ import SearchBar from '../components/ui/SearchBar';
 // ─── Curated palettes (shown when no search is active) ────────────────────────
 const PALETTES = [  
     { name: 'White',        hex: '#f7f4f8', rgb: [247,247,247],   group: 'Neon' },
-    { name: 'Red',          hex: '#ff0000', rgb: [(150,0,0)],   group: 'Neon' },
+    { name: 'Red',          hex: '#ff0000', rgb: [150,0,0],   group: 'Neon' },
     { name: 'Orange',       hex: '#ff6600', rgb: [0,255,136],   group: 'Neon' },
     { name: 'Yellow',       hex: '#B4B400', rgb: [180,180,0],   group: 'Neon' },
     { name: 'Green',        hex: '#007800', rgb: [0,120,0],   group: 'Neon' },
     { name: 'Lime',         hex: '#00C800', rgb: [0,200,0],   group: 'Neon' },
     { name: 'Cyan',         hex: '#00B4B4', rgb: [0,180,180], group: 'Pastel' },
-    { name: 'Blue',         hex:  #000078', rgb: [0,0,120], group: 'Pastel' },
+    { name: 'Blue',         hex: '#000078', rgb: [0,0,120], group: 'Pastel' },
     { name: 'pink',         hex: '#C86496', rgb: [200,100,150], group: 'Pastel' },
-    { name: 'Purple         hex: '#500050', rgb: [80,0,80], group: 'Pastel' },
+    { name: 'Purple',       hex: '#500050', rgb: [80,0,80], group: 'Pastel' },
     { name: 'Black',        hex: '#000000', rgb: [0,0,0], group: 'Pastel' },
 
 ];
