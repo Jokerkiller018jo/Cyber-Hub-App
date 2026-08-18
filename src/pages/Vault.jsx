@@ -494,6 +494,7 @@ export default function Symbols({ user }) {
                                             style={{
                                                 display: 'flex', alignItems: 'center', gap: '12px',
                                                 padding: '14px', cursor: isFavGroup ? (draggedItem === r.id ? 'grabbing' : 'grab') : 'pointer', position: 'relative',
+                                                userSelect: isFavGroup ? 'none' : 'auto',
                                                 transition: 'transform 0.18s, box-shadow 0.18s, background 0.18s',
                                                 borderColor: dragOverItem === r.id ? 'var(--accent-primary)' : colors.border,
                                                 borderStyle: dragOverItem === r.id ? 'dashed' : 'solid',
