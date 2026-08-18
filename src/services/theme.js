@@ -12,7 +12,7 @@ export const ACCENT_COLORS = [
     { hex: '#8b5cf6', hover: '#a78bfa', dark: '#7c3aed', name: 'Deep Purple' },
     { hex: '#ec4899', hover: '#f472b6', dark: '#db2777', name: 'Hot Pink' },
     { hex: '#22c55e', hover: '#4ade80', dark: '#16a34a', name: 'Matrix Green' },
-    { hex: '#ef4444', hover: '#f87171', dark: '#dc2626', name: 'Hacker Red' },
+    { hex: '#098831', hover: '#13ad44', dark: '#0cef08', name: 'Hacker' },
     { hex: '#6366f1', hover: '#818cf8', dark: '#4f46e5', name: 'Indigo Core' },
     { hex: '#e2e8f0', hover: '#f8fafc', dark: '#94a3b8', name: 'Monochrome' },
 ];

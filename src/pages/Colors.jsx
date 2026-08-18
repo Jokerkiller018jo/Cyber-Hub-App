@@ -2,39 +2,19 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import SearchBar from '../components/ui/SearchBar';
 
 // ─── Curated palettes (shown when no search is active) ────────────────────────
-const PALETTES = [
-    { name: 'Cyberpunk',    hex: '#B000FF', rgb: [176,0,255],   group: 'Neon' },
-    { name: 'Neon Blue',    hex: '#00D4FF', rgb: [0,212,255],   group: 'Neon' },
-    { name: 'Neon Green',   hex: '#00FF88', rgb: [0,255,136],   group: 'Neon' },
-    { name: 'Neon Pink',    hex: '#FF006E', rgb: [255,0,110],   group: 'Neon' },
-    { name: 'Neon Orange',  hex: '#FF6600', rgb: [255,102,0],   group: 'Neon' },
-    { name: 'Neon Yellow',  hex: '#FFE600', rgb: [255,230,0],   group: 'Neon' },
-    { name: 'Lavender',     hex: '#B5A0E8', rgb: [181,160,232], group: 'Pastel' },
-    { name: 'Peach',        hex: '#FFCBA4', rgb: [255,203,164], group: 'Pastel' },
-    { name: 'Mint',         hex: '#A8E6CF', rgb: [168,230,207], group: 'Pastel' },
-    { name: 'Baby Blue',    hex: '#A8D8EA', rgb: [168,216,234], group: 'Pastel' },
-    { name: 'Rose',         hex: '#FFB7B2', rgb: [255,183,178], group: 'Pastel' },
-    { name: 'Lemon',        hex: '#FFEAA7', rgb: [255,234,167], group: 'Pastel' },
-    { name: 'Void Black',   hex: '#0A0A0F', rgb: [10,10,15],    group: 'Dark' },
-    { name: 'Deep Space',   hex: '#0D0D1A', rgb: [13,13,26],    group: 'Dark' },
-    { name: 'Midnight',     hex: '#1A1A2E', rgb: [26,26,46],    group: 'Dark' },
-    { name: 'Dark Slate',   hex: '#16213E', rgb: [22,33,62],    group: 'Dark' },
-    { name: 'Carbon',       hex: '#2C2C2C', rgb: [44,44,44],    group: 'Dark' },
-    { name: 'Charcoal',     hex: '#36454F', rgb: [54,69,79],    group: 'Dark' },
-    { name: 'Red 500',      hex: '#F44336', rgb: [244,67,54],   group: 'Material' },
-    { name: 'Pink 500',     hex: '#E91E63', rgb: [233,30,99],   group: 'Material' },
-    { name: 'Purple 500',   hex: '#9C27B0', rgb: [156,39,176],  group: 'Material' },
-    { name: 'Blue 500',     hex: '#2196F3', rgb: [33,150,243],  group: 'Material' },
-    { name: 'Teal 500',     hex: '#009688', rgb: [0,150,136],   group: 'Material' },
-    { name: 'Green 500',    hex: '#4CAF50', rgb: [76,175,80],   group: 'Material' },
-    { name: 'Amber 500',    hex: '#FFC107', rgb: [255,193,7],   group: 'Material' },
-    { name: 'Orange 500',   hex: '#FF9800', rgb: [255,152,0],   group: 'Material' },
-    { name: 'Sunset Start', hex: '#FF6B6B', rgb: [255,107,107], group: 'Vibrant' },
-    { name: 'Ocean Blue',   hex: '#0072FF', rgb: [0,114,255],   group: 'Vibrant' },
-    { name: 'Aurora',       hex: '#00C9FF', rgb: [0,201,255],   group: 'Vibrant' },
-    { name: 'Cosmic',       hex: '#8B00FF', rgb: [139,0,255],   group: 'Vibrant' },
-    { name: 'Emerald',      hex: '#00B09B', rgb: [0,176,155],   group: 'Vibrant' },
-    { name: 'Gold',         hex: '#F7971E', rgb: [247,151,30],  group: 'Vibrant' },
+const PALETTES = [  
+    { name: 'White',        hex: '#f7f4f8', rgb: [247,247,247],   group: 'Neon' },
+    { name: 'Red',          hex: '#ff0000', rgb: [(150,0,0)],   group: 'Neon' },
+    { name: 'Orange',       hex: '#ff6600', rgb: [0,255,136],   group: 'Neon' },
+    { name: 'Yellow',       hex: '#B4B400', rgb: [180,180,0],   group: 'Neon' },
+    { name: 'Green',        hex: '#007800', rgb: [0,120,0],   group: 'Neon' },
+    { name: 'Lime',         hex: '#00C800', rgb: [0,200,0],   group: 'Neon' },
+    { name: 'Cyan',         hex: '#00B4B4', rgb: [0,180,180], group: 'Pastel' },
+    { name: 'Blue',         hex:  #000078', rgb: [0,0,120], group: 'Pastel' },
+    { name: 'pink',         hex: '#C86496', rgb: [200,100,150], group: 'Pastel' },
+    { name: 'Purple         hex: '#500050', rgb: [80,0,80], group: 'Pastel' },
+    { name: 'Black',        hex: '#000000', rgb: [0,0,0], group: 'Pastel' },
+
 ];
 
 const GROUPS = ['All', '16M+ Generator'];
@@ -111,7 +91,7 @@ const SEMANTIC_PALETTES = {
         { name: 'Blaze Yellow', hex: '#FFD700', rgb: [255,215,0], group: 'Semantic' },
     ],
     blood: [
-        { name: 'Blood Red', hex: '#8A0303', rgb: [138,3,3], group: 'Semantic' },
+        { name: 'Blood Red', hex: '#aa0a0a', rgb: [138,3,3], group: 'Semantic' },
         { name: 'Crimson', hex: '#DC143C', rgb: [220,20,60], group: 'Semantic' },
         { name: 'Dark Blood', hex: '#4A0404', rgb: [74,4,4], group: 'Semantic' },
     ],
@@ -123,7 +103,7 @@ const SEMANTIC_PALETTES = {
     sun: [
         { name: 'Sun Yellow', hex: '#FFD700', rgb: [255,215,0], group: 'Semantic' },
         { name: 'Sunburst', hex: '#FF8C00', rgb: [255,140,0], group: 'Semantic' },
-        { name: 'Bright Sun', hex: '#FFFF00', rgb: [255,255,0], group: 'Semantic' },
+        { name: 'Bright Sun', hex: '#f9f9f9', rgb: [255,255,0], group: 'Semantic' },
     ],
     grass: [
         { name: 'Grass Green', hex: '#7CFC00', rgb: [124,252,0], group: 'Semantic' },
@@ -132,13 +112,14 @@ const SEMANTIC_PALETTES = {
     ],
     water: [
         { name: 'Water Blue', hex: '#00FFFF', rgb: [0,255,255], group: 'Semantic' },
-        { name: 'Aqua', hex: '#7FFFD4', rgb: [127,255,212], group: 'Semantic' },
-        { name: 'Turquoise', hex: '#40E0D0', rgb: [64,224,208], group: 'Semantic' },
+        { name: 'Aqua',       hex: '#7FFFD4', rgb: [127,255,212], group: 'Semantic' },
+        { name: 'Turquoise',  hex: '#40E0D0', rgb: [64,224,208], group: 'Semantic' },
     ],
     earth: [
-        { name: 'Earth Green', hex: '#4B5320', rgb: [75,83,32], group: 'Semantic' },
-        { name: 'Earth Blue', hex: '#0000FF', rgb: [0,0,255], group: 'Semantic' },
-        { name: 'Earth Brown', hex: '#8B4513', rgb: [139,69,19], group: 'Semantic' },
+        { name: 'Earth Grass', hex: '#4B5320', rgb: [75,83,32], group: 'Semantic' },
+        { name: 'Earth Water', hex: '#0000FF', rgb: [0,0,255], group: 'Semantic' },
+        { name: 'Earth Dirt',  hex: '#8B4513', rgb: [139,69,19], group: 'Semantic' },
+        { name: 'Earth Snow',  hex: '#e2dfdc', rgb: [226,223,220], group: 'Semantic' },
     ],
     cherry: [
         { name: 'Cherry Red', hex: '#D2042D', rgb: [210,4,45], group: 'Semantic' },
