@@ -9,7 +9,7 @@ import Lobby from './pages/Lobby';
 
 import MarketDashboard from './pages/MarketDashboard';
 import CurrencyCenter from './pages/CurrencyCenter';
-import Symbols from './pages/Symbols';
+import Symbols from './pages/Vault';
 import Settings from './pages/Settings';
 import LoadingScreen from './components/ui/LoadingScreen';
 
