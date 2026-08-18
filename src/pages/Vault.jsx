@@ -480,17 +480,27 @@ export default function Symbols({ user }) {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '10px' }}>
                                 {ranges.map(r => {
                                     const size = r.end - r.start + 1;
+                                    const isFavGroup = groupName === 'Favorites';
                                     return (
                                         <div
                                             key={r.id}
                                             className="card"
                                             onClick={() => handleCategorySelect(r.id)}
+                                            draggable={isFavGroup}
+                                            onDragStart={isFavGroup ? (e) => handleDragStart(e, r.id) : undefined}
+                                            onDragOver={isFavGroup ? (e) => handleDragOver(e, r.id) : undefined}
+                                            onDrop={isFavGroup ? (e) => handleDrop(e, r.id) : undefined}
+                                            onDragEnd={isFavGroup ? handleDragEnd : undefined}
                                             style={{
                                                 display: 'flex', alignItems: 'center', gap: '12px',
-                                                padding: '14px', cursor: 'pointer', position: 'relative',
+                                                padding: '14px', cursor: isFavGroup ? (draggedItem === r.id ? 'grabbing' : 'grab') : 'pointer', position: 'relative',
                                                 transition: 'transform 0.18s, box-shadow 0.18s, background 0.18s',
-                                                borderColor: colors.border,
+                                                borderColor: dragOverItem === r.id ? 'var(--accent-primary)' : colors.border,
+                                                borderStyle: dragOverItem === r.id ? 'dashed' : 'solid',
+                                                borderWidth: dragOverItem === r.id ? '2px' : '1px',
                                                 background: colors.bg,
+                                                opacity: draggedItem === r.id ? 0.4 : 1,
+                                                transform: dragOverItem === r.id ? 'scale(1.02)' : 'none'
                                             }}
                                             onMouseEnter={e => {
                                                 e.currentTarget.style.transform = 'translateY(-3px)';
