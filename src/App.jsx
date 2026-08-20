@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import AppLayout from './components/layout/AppLayout';
-import { observeAuth } from './services/auth-handler';
+import { observeAuth, checkRedirectResult } from './services/auth-handler';
 
 // Pages
 import Lobby from './pages/Lobby';
@@ -19,6 +19,18 @@ export default function App() {
     const [introDone, setIntroDone] = useState(false);
 
     useEffect(() => {
+        // Check if returning from a Google redirect
+        checkRedirectResult().then(u => {
+            if (u) {
+                setUser({
+                    uid: u.uid,
+                    email: u.email,
+                    username: u.displayName || u.email?.split('@')[0],
+                    avatar: u.photoURL
+                });
+            }
+        });
+
         const unsubscribe = observeAuth((u) => {
             if (u) {
                 setUser({

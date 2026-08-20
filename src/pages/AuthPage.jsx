@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginWithGoogle } from '../services/auth-handler';
+import { loginWithGoogle, loginWithGoogleRedirect } from '../services/auth-handler';
 import Icon from '../components/ui/Icon';
 import MatrixBackground from '../components/canvas/MatrixBackground';
 
@@ -14,11 +14,23 @@ export default function AuthPage({ onLogin }) {
         setError('');
         try {
             const user = await loginWithGoogle();
-            onLogin(user);
-            navigate('/nexus');
+            if (user) {
+                onLogin(user);
+                navigate('/lobby');
+            }
         } catch (err) {
             setError(err.message);
-        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDirectRedirect = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            await loginWithGoogleRedirect();
+        } catch (err) {
+            setError(err.message);
             setLoading(false);
         }
     };
@@ -38,8 +50,8 @@ export default function AuthPage({ onLogin }) {
             <div className="glass-panel" style={{
                 position: 'relative',
                 zIndex: 10,
-                width: '400px',
-                padding: '48px 40px',
+                width: '420px',
+                padding: '44px 36px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -47,7 +59,7 @@ export default function AuthPage({ onLogin }) {
             }}>
                 {/* Logo / Title */}
                 <img
-                    src="/favicon.jpg"
+                    src="/favicon.png"
                     alt="Cyber-Hub Logo"
                     style={{
                         width: '72px',
@@ -63,14 +75,15 @@ export default function AuthPage({ onLogin }) {
                     color: 'var(--text-main)',
                     marginBottom: '6px',
                     textAlign: 'center',
-                    letterSpacing: '0.1em'
+                    letterSpacing: '0.1em',
+                    fontSize: '1.6rem'
                 }}>
                     CYBER-HUB
                 </h1>
                 <p style={{
                     color: 'var(--text-muted)',
-                    marginBottom: '40px',
-                    fontSize: '0.9rem',
+                    marginBottom: '32px',
+                    fontSize: '0.85rem',
                     textAlign: 'center'
                 }}>
                     Awaiting secure credentials...
@@ -84,16 +97,16 @@ export default function AuthPage({ onLogin }) {
                         color: '#ff4444',
                         padding: '10px 14px',
                         borderRadius: 'var(--radius-small)',
-                        marginBottom: '24px',
+                        marginBottom: '20px',
                         width: '100%',
-                        fontSize: '0.85rem',
+                        fontSize: '0.82rem',
                         textAlign: 'center'
                     }}>
                         {error}
                     </div>
                 )}
 
-                {/* Google Sign-In button */}
+                {/* Google Sign-In Primary button */}
                 <button
                     className="cyber-button"
                     onClick={handleGoogle}
@@ -104,19 +117,48 @@ export default function AuthPage({ onLogin }) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '10px',
-                        padding: '14px',
-                        fontSize: '0.95rem',
-                        letterSpacing: '0.08em'
+                        padding: '13px',
+                        fontSize: '0.92rem',
+                        letterSpacing: '0.08em',
+                        marginBottom: '12px'
                     }}
                 >
                     {loading ? (
                         'AUTHENTICATING...'
                     ) : (
                         <>
-                            <Icon name="google" size={20} />
+                            <Icon name="google" size={18} />
                             SIGN IN WITH GOOGLE
                         </>
                     )}
+                </button>
+
+                {/* Direct Full-Page Redirect Alternative */}
+                <button
+                    onClick={handleDirectRedirect}
+                    disabled={loading}
+                    style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 'var(--radius-small)',
+                        color: 'var(--text-muted)',
+                        padding: '9px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                        e.currentTarget.style.color = 'var(--text-main)';
+                    }}
+                    onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                    }}
+                >
+                    Browser Redirect Sign-In (No Popups)
                 </button>
 
                 {/* Divider */}
@@ -124,7 +166,7 @@ export default function AuthPage({ onLogin }) {
                     width: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    margin: '28px 0',
+                    margin: '22px 0',
                     color: 'var(--text-muted)'
                 }}>
                     <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
@@ -136,16 +178,17 @@ export default function AuthPage({ onLogin }) {
                 <p
                     onClick={() => {
                         onLogin({ username: 'Guest Operative', avatar: '' });
-                        navigate('/nexus');
+                        navigate('/lobby');
                     }}
                     style={{
                         color: 'var(--text-muted)',
                         cursor: 'pointer',
-                        fontSize: '0.7rem',
+                        fontSize: '0.75rem',
                         border: '1px solid var(--border-color)',
-                        padding: '6px 20px',
+                        padding: '7px 24px',
                         borderRadius: 'var(--radius-small)',
-                        transition: 'border-color var(--transition-fast), color var(--transition-fast)'
+                        transition: 'all 0.15s ease',
+                        margin: 0
                     }}
                     onMouseEnter={e => {
                         e.target.style.borderColor = 'var(--accent-primary)';

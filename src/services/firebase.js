@@ -1,5 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "firebase/auth";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signInWithRedirect,
+    getRedirectResult,
+    signOut, 
+    onAuthStateChanged, 
+    updateProfile 
+} from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,6 +24,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 /** Load user settings from Firestore */
 export async function loadUserSettings(uid) {
@@ -38,10 +48,12 @@ export async function saveUserSettings(uid, settings) {
 
 export { 
     app, 
-    auth,
-    db,
-    googleProvider,
+    auth, 
+    db, 
+    googleProvider, 
     signInWithPopup, 
+    signInWithRedirect,
+    getRedirectResult,
     signOut, 
     onAuthStateChanged, 
     updateProfile 

@@ -3,7 +3,7 @@ Cyber-Hub Desktop Client — High-Performance Edition
 Powered by PySide6 & Python with Full GPU Hardware Acceleration & OAuth Popup Support
 Features:
 - Full Chromium GPU hardware rasterization (60-144 FPS)
-- Google OAuth & Firebase Authentication popup support (createWindow popup handler)
+- Google OAuth & Firebase Authentication popup and persistent cookie storage
 - Custom exposed edge rounded top and bottom cyber bars
 - Zero-lag frameless window with smooth dragging, maximize/restore, minimize, and resize
 - Embedded WebEngineView loading https://cyber-hub-app.vercel.app with WebGL & 2D canvas acceleration
@@ -47,8 +47,8 @@ class AuthPopupDialog(QDialog):
     def __init__(self, profile, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Sign in with Google — Cyber-Hub")
-        self.resize(520, 680)
-        self.setMinimumSize(420, 560)
+        self.resize(540, 700)
+        self.setMinimumSize(440, 580)
         self.setStyleSheet("background-color: #09090b; color: #ffffff;")
 
         layout = QVBoxLayout(self)
@@ -148,9 +148,15 @@ class CyberHubWindow(QMainWindow):
         self.webview = QWebEngineView(self.shell_frame)
         self.webview.setObjectName("CyberWebView")
 
-        # Configure WebEngine profile & hardware acceleration settings
+        # Configure WebEngine profile with persistent session & cookie cache
         profile = QWebEngineProfile.defaultProfile()
         profile.setHttpUserAgent(CHROME_USER_AGENT)
+        
+        # Persistent storage cache for login sessions
+        cache_dir = os.path.join(os.path.expanduser("~"), ".cyber_hub_cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        profile.setPersistentStoragePath(cache_dir)
+        profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies)
 
         settings = self.webview.settings()
         settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
