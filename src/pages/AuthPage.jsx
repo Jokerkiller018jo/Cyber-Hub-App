@@ -46,6 +46,19 @@ export default function AuthPage({ onLogin }) {
                 animation: 'slideUp var(--transition-smooth) forwards'
             }}>
                 {/* Logo / Title */}
+                <img
+                    src="/favicon.jpg"
+                    alt="Cyber-Hub Logo"
+                    style={{
+                        width: '72px',
+                        height: '72px',
+                        borderRadius: '16px',
+                        objectFit: 'cover',
+                        marginBottom: '16px',
+                        boxShadow: '0 0 24px rgba(6, 182, 212, 0.5), 0 0 10px rgba(168, 85, 247, 0.4)',
+                        border: '1.5px solid rgba(6, 182, 212, 0.4)'
+                    }}
+                />
                 <h1 style={{
                     color: 'var(--text-main)',
                     marginBottom: '6px',

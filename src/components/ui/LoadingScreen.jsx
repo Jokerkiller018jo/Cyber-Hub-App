@@ -60,32 +60,18 @@ const LoadingScreen = ({ onComplete }) => {
                     <div className="ls-hex-ring ls-ring-1" />
                     <div className="ls-hex-ring ls-ring-2" />
                     <div className="ls-hex-ring ls-ring-3" />
-                    <div className="ls-icon-core">
-                        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <polygon
-                                points="40,6 72,22 72,58 40,74 8,58 8,22"
-                                stroke="url(#hexGrad)"
-                                strokeWidth="2"
-                                fill="none"
-                            />
-                            <circle cx="40" cy="40" r="16" fill="url(#coreGrad)" />
-                            <circle cx="40" cy="40" r="8" fill="url(#innerGrad)" />
-                            <circle cx="40" cy="40" r="3" fill="white" />
-                            <defs>
-                                <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
-                                    <stop stopColor="#a855f7" />
-                                    <stop offset="1" stopColor="#06b6d4" />
-                                </linearGradient>
-                                <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
-                                    <stop stopColor="#a855f7" stopOpacity="0.4" />
-                                    <stop offset="1" stopColor="#a855f7" stopOpacity="0" />
-                                </radialGradient>
-                                <radialGradient id="innerGrad" cx="50%" cy="50%" r="50%">
-                                    <stop stopColor="#c084fc" stopOpacity="0.8" />
-                                    <stop offset="1" stopColor="#7c3aed" stopOpacity="0.3" />
-                                </radialGradient>
-                            </defs>
-                        </svg>
+                    <div className="ls-icon-core" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                            src="/favicon.jpg"
+                            alt="Cyber-Hub"
+                            style={{
+                                width: '54px',
+                                height: '54px',
+                                borderRadius: '12px',
+                                objectFit: 'cover',
+                                boxShadow: '0 0 20px rgba(6, 182, 212, 0.6), 0 0 10px rgba(168, 85, 247, 0.4)'
+                            }}
+                        />
                     </div>
                 </div>
 

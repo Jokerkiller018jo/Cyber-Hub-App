@@ -124,6 +124,7 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                         color: 'var(--text-main)'
                     }}
                 >
+                    <img src="/favicon.jpg" alt="Logo" style={{ width: '30px', height: '30px', borderRadius: '8px', objectFit: 'cover', boxShadow: '0 0 10px rgba(6,182,212,0.35)' }} />
                     NEXUS CORE
                     <span style={badgeStyle}>v0.1.8</span>
                 </div>
@@ -289,17 +290,32 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                         onClick={() => navigate('/lobby')}
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: isCompact || isFloating ? 'center' : 'flex-start',
+                            alignItems: 'center',
+                            gap: isCompact || isFloating ? '0' : '10px',
                             cursor: 'pointer',
                             color: 'var(--text-main)',
                             fontWeight: 900,
                             letterSpacing: '1px',
-                            fontSize: isCompact || isFloating ? '0.75rem' : '1.15rem',
+                            fontSize: isCompact || isFloating ? '0.75rem' : '1.1rem',
                         }}
                     >
-                        <span>{isCompact || isFloating ? '⚡' : 'NEXUS CORE'}</span>
-                        {!isCompact && !isFloating && <span style={badgeStyle}>v0.1.8</span>}
+                        <img 
+                            src="/favicon.jpg" 
+                            alt="Logo" 
+                            style={{ 
+                                width: isCompact || isFloating ? '34px' : '28px', 
+                                height: isCompact || isFloating ? '34px' : '28px', 
+                                borderRadius: '8px', 
+                                objectFit: 'cover',
+                                boxShadow: '0 0 12px rgba(6,182,212,0.4)' 
+                            }} 
+                        />
+                        {!isCompact && !isFloating && (
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span>NEXUS CORE</span>
+                                <span style={badgeStyle}>v0.1.8</span>
+                            </div>
+                        )}
                     </div>
 
                     {!isFloating && (
