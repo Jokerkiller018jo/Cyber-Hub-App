@@ -138,22 +138,24 @@ const TAB_SECTIONS = {
 ───────────────────────────────────────────────────────── */
 export default function Settings({ user, onLogout }) {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('appearance');
-    const [activeSection, setActiveSection] = useState('docking');
+
+    // 1st: My Account, 2nd: Security, 3rd: Appearance, 4th: Notifications
+    const [activeTab, setActiveTab] = useState('account');
+    const [activeSection, setActiveSection] = useState('profile');
 
     // Guest detection
     const isGuest = !user?.email;
 
-    // My Account
+    // My Account state
     const [displayName, setDisplayName] = useState(user?.username || '');
     const [saveStatus, setSaveStatus] = useState('');
     const [saving, setSaving] = useState(false);
 
-    // Security
+    // Security state
     const [signingOut, setSigningOut] = useState(false);
     const [securityMsg, setSecurityMsg] = useState('');
 
-    // Appearance & Layout
+    // Appearance & Layout state
     const initialTheme = useMemo(() => loadTheme(), []);
     const [accentColor, setAccentColor] = useState(initialTheme.accent);
     const [customColor, setCustomColor] = useState(initialTheme.accent);
@@ -169,6 +171,26 @@ export default function Settings({ user, onLogout }) {
     const [cloudSyncing, setCloudSyncing] = useState(false);
     const [cloudMsg, setCloudMsg] = useState('');
 
+    // Notifications state
+    const [notifs, setNotifs] = useState(() => {
+        try {
+            const saved = localStorage.getItem('cyberhub_notifications');
+            if (saved) return JSON.parse(saved);
+        } catch (_) {}
+        return { security: true, messages: true, market: false, system: false };
+    });
+
+    // ── Snapshot of saved state for Unsaved Changes tracking ──
+    const [savedSnapshot, setSavedSnapshot] = useState(() => ({
+        accent: initialTheme.accent,
+        glitch: initialTheme.glitch,
+        glow: initialTheme.glow,
+        searchBarStyle: getSearchBarStyle(),
+        layoutStr: JSON.stringify(loadLayoutConfig()),
+        displayName: user?.username || '',
+        notifsStr: JSON.stringify({ security: true, messages: true, market: false, system: false })
+    }));
+
     // Load settings from Firestore on mount for logged-in users
     useEffect(() => {
         if (isGuest || !user?.uid) return;
@@ -183,73 +205,120 @@ export default function Settings({ user, onLogout }) {
                 setLayout(data.layoutConfig);
                 saveLayoutConfig(data.layoutConfig);
             }
+            // Update snapshot to match loaded cloud state
+            setSavedSnapshot({
+                accent: data.accent || initialTheme.accent,
+                glitch: data.glitch !== undefined ? data.glitch : initialTheme.glitch,
+                glow: data.glow !== undefined ? data.glow : initialTheme.glow,
+                searchBarStyle: data.searchBarStyle || getSearchBarStyle(),
+                layoutStr: JSON.stringify(data.layoutConfig || loadLayoutConfig()),
+                displayName: user?.username || '',
+                notifsStr: JSON.stringify(data.notifications || notifs)
+            });
         });
     }, [user?.uid]);
 
-    // Apply theme changes
+    // Live preview theme & layout
     useEffect(() => {
         setTheme({ accent: accentColor, glitch, glow });
     }, [accentColor, glitch, glow]);
 
-    // Apply layout changes
     const updateLayout = (updates) => {
         const next = { ...layout, ...updates };
         setLayout(next);
         saveLayoutConfig(next);
     };
 
-    // Save all settings to Firestore
-    const handleSaveToCloud = async () => {
-        if (isGuest || !user?.uid) return;
+    const handleToggleNotif = (key, val) => {
+        setNotifs(prev => ({ ...prev, [key]: val }));
+    };
+
+    // Calculate if user has modified anything since last save
+    const isDirty = useMemo(() => {
+        if (!savedSnapshot) return false;
+        return (
+            savedSnapshot.accent !== accentColor ||
+            savedSnapshot.glitch !== glitch ||
+            savedSnapshot.glow !== glow ||
+            savedSnapshot.searchBarStyle !== searchBarStyleVal ||
+            savedSnapshot.layoutStr !== JSON.stringify(layout) ||
+            savedSnapshot.displayName !== displayName ||
+            savedSnapshot.notifsStr !== JSON.stringify(notifs)
+        );
+    }, [savedSnapshot, accentColor, glitch, glow, searchBarStyleVal, layout, displayName, notifs]);
+
+    // Revert all unsaved changes
+    const handleReset = () => {
+        if (!savedSnapshot) return;
+        setAccentColor(savedSnapshot.accent);
+        setCustomColor(savedSnapshot.accent);
+        setGlitch(savedSnapshot.glitch);
+        setGlow(savedSnapshot.glow);
+        setTheme({ accent: savedSnapshot.accent, glitch: savedSnapshot.glitch, glow: savedSnapshot.glow });
+
+        setSearchBarStyleVal(savedSnapshot.searchBarStyle);
+        setSearchBarStyle(savedSnapshot.searchBarStyle);
+
+        const restoredLayout = JSON.parse(savedSnapshot.layoutStr);
+        setLayout(restoredLayout);
+        saveLayoutConfig(restoredLayout);
+
+        setDisplayName(savedSnapshot.displayName);
+        setNotifs(JSON.parse(savedSnapshot.notifsStr));
+    };
+
+    // Save all changes (Local & Cloud)
+    const handleSaveAll = async () => {
+        setSaving(true);
         setCloudSyncing(true);
         setCloudMsg('');
-        const result = await saveUserSettings(user.uid, {
+
+        // 1. Save display name if changed
+        if (displayName !== user?.username) {
+            try {
+                const { updateProfile } = await import('firebase/auth');
+                if (auth.currentUser) {
+                    await updateProfile(auth.currentUser, { displayName });
+                }
+            } catch (_) {}
+        }
+
+        // 2. Save local storage
+        setTheme({ accent: accentColor, glitch, glow });
+        setSearchBarStyle(searchBarStyleVal);
+        saveLayoutConfig(layout);
+        try {
+            localStorage.setItem('cyberhub_notifications', JSON.stringify(notifs));
+        } catch (_) {}
+
+        // 3. Save to Firestore if logged in
+        let result = { ok: true };
+        if (!isGuest && user?.uid) {
+            result = await saveUserSettings(user.uid, {
+                accent: accentColor,
+                glitch,
+                glow,
+                searchBarStyle: searchBarStyleVal,
+                notifications: notifs,
+                layoutConfig: layout,
+            });
+        }
+
+        // 4. Update saved snapshot so floating bar hides
+        setSavedSnapshot({
             accent: accentColor,
             glitch,
             glow,
             searchBarStyle: searchBarStyleVal,
-            notifications: notifs,
-            layoutConfig: layout,
+            layoutStr: JSON.stringify(layout),
+            displayName,
+            notifsStr: JSON.stringify(notifs)
         });
+
         setCloudMsg(result.ok ? 'saved' : (result.error || 'error'));
+        setSaving(false);
         setCloudSyncing(false);
-        setTimeout(() => setCloudMsg(''), 6000);
-    };
-
-    // Notifications
-    const [notifs, setNotifs] = useState(() => {
-        try {
-            const saved = localStorage.getItem('cyberhub_notifications');
-            if (saved) return JSON.parse(saved);
-        } catch (_) {}
-        return { security: true, messages: true, market: false, system: false };
-    });
-
-    const handleToggleNotif = (key, val) => {
-        setNotifs(prev => {
-            const next = { ...prev, [key]: val };
-            try {
-                localStorage.setItem('cyberhub_notifications', JSON.stringify(next));
-            } catch (_) {}
-            return next;
-        });
-    };
-
-    const handleSaveName = async () => {
-        setSaving(true);
-        setSaveStatus('');
-        try {
-            const { updateProfile } = await import('firebase/auth');
-            if (auth.currentUser) {
-                await updateProfile(auth.currentUser, { displayName });
-                setSaveStatus('saved');
-            }
-        } catch (err) {
-            setSaveStatus('error');
-        } finally {
-            setSaving(false);
-            setTimeout(() => setSaveStatus(''), 3000);
-        }
+        setTimeout(() => setCloudMsg(''), 5000);
     };
 
     const handleSignOutAll = async () => {
@@ -290,7 +359,6 @@ export default function Settings({ user, onLogout }) {
         setDragNavId(null);
         setDragOverNavId(null);
     };
-
     const onTabDragEnd = () => {
         setDragNavId(null);
         setDragOverNavId(null);
@@ -308,10 +376,11 @@ export default function Settings({ user, onLogout }) {
         updateLayout({ navOrder: currentOrder });
     };
 
+    // ── STRICT TAB ORDERING: My Account -> Security -> Appearance -> Notifications ──
     const tabs = [
-        { id: 'appearance',    icon: 'appearance', label: 'Appearance & Layout' },
         { id: 'account',       icon: 'user',       label: 'My Account' },
         { id: 'security',      icon: 'shield',     label: 'Security' },
+        { id: 'appearance',    icon: 'appearance', label: 'Appearance' },
         { id: 'notifications', icon: 'bell',       label: 'Notifications' },
     ];
 
@@ -319,7 +388,197 @@ export default function Settings({ user, onLogout }) {
     const renderTab = () => {
         switch (activeTab) {
 
-            // ── APPEARANCE & MODULAR LAYOUT (Arc / Zen Studio) ──
+            // ── 1. MY ACCOUNT ──
+            case 'account': return (
+                <div className="animate-fade">
+                    <PageHeading>My Account</PageHeading>
+
+                    <SectionCard id="profile">
+                        <SectionTitle icon="user">Profile</SectionTitle>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px' }}>
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="avatar" style={{
+                                        width: '72px', height: '72px', borderRadius: '50%',
+                                        border: '2px solid var(--accent-primary)',
+                                        objectFit: 'cover',
+                                        boxShadow: '0 0 20px rgba(6,182,212,0.35)'
+                                    }} />
+                                ) : (
+                                    <div style={{
+                                        width: '72px', height: '72px', borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(0,212,255,0.2))',
+                                        border: '2px solid var(--accent-primary)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1.8rem',
+                                        boxShadow: '0 0 20px rgba(6,182,212,0.3)'
+                                    }}>👤</div>
+                                )}
+                                <div style={{
+                                    position: 'absolute', bottom: '3px', right: '3px',
+                                    width: '14px', height: '14px', borderRadius: '50%',
+                                    background: '#00ff88',
+                                    border: '2px solid var(--bg-base)',
+                                    boxShadow: '0 0 8px rgba(0,255,136,0.6)'
+                                }} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                                    {displayName || user?.username || 'Operative'}
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
+                                <div style={{
+                                    marginTop: '8px', fontSize: '0.7rem', fontWeight: '600',
+                                    letterSpacing: '0.08em', color: '#00ff88',
+                                    display: 'flex', alignItems: 'center', gap: '5px'
+                                }}>
+                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 6px #00ff88' }} />
+                                    ACTIVE NODE
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <FieldLabel>Display Name</FieldLabel>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={displayName}
+                                onChange={e => setDisplayName(e.target.value)}
+                                placeholder="Your operative codename"
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 16px',
+                                    background: 'rgba(0,0,0,0.3)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-small)',
+                                    color: 'var(--text-main)',
+                                    fontSize: '0.95rem',
+                                    outline: 'none',
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <FieldLabel>Email Address</FieldLabel>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    value={user?.email || ''}
+                                    readOnly
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: 'var(--radius-small)',
+                                        color: 'var(--text-main)',
+                                        opacity: 0.5,
+                                        cursor: 'not-allowed',
+                                        paddingRight: '90px'
+                                    }}
+                                />
+                                <span style={{
+                                    position: 'absolute', right: '12px', top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    fontSize: '0.65rem', fontWeight: '700', letterSpacing: '0.1em',
+                                    color: 'var(--text-muted)',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    padding: '3px 8px', borderRadius: '6px'
+                                }}>READ ONLY</span>
+                            </div>
+                        </div>
+                    </SectionCard>
+                </div>
+            );
+
+            // ── 2. SECURITY ──
+            case 'security': return (
+                <div className="animate-fade">
+                    <PageHeading>Security</PageHeading>
+
+                    <SectionCard id="connected-accounts">
+                        <SectionTitle icon="google">Connected Accounts</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: '1.6' }}>
+                            Your Cyber-Hub identity is authenticated through the following provider.
+                        </p>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '16px 18px',
+                            borderRadius: '12px',
+                            background: 'rgba(66,133,244,0.07)',
+                            border: '1px solid rgba(66,133,244,0.2)'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                <div style={{
+                                    width: '40px', height: '40px', borderRadius: '10px',
+                                    background: 'rgba(66,133,244,0.15)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    <Icon name="google" size={20} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '3px' }}>Google</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
+                                </div>
+                            </div>
+                            <div style={{
+                                fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em',
+                                color: user?.email ? '#00ff88' : '#ff4444',
+                                background: user?.email ? 'rgba(0,255,136,0.08)' : 'rgba(255,68,68,0.08)',
+                                border: user?.email ? '1px solid rgba(0,255,136,0.25)' : '1px solid rgba(255,68,68,0.25)',
+                                padding: '4px 12px', borderRadius: '20px',
+                                display: 'flex', alignItems: 'center', gap: '6px'
+                            }}>
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: user?.email ? '#00ff88' : '#ff4444', boxShadow: user?.email ? '0 0 6px #00ff88' : '0 0 6px #ff4444' }} />
+                                {user?.email ? 'VERIFIED' : 'NOT CONNECTED'}
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    <SectionCard id="sessions">
+                        <SectionTitle icon="shield">Session Management</SectionTitle>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '22px', lineHeight: '1.6' }}>
+                            Terminate all active sessions for your account. You will be redirected to the login screen.
+                        </p>
+
+                        {securityMsg && (
+                            <div style={{
+                                background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)',
+                                color: '#ff4444', padding: '10px 14px', borderRadius: '8px',
+                                fontSize: '0.84rem', marginBottom: '16px'
+                            }}>
+                                {securityMsg}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleSignOutAll}
+                            disabled={signingOut}
+                            style={{
+                                background: 'rgba(255,68,68,0.07)',
+                                border: '1px solid rgba(255,68,68,0.4)',
+                                color: '#ff6666',
+                                padding: '11px 22px',
+                                borderRadius: '10px',
+                                fontWeight: '700',
+                                fontSize: '0.8rem',
+                                letterSpacing: '0.1em',
+                                cursor: signingOut ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.2s ease',
+                                display: 'flex', alignItems: 'center', gap: '8px'
+                            }}
+                        >
+                            <Icon name="close" size={16} />
+                            {signingOut ? 'DISCONNECTING...' : 'SIGN OUT ALL DEVICES'}
+                        </button>
+                    </SectionCard>
+                </div>
+            );
+
+            // ── 3. APPEARANCE (Modular Arc & Zen Customization) ──
             case 'appearance': return (
                 <div className="animate-fade">
                     <PageHeading>Appearance & Modular Layout</PageHeading>
@@ -540,38 +799,6 @@ export default function Settings({ user, onLogout }) {
                                 </div>
                                 <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Custom</span>
                             </div>
-                        </div>
-
-                        {/* Save to cloud button */}
-                        <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {isGuest ? (
-                                <div style={{
-                                    fontSize: '0.8rem', color: '#f59e0b',
-                                    background: 'rgba(245,158,11,0.08)',
-                                    border: '1px solid rgba(245,158,11,0.25)',
-                                    borderRadius: '8px', padding: '8px 14px',
-                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                }}>
-                                    ⚠️ Changes are saved locally only. Sign in to sync across devices.
-                                </div>
-                            ) : (
-                                <>
-                                    <button
-                                        className="cyber-button"
-                                        onClick={handleSaveToCloud}
-                                        disabled={cloudSyncing}
-                                        style={{ fontSize: '0.78rem', padding: '9px 18px' }}
-                                    >
-                                        {cloudSyncing ? 'SYNCING...' : '☁ SAVE ALL TO CLOUD'}
-                                    </button>
-                                    {cloudMsg === 'saved' && <span style={{ fontSize: '0.82rem', color: '#00ff88' }}>✓ Synced layout & theme to your account</span>}
-                                    {cloudMsg && cloudMsg !== 'saved' && (
-                                        <span style={{ fontSize: '0.78rem', color: '#ff4444', maxWidth: '300px', lineHeight: '1.4' }}>
-                                            ✕ {cloudMsg}
-                                        </span>
-                                    )}
-                                </>
-                            )}
                         </div>
                     </SectionCard>
 
@@ -796,194 +1023,7 @@ export default function Settings({ user, onLogout }) {
                 </div>
             );
 
-            // ── MY ACCOUNT ──
-            case 'account': return (
-                <div className="animate-fade">
-                    <PageHeading>My Account</PageHeading>
-
-                    <SectionCard id="profile">
-                        <SectionTitle icon="user">Profile</SectionTitle>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px' }}>
-                            <div style={{ position: 'relative', flexShrink: 0 }}>
-                                {user?.avatar ? (
-                                    <img src={user.avatar} alt="avatar" style={{
-                                        width: '72px', height: '72px', borderRadius: '50%',
-                                        border: '2px solid var(--accent-primary)',
-                                        objectFit: 'cover',
-                                        boxShadow: '0 0 20px rgba(6,182,212,0.35)'
-                                    }} />
-                                ) : (
-                                    <div style={{
-                                        width: '72px', height: '72px', borderRadius: '50%',
-                                        background: 'linear-gradient(135deg, rgba(6,182,212,0.3), rgba(0,212,255,0.2))',
-                                        border: '2px solid var(--accent-primary)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '1.8rem',
-                                        boxShadow: '0 0 20px rgba(6,182,212,0.3)'
-                                    }}>👤</div>
-                                )}
-                                <div style={{
-                                    position: 'absolute', bottom: '3px', right: '3px',
-                                    width: '14px', height: '14px', borderRadius: '50%',
-                                    background: '#00ff88',
-                                    border: '2px solid var(--bg-base)',
-                                    boxShadow: '0 0 8px rgba(0,255,136,0.6)'
-                                }} />
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '4px' }}>
-                                    {user?.username || 'Operative'}
-                                </div>
-                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
-                                <div style={{
-                                    marginTop: '8px', fontSize: '0.7rem', fontWeight: '600',
-                                    letterSpacing: '0.08em', color: '#00ff88',
-                                    display: 'flex', alignItems: 'center', gap: '5px'
-                                }}>
-                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00ff88', boxShadow: '0 0 6px #00ff88' }} />
-                                    ACTIVE NODE
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '20px' }}>
-                            <FieldLabel>Display Name</FieldLabel>
-                            <input
-                                type="text"
-                                className="input-field"
-                                value={displayName}
-                                onChange={e => { setDisplayName(e.target.value); setSaveStatus(''); }}
-                                placeholder="Your operative codename"
-                                style={{ fontSize: '0.95rem' }}
-                            />
-                        </div>
-
-                        <div style={{ marginBottom: '24px' }}>
-                            <FieldLabel>Email Address</FieldLabel>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    type="email"
-                                    className="input-field"
-                                    value={user?.email || ''}
-                                    readOnly
-                                    style={{ opacity: 0.5, cursor: 'not-allowed', paddingRight: '90px' }}
-                                />
-                                <span style={{
-                                    position: 'absolute', right: '12px', top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    fontSize: '0.65rem', fontWeight: '700', letterSpacing: '0.1em',
-                                    color: 'var(--text-muted)',
-                                    background: 'rgba(255,255,255,0.06)',
-                                    padding: '3px 8px', borderRadius: '6px'
-                                }}>READ ONLY</span>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <button className="cyber-button" onClick={handleSaveName} disabled={saving}>
-                                {saving ? 'SAVING...' : 'SAVE CHANGES'}
-                            </button>
-                            {saveStatus === 'saved' && (
-                                <span style={{ fontSize: '0.82rem', color: '#00ff88', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    ✓ Saved successfully
-                                </span>
-                            )}
-                            {saveStatus === 'error' && (
-                                <span style={{ fontSize: '0.82rem', color: '#ff4444' }}>
-                                    ✕ Failed to save
-                                </span>
-                            )}
-                        </div>
-                    </SectionCard>
-                </div>
-            );
-
-            // ── SECURITY ──
-            case 'security': return (
-                <div className="animate-fade">
-                    <PageHeading>Security</PageHeading>
-
-                    <SectionCard id="connected-accounts">
-                        <SectionTitle icon="google">Connected Accounts</SectionTitle>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '18px', lineHeight: '1.6' }}>
-                            Your Cyber-Hub identity is authenticated through the following provider.
-                        </p>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '16px 18px',
-                            borderRadius: '12px',
-                            background: 'rgba(66,133,244,0.07)',
-                            border: '1px solid rgba(66,133,244,0.2)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                <div style={{
-                                    width: '40px', height: '40px', borderRadius: '10px',
-                                    background: 'rgba(66,133,244,0.15)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <Icon name="google" size={20} />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '3px' }}>Google</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{user?.email || '—'}</div>
-                                </div>
-                            </div>
-                            <div style={{
-                                fontSize: '0.7rem', fontWeight: '700', letterSpacing: '0.1em',
-                                color: user?.email ? '#00ff88' : '#ff4444',
-                                background: user?.email ? 'rgba(0,255,136,0.08)' : 'rgba(255,68,68,0.08)',
-                                border: user?.email ? '1px solid rgba(0,255,136,0.25)' : '1px solid rgba(255,68,68,0.25)',
-                                padding: '4px 12px', borderRadius: '20px',
-                                display: 'flex', alignItems: 'center', gap: '6px'
-                            }}>
-                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: user?.email ? '#00ff88' : '#ff4444', boxShadow: user?.email ? '0 0 6px #00ff88' : '0 0 6px #ff4444' }} />
-                                {user?.email ? 'VERIFIED' : 'NOT CONNECTED'}
-                            </div>
-                        </div>
-                    </SectionCard>
-
-                    <SectionCard id="sessions">
-                        <SectionTitle icon="shield">Session Management</SectionTitle>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '22px', lineHeight: '1.6' }}>
-                            Terminate all active sessions for your account. You will be redirected to the login screen.
-                        </p>
-
-                        {securityMsg && (
-                            <div style={{
-                                background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.25)',
-                                color: '#ff4444', padding: '10px 14px', borderRadius: '8px',
-                                fontSize: '0.84rem', marginBottom: '16px'
-                            }}>
-                                {securityMsg}
-                            </div>
-                        )}
-
-                        <button
-                            onClick={handleSignOutAll}
-                            disabled={signingOut}
-                            style={{
-                                background: 'rgba(255,68,68,0.07)',
-                                border: '1px solid rgba(255,68,68,0.4)',
-                                color: '#ff6666',
-                                padding: '11px 22px',
-                                borderRadius: '10px',
-                                fontWeight: '700',
-                                fontSize: '0.8rem',
-                                letterSpacing: '0.1em',
-                                cursor: signingOut ? 'not-allowed' : 'pointer',
-                                transition: 'all 0.2s ease',
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                            }}
-                        >
-                            <Icon name="close" size={16} />
-                            {signingOut ? 'DISCONNECTING...' : 'SIGN OUT ALL DEVICES'}
-                        </button>
-                    </SectionCard>
-                </div>
-            );
-
-            // ── NOTIFICATIONS ──
+            // ── 4. NOTIFICATIONS ──
             case 'notifications': return (
                 <div className="animate-fade">
                     <PageHeading>Notifications</PageHeading>
@@ -1021,7 +1061,7 @@ export default function Settings({ user, onLogout }) {
 
     /* ── Layout ─────────────────────────────────────────────── */
     return (
-        <div className="settings-layout" style={{ display: 'flex', width: '100%', height: '100%', overflow: 'hidden' }}>
+        <div className="settings-layout" style={{ display: 'flex', width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
 
             {/* ── Left Settings Sub-Sidebar (Discord-Style with Scroll Spy) ── */}
             <div className="settings-sidebar" style={{
@@ -1058,7 +1098,7 @@ export default function Settings({ user, onLogout }) {
                     )}
                     <div style={{ minWidth: 0 }}>
                         <div style={{ fontWeight: '700', fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {user?.username || 'Operative'}
+                            {displayName || user?.username || 'Operative'}
                         </div>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {user?.email || 'Guest Session'}
@@ -1071,7 +1111,7 @@ export default function Settings({ user, onLogout }) {
                     fontSize: '0.68rem', fontWeight: '700', letterSpacing: '0.15em',
                     color: 'rgba(136,136,153,0.6)', padding: '0 12px', marginBottom: '8px'
                 }}>
-                    SETTINGS & STUDIO
+                    USER SETTINGS
                 </div>
 
                 {/* Main Tabs List */}
@@ -1212,7 +1252,7 @@ export default function Settings({ user, onLogout }) {
                     flex: 1,
                     height: '100%',
                     overflowY: 'auto',
-                    padding: '36px 48px',
+                    padding: '36px 48px 100px 48px',
                     position: 'relative',
                 }}
                 onScroll={(e) => {
@@ -1286,6 +1326,76 @@ export default function Settings({ user, onLogout }) {
                 {/* Tab content wrapper */}
                 <div style={{ maxWidth: '680px' }}>
                     {renderTab()}
+                </div>
+            </div>
+
+            {/* ── Discord-Style Floating Unsaved Changes Bottom Bar ── */}
+            <div style={{
+                position: 'absolute',
+                bottom: isDirty ? '24px' : '-80px',
+                left: 'calc(260px + (100% - 260px) / 2)',
+                transform: 'translateX(-50%)',
+                width: 'calc(100% - 320px)',
+                maxWidth: '680px',
+                background: '#111214',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0,0,0,0.6)',
+                zIndex: 1000,
+                transition: 'bottom 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease',
+                opacity: isDirty ? 1 : 0,
+                pointerEvents: isDirty ? 'auto' : 'none',
+            }}>
+                <span style={{ color: '#f2f3f5', fontWeight: 600, fontSize: '0.92rem', letterSpacing: '0.01em' }}>
+                    Careful — you have unsaved changes!
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <button
+                        onClick={handleReset}
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#949cf7',
+                            fontWeight: 600,
+                            fontSize: '0.88rem',
+                            cursor: 'pointer',
+                            padding: '6px 10px',
+                            transition: 'color 0.15s ease',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                        onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                    >
+                        Reset
+                    </button>
+
+                    <button
+                        onClick={handleSaveAll}
+                        disabled={saving || cloudSyncing}
+                        style={{
+                            background: '#23a55a',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '8px 22px',
+                            fontWeight: 700,
+                            fontSize: '0.88rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'background 0.15s ease, transform 0.1s',
+                            boxShadow: '0 2px 10px rgba(35, 165, 90, 0.4)'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#1da050'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#23a55a'}
+                    >
+                        {saving || cloudSyncing ? 'Saving...' : 'Save'}
+                    </button>
                 </div>
             </div>
         </div>
