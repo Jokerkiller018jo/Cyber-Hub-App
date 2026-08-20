@@ -9,6 +9,7 @@ import Lobby from './pages/Lobby';
 import MarketDashboard from './pages/MarketDashboard';
 import CurrencyCenter from './pages/CurrencyCenter';
 import Symbols from './pages/Vault';
+import Extensions from './pages/Extensions';
 import Settings from './pages/Settings';
 import LoadingScreen from './components/ui/LoadingScreen';
 
@@ -57,6 +58,7 @@ export default function App() {
                         <Route path="/market" element={<MarketDashboard />} />
                         <Route path="/currencies" element={<CurrencyCenter />} />
                         <Route path="/symbols" element={<Symbols user={user} />} />
+                        <Route path="/extensions" element={<Extensions user={user} />} />
                         <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
                         <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />
                     </Route>

@@ -7,10 +7,11 @@
 const STORAGE_KEY = 'cyberhub_layout_config';
 
 export const DEFAULT_NAV_ITEMS = [
-    { id: 'lobby',       path: '/lobby',       name: 'LOBBY',      icon: 'home',     desc: 'Main overview & modules' },
-    { id: 'market',      path: '/market',      name: 'MARKET',     icon: 'chart',    desc: 'Live financial tracker' },
-    { id: 'currencies',  path: '/currencies',  name: 'CURRENCIES', icon: 'bank',     desc: 'Fiat & Forex converter' },
-    { id: 'symbols',     path: '/symbols',     name: 'VAULT',      icon: 'database', desc: 'Unicode symbols & tools' },
+    { id: 'lobby',       path: '/lobby',       name: 'LOBBY',      icon: 'home',      desc: 'Main overview & modules' },
+    { id: 'market',      path: '/market',      name: 'MARKET',     icon: 'chart',     desc: 'Live financial tracker' },
+    { id: 'currencies',  path: '/currencies',  name: 'CURRENCIES', icon: 'bank',      desc: 'Fiat & Forex converter' },
+    { id: 'symbols',     path: '/symbols',     name: 'VAULT',      icon: 'database',  desc: 'Unicode symbols & tools' },
+    { id: 'extensions',  path: '/extensions',  name: 'EXTENSIONS', icon: 'extension', desc: 'Cyber addons & modular tools' },
 ];
 
 export const BACKGROUND_CATEGORIES = [
@@ -54,7 +55,7 @@ export const DEFAULT_LAYOUT = {
     sidebarPosition: 'left',       // 'left' | 'right' | 'top' | 'floating'
     sidebarMode: 'expanded',       // 'expanded' | 'compact' | 'autohide'
     searchBarPlacement: 'sidebar', // 'sidebar' | 'header' | 'command-bar'
-    navOrder: ['lobby', 'market', 'currencies', 'symbols'],
+    navOrder: ['lobby', 'market', 'currencies', 'symbols', 'extensions'],
     glassLevel: 'standard',        // 'subtle' | 'standard' | 'heavy' | 'solid'
     borderStyle: 'cyber-chamfer',  // 'rounded' | 'cyber-chamfer' | 'sharp' | 'pill'
     uiDensity: 'balanced',         // 'compact' | 'balanced' | 'spacious'
