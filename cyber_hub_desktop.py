@@ -34,7 +34,6 @@ class CyberWebEnginePage(QWebEnginePage):
         super().__init__(profile, parent)
 
     def featurePermissionRequested(self, securityOrigin, feature):
-        # Auto-grant permissions for local/media features
         self.setFeaturePermission(
             securityOrigin, feature, QWebEnginePage.PermissionGrantedByUser
         )
@@ -55,20 +54,26 @@ class CyberHubWindow(QMainWindow):
 
         # Window Dragging & Resizing State
         self.drag_position = QPoint()
-        self.resizing = False
-        self.resize_edge = None
-        self.border_width = 8
         self.is_maximized_custom = False
         self.normal_geometry = self.geometry()
         self.zoom_factor = 1.0
 
-        # Resolve asset paths
+        # Resolve asset paths (supports .png, .jpg, .svg)
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(base_dir, "public", "favicon.jpg")
-        if not os.path.exists(icon_path):
-            icon_path = os.path.join(base_dir, "public", "icon.jpg")
+        possible_icons = [
+            os.path.join(base_dir, "public", "favicon.png"),
+            os.path.join(base_dir, "public", "icon.png"),
+            os.path.join(base_dir, "public", "logo.png"),
+            os.path.join(base_dir, "public", "favicon.jpg"),
+            os.path.join(base_dir, "public", "icon.jpg"),
+        ]
+        icon_path = None
+        for p in possible_icons:
+            if os.path.exists(p):
+                icon_path = p
+                break
 
-        if os.path.exists(icon_path):
+        if icon_path:
             self.setWindowIcon(QIcon(icon_path))
             self.app_icon_pixmap = QPixmap(icon_path)
         else:
@@ -104,19 +109,7 @@ class CyberHubWindow(QMainWindow):
         shell_layout.setContentsMargins(0, 0, 0, 0)
         shell_layout.setSpacing(0)
 
-        # ── 1. CUSTOM TOP EXPOSED EDGE ROUNDED BAR ──
-        self.top_bar = self.create_top_bar()
-        shell_layout.addWidget(self.top_bar)
-
-        # ── Loading Progress Bar ──
-        self.progress_bar = QProgressBar(self.shell_frame)
-        self.progress_bar.setFixedHeight(2)
-        self.progress_bar.setTextVisible(False)
-        self.progress_bar.setObjectName("CyberProgressBar")
-        self.progress_bar.hide()
-        shell_layout.addWidget(self.progress_bar)
-
-        # ── 2. MAIN CHROMIUM WEBVIEW ──
+        # ── 1. MAIN CHROMIUM WEBVIEW INSTANTIATION ──
         self.webview = QWebEngineView(self.shell_frame)
         self.webview.setObjectName("CyberWebView")
 
@@ -143,13 +136,33 @@ class CyberHubWindow(QMainWindow):
         self.webview.urlChanged.connect(self.on_url_changed)
         self.webview.titleChanged.connect(self.on_title_changed)
 
-        # Load live Vercel domain
-        self.webview.load(QUrl(VERCEL_HOST_URL))
+        # ── 2. CUSTOM TOP EXPOSED EDGE ROUNDED BAR ──
+        self.top_bar = self.create_top_bar()
+        shell_layout.addWidget(self.top_bar)
+
+        # ── Loading Progress Bar ──
+        self.progress_bar = QProgressBar(self.shell_frame)
+        self.progress_bar.setFixedHeight(2)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setObjectName("CyberProgressBar")
+        self.progress_bar.hide()
+        shell_layout.addWidget(self.progress_bar)
+
+        # ── 3. ADD WEBVIEW TO LAYOUT ──
         shell_layout.addWidget(self.webview, 1)
 
-        # ── 3. CUSTOM BOTTOM EXPOSED EDGE ROUNDED BAR ──
+        # ── 4. CUSTOM BOTTOM EXPOSED EDGE ROUNDED BAR ──
         self.bottom_bar = self.create_bottom_bar()
         shell_layout.addWidget(self.bottom_bar)
+
+        # Connect Top Bar buttons to WebEngine
+        self.btn_back.clicked.connect(self.webview.back)
+        self.btn_forward.clicked.connect(self.webview.forward)
+        self.btn_reload.clicked.connect(self.handle_reload_toggle)
+        self.btn_home.clicked.connect(lambda: self.webview.load(QUrl(VERCEL_HOST_URL)))
+
+        # Load live Vercel domain
+        self.webview.load(QUrl(VERCEL_HOST_URL))
 
         # Apply Modern Cyberpunk QSS Styling
         self.apply_styles()
@@ -209,28 +222,24 @@ class CyberHubWindow(QMainWindow):
         self.btn_back.setObjectName("NavBtn")
         self.btn_back.setToolTip("Back (Alt+Left)")
         self.btn_back.setFixedSize(30, 30)
-        self.btn_back.clicked.connect(self.webview.back)
         nav_layout.addWidget(self.btn_back)
 
         self.btn_forward = QPushButton("▶", bar)
         self.btn_forward.setObjectName("NavBtn")
         self.btn_forward.setToolTip("Forward (Alt+Right)")
         self.btn_forward.setFixedSize(30, 30)
-        self.btn_forward.clicked.connect(self.webview.forward)
         nav_layout.addWidget(self.btn_forward)
 
         self.btn_reload = QPushButton("🔄", bar)
         self.btn_reload.setObjectName("NavBtn")
         self.btn_reload.setToolTip("Reload (F5 / Ctrl+R)")
         self.btn_reload.setFixedSize(30, 30)
-        self.btn_reload.clicked.connect(self.webview.reload)
         nav_layout.addWidget(self.btn_reload)
 
         self.btn_home = QPushButton("🏠", bar)
         self.btn_home.setObjectName("NavBtn")
         self.btn_home.setToolTip("Home Lobby")
         self.btn_home.setFixedSize(30, 30)
-        self.btn_home.clicked.connect(lambda: self.webview.load(QUrl(VERCEL_HOST_URL)))
         nav_layout.addWidget(self.btn_home)
 
         # Capsule URL Pill
@@ -372,6 +381,14 @@ class CyberHubWindow(QMainWindow):
         self.btn_back.setEnabled(self.webview.history().canGoBack())
         self.btn_forward.setEnabled(self.webview.history().canGoForward())
 
+    def handle_reload_toggle(self):
+        if self.btn_reload.text() == "✕":
+            self.webview.stop()
+            self.progress_bar.hide()
+            self.btn_reload.setText("🔄")
+        else:
+            self.webview.reload()
+
     def on_url_changed(self, url):
         url_str = url.toString()
         display = url_str.replace("https://", "").replace("http://", "")
@@ -425,7 +442,6 @@ class CyberHubWindow(QMainWindow):
     # ── Frameless Window Dragging & Resizing ──
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            # Check if clicked inside top bar for window dragging
             top_bar_rect = self.top_bar.geometry()
             top_bar_rect.moveTopLeft(self.shell_frame.mapTo(self, top_bar_rect.topLeft()))
             if top_bar_rect.contains(event.position().toPoint()):
