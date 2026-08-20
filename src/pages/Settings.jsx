@@ -291,6 +291,12 @@ export default function Settings({ user, onLogout }) {
         setDragOverNavId(null);
     };
 
+    const onTabDragEnd = () => {
+        setDragNavId(null);
+        setDragOverNavId(null);
+    };
+    const handleDragEnd = onTabDragEnd;
+
     const moveTab = (id, direction) => {
         const currentOrder = [...(layout.navOrder || DEFAULT_NAV_ITEMS.map(i => i.id))];
         const idx = currentOrder.indexOf(id);
