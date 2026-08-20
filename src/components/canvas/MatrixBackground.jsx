@@ -1,10 +1,26 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { loadLayoutConfig } from '../../services/layoutConfig';
 
 export default function MatrixBackground() {
     const canvasRef = useRef(null);
+    const [layout, setLayout] = useState(() => loadLayoutConfig());
+
+    useEffect(() => {
+        const handleUpdate = () => setLayout(loadLayoutConfig());
+        window.addEventListener('cyberhub_layout_change', handleUpdate);
+        window.addEventListener('storage', handleUpdate);
+        return () => {
+            window.removeEventListener('cyberhub_layout_change', handleUpdate);
+            window.removeEventListener('storage', handleUpdate);
+        };
+    }, []);
+
+    const matrixSpeed = layout.matrixBackground?.speed || 50;
+    const matrixOpacity = layout.matrixBackground?.opacity ?? 0.8;
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         
         let width, height;
@@ -18,17 +34,13 @@ export default function MatrixBackground() {
         // Characters to use for the falling effect
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()_+=-{}[]|;:<>?,./';
         const fontSize = 16;
-        let columns = width / fontSize;
-        const drops = Array(Math.floor(columns)).fill(1);
-
-        let animationFrameId;
+        const columns = Math.floor(width / fontSize);
+        const drops = Array(columns).fill(1);
 
         const drawMatrix = () => {
             const computedStyle = getComputedStyle(document.documentElement);
             const rawAccent = computedStyle.getPropertyValue('--accent-primary').trim() || '#06b6d4';
             
-            // Use a slight fade of the actual background color rather than pure black
-            // We use a fallback if the variable isn't parsed perfectly, but usually we just use black with low opacity
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, width, height);
 
@@ -53,13 +65,13 @@ export default function MatrixBackground() {
             ctx.shadowBlur = 0;
         };
 
-        const intervalId = setInterval(drawMatrix, 50);
+        const intervalId = setInterval(drawMatrix, matrixSpeed);
 
         return () => {
             window.removeEventListener('resize', resize);
             clearInterval(intervalId);
         };
-    }, []);
+    }, [matrixSpeed]);
 
     return (
         <canvas 
@@ -72,7 +84,8 @@ export default function MatrixBackground() {
                 height: '100vh',
                 zIndex: 0,
                 pointerEvents: 'none',
-                opacity: 0.8
+                opacity: matrixOpacity,
+                transition: 'opacity 0.3s ease',
             }}
         />
     );

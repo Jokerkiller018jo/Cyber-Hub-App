@@ -12,10 +12,10 @@ export default function Lobby() {
     }, []);
 
     const navTabs = [
-        { label: 'Market',     path: '/workspace',     icon: 'trending-up', color: '#de3806f5' },
-        { label: 'Currencies', path: '/workspace', icon: 'dollar',       color: '#10e059' },
-        { label: 'Vault',      path: '/workspace',    icon: 'database',     color: '#f59e0b' },
-        { label: 'Settings',   path: '/workspace',   icon: 'settings',     color: '#94a3b8' },
+        { label: 'Market',     path: '/market',     icon: 'trending-up', color: '#de3806f5' },
+        { label: 'Currencies', path: '/currencies', icon: 'dollar',       color: '#10e059' },
+        { label: 'Vault',      path: '/symbols',    icon: 'database',     color: '#f59e0b' },
+        { label: 'Settings',   path: '/settings',   icon: 'settings',     color: '#94a3b8' },
     ];
 
     const infoCards = [

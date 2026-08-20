@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
-import Workspace from './components/layout/Workspace';
+import AppLayout from './components/layout/AppLayout';
 import { observeAuth } from './services/auth-handler';
 
 // Pages
 import Lobby from './pages/Lobby';
-
 import MarketDashboard from './pages/MarketDashboard';
 import CurrencyCenter from './pages/CurrencyCenter';
 import Symbols from './pages/Vault';
@@ -14,7 +13,6 @@ import Settings from './pages/Settings';
 import LoadingScreen from './components/ui/LoadingScreen';
 
 function Messages({ user }) {
-    // Phone connection requirement removed
     return (
         <div style={{ display: 'flex', height: '100%', width: '100%', background: 'var(--bg-base)', color: 'var(--text-main)', borderRadius: 'var(--radius-large)', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
             {/* Sidebar */}
@@ -104,10 +102,18 @@ export default function App() {
                 />
 
                 {user ? (
-                    <>
+                    <Route element={<AppLayout user={user} onLogout={handleLogout} />}>
+                        <Route path="/" element={<Navigate to="/lobby" />} />
+                        <Route path="/nexus" element={<Navigate to="/lobby" />} />
+                        <Route path="/AIChat" element={<Navigate to="/lobby" />} />
                         <Route path="/lobby" element={<Lobby />} />
-                        <Route path="/*" element={<Workspace user={user} onLogout={handleLogout} />} />
-                    </>
+                        <Route path="/chat" element={<Messages user={user} />} />
+                        <Route path="/market" element={<MarketDashboard />} />
+                        <Route path="/currencies" element={<CurrencyCenter />} />
+                        <Route path="/symbols" element={<Symbols user={user} />} />
+                        <Route path="/settings" element={<Settings user={user} onLogout={handleLogout} />} />
+                        <Route path="*" element={<div style={{ color: 'var(--text-muted)', padding: '20px' }}>Page Not Found</div>} />
+                    </Route>
                 ) : (
                     <Route path="*" element={<Navigate to="/login" />} />
                 )}

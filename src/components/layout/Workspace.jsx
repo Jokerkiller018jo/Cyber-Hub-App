@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Model, Actions, TabNode } from 'flexlayout-react';
 import 'flexlayout-react/style/dark.css'; // use dark theme
 import Sidebar from './Sidebar';
-import MatrixBackground from '../canvas/MatrixBackground';
+import MatrixBackground from '../../canvas/MatrixBackground';
 
 // Import our panel components
 import MarketDashboard from '../../pages/MarketDashboard';
 import CurrencyCenter from '../../pages/CurrencyCenter';
 import Vault from '../../pages/Vault';
 import Settings from '../../pages/Settings';
-import Messages from '../../pages/Messages';
 
 const defaultConfig = {
     global: {
@@ -87,31 +86,22 @@ export default function Workspace({ user, onLogout }) {
     const factory = (node) => {
         const component = node.getComponent();
         
-        let content = null;
         switch(component) {
             case 'sidebar':
                 return <Sidebar user={user} onLogout={onLogout} layoutModel={model} />;
             case 'market':
-                content = <MarketDashboard />; break;
+                return <MarketDashboard />;
             case 'currencies':
-                content = <CurrencyCenter />; break;
+                return <CurrencyCenter />;
             case 'vault':
-                content = <Vault user={user} />; break;
+                return <Vault user={user} />;
             case 'settings':
-                content = <Settings user={user} onLogout={onLogout} />; break;
+                return <Settings user={user} onLogout={onLogout} />;
             case 'chat':
-                content = <Messages user={user} />; break;
+                return <div style={{padding: 20, color: '#fff'}}>Chat Panel (WIP)</div>;
             default:
-                content = <div style={{padding: 20, color: '#fff'}}>Unknown Component: {component}</div>; break;
+                return <div style={{padding: 20, color: '#fff'}}>Unknown Component: {component}</div>;
         }
-
-        return (
-            <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '15px' }}>
-                <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    {content}
-                </div>
-            </div>
-        );
     };
 
     return (
