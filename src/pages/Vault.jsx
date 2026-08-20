@@ -116,13 +116,13 @@ const GROUP_ICONS = {
 // Per-block icon overrides (use specific SVG icons where meaningful)
 const BLOCK_ICONS = {
     'ascii':       'code',
-    'music':       'palette',
-    'math_alpha':  'symbol',
+    'music':       'music',
+    'math_alpha':  'math',
     'colors_db':   'palette',
-    'arrows':      'trending-up',
-    'currency':    'dollar',
-    'braille':     'grid',
-    'runic':       'text',
+    'arrows':      'arrows',
+    'currency':    'currency',
+    'braille':     'braille',
+    'runic':       'runic',
 };
 
 function toHex(cp) { return cp.toString(16).toUpperCase().padStart(4, '0'); }
