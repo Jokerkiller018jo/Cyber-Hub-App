@@ -1,9 +1,9 @@
 """
 Cyber-Hub Desktop Client — High-Performance Edition
-Powered by PySide6 & Python with Full GPU Hardware Acceleration & OAuth Popup Support
+Powered by PySide6 & Python with Full GPU Hardware Acceleration & Enhanced OAuth Support
 Features:
 - Full Chromium GPU hardware rasterization (60-144 FPS)
-- Google OAuth & Firebase Authentication popup and persistent cookie storage
+- Google OAuth & Firebase Authentication popup with AutomationControlled bypass
 - Custom exposed edge rounded top and bottom cyber bars
 - Zero-lag frameless window with smooth dragging, maximize/restore, minimize, and resize
 - Embedded WebEngineView loading https://cyber-hub-app.vercel.app with WebGL & 2D canvas acceleration
@@ -13,7 +13,9 @@ Features:
 import os
 import sys
 
-# ── 1. CONFIGURE CHROMIUM GPU & NETWORKING FLAGS ──
+# ── 1. CONFIGURE CHROMIUM GPU & USER-AGENT FLAGS BEFORE QT INIT ──
+CHROME_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--ignore-gpu-blocklist "
     "--enable-gpu-rasterization "
@@ -22,6 +24,7 @@ os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--enable-accelerated-video-decode "
     "--enable-native-gpu-memory-buffers "
     "--enable-features=CanvasOopRasterization "
+    "--disable-blink-features=AutomationControlled "
     "--num-raster-threads=4"
 )
 
@@ -33,13 +36,32 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import (
-    QWebEngineProfile, QWebEnginePage, QWebEngineSettings
+    QWebEngineProfile, QWebEnginePage, QWebEngineSettings, QWebEngineScript
 )
 
 VERCEL_HOST_URL = "https://cyber-hub-app.vercel.app"
 APP_TITLE = "Cyber-Hub Nexus"
 APP_VERSION = "v0.1.8 Desktop"
-CHROME_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+
+def inject_stealth_script(profile):
+    """Injects JavaScript to remove webdriver properties for Google OAuth compliance."""
+    script = QWebEngineScript()
+    script.setName("StealthPatch")
+    script.setSourceCode("""
+        try {
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.navigator.chrome = {
+                runtime: {},
+                loadTimes: function() {},
+                csi: function() {},
+                app: {}
+            };
+        } catch (e) {}
+    """)
+    script.setInjectionPoint(QWebEngineScript.DocumentCreation)
+    script.setWorldId(QWebEngineScript.MainWorld)
+    profile.scripts().insert(script)
 
 
 class AuthPopupDialog(QDialog):
@@ -151,6 +173,7 @@ class CyberHubWindow(QMainWindow):
         # Configure WebEngine profile with persistent session & cookie cache
         profile = QWebEngineProfile.defaultProfile()
         profile.setHttpUserAgent(CHROME_USER_AGENT)
+        inject_stealth_script(profile)
         
         # Persistent storage cache for login sessions
         cache_dir = os.path.join(os.path.expanduser("~"), ".cyber_hub_cache")

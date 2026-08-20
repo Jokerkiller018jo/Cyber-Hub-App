@@ -5,6 +5,8 @@ import {
     signInWithPopup, 
     signInWithRedirect,
     getRedirectResult,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut, 
     onAuthStateChanged, 
     updateProfile 
@@ -54,6 +56,8 @@ export {
     signInWithPopup, 
     signInWithRedirect,
     getRedirectResult,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut, 
     onAuthStateChanged, 
     updateProfile 

@@ -4,6 +4,8 @@ import {
     signInWithPopup,
     signInWithRedirect,
     getRedirectResult,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
 } from './firebase';
@@ -14,6 +16,12 @@ function mapFirebaseError(err) {
     const messages = {
         'auth/network-request-failed':  'Network error. Please check your connection.',
         'auth/user-disabled':           'This account has been disabled. Contact support.',
+        'auth/user-not-found':          'No account found with this email.',
+        'auth/wrong-password':          'Incorrect password. Please try again.',
+        'auth/invalid-credential':      'Invalid email or password.',
+        'auth/email-already-in-use':    'An account already exists with this email.',
+        'auth/weak-password':           'Password should be at least 6 characters.',
+        'auth/invalid-email':           'Please enter a valid email address.',
         'auth/popup-closed-by-user':    'Sign-in popup was closed. Redirecting...',
         'auth/popup-blocked':           'Popup was blocked by your browser. Redirecting...',
         'auth/cancelled-popup-request': 'Sign-in request was updated.',
@@ -57,6 +65,26 @@ export async function loginWithGoogle() {
             await signInWithRedirect(auth, googleProvider);
             return null;
         }
+        throw new Error(mapFirebaseError(err));
+    }
+}
+
+/** Email and Password Login */
+export async function loginWithEmail(email, password) {
+    try {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        return result.user;
+    } catch (err) {
+        throw new Error(mapFirebaseError(err));
+    }
+}
+
+/** Email and Password Registration */
+export async function registerWithEmail(email, password) {
+    try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        return result.user;
+    } catch (err) {
         throw new Error(mapFirebaseError(err));
     }
 }
