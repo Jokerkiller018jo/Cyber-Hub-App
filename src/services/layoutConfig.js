@@ -11,14 +11,13 @@ export const DEFAULT_NAV_ITEMS = [
     { id: 'market',      path: '/market',      name: 'MARKET',     icon: 'chart',    desc: 'Live financial tracker' },
     { id: 'currencies',  path: '/currencies',  name: 'CURRENCIES', icon: 'bank',     desc: 'Fiat & Forex converter' },
     { id: 'symbols',     path: '/symbols',     name: 'VAULT',      icon: 'database', desc: 'Unicode symbols & tools' },
-    { id: 'chat',        path: '/chat',        name: 'COMMS',      icon: 'chat',     desc: 'Secure communications' },
 ];
 
 export const DEFAULT_LAYOUT = {
     sidebarPosition: 'left',       // 'left' | 'right' | 'top' | 'floating'
     sidebarMode: 'expanded',       // 'expanded' | 'compact' | 'autohide'
     searchBarPlacement: 'sidebar', // 'sidebar' | 'header' | 'command-bar'
-    navOrder: ['lobby', 'market', 'currencies', 'symbols', 'chat'],
+    navOrder: ['lobby', 'market', 'currencies', 'symbols'],
     glassLevel: 'standard',        // 'subtle' | 'standard' | 'heavy' | 'solid'
     borderStyle: 'cyber-chamfer',  // 'rounded' | 'cyber-chamfer' | 'sharp' | 'pill'
     uiDensity: 'balanced',         // 'compact' | 'balanced' | 'spacious'
