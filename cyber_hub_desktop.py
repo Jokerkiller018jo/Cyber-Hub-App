@@ -1,8 +1,9 @@
 """
 Cyber-Hub Desktop Client — High-Performance Edition
-Powered by PySide6 & Python with Full GPU Hardware Acceleration
+Powered by PySide6 & Python with Full GPU Hardware Acceleration & OAuth Popup Support
 Features:
 - Full Chromium GPU hardware rasterization (60-144 FPS)
+- Google OAuth & Firebase Authentication popup support (createWindow popup handler)
 - Custom exposed edge rounded top and bottom cyber bars
 - Zero-lag frameless window with smooth dragging, maximize/restore, minimize, and resize
 - Embedded WebEngineView loading https://cyber-hub-app.vercel.app with WebGL & 2D canvas acceleration
@@ -12,7 +13,7 @@ Features:
 import os
 import sys
 
-# ── 1. CONFIGURE CHROMIUM GPU FLAGS BEFORE QT INITIALIZATION ──
+# ── 1. CONFIGURE CHROMIUM GPU & NETWORKING FLAGS ──
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--ignore-gpu-blocklist "
     "--enable-gpu-rasterization "
@@ -28,7 +29,7 @@ from PySide6.QtCore import Qt, QUrl, QPoint, QSize, QTimer
 from PySide6.QtGui import QIcon, QPixmap, QColor, QCursor, QFont, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QProgressBar, QSizeGrip, QFrame
+    QLabel, QPushButton, QProgressBar, QSizeGrip, QFrame, QDialog
 )
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import (
@@ -38,17 +39,51 @@ from PySide6.QtWebEngineCore import (
 VERCEL_HOST_URL = "https://cyber-hub-app.vercel.app"
 APP_TITLE = "Cyber-Hub Nexus"
 APP_VERSION = "v0.1.8 Desktop"
+CHROME_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+
+class AuthPopupDialog(QDialog):
+    """Dedicated modal popup dialog for Google OAuth / Firebase Authentication popups."""
+    def __init__(self, profile, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Sign in with Google — Cyber-Hub")
+        self.resize(520, 680)
+        self.setMinimumSize(420, 560)
+        self.setStyleSheet("background-color: #09090b; color: #ffffff;")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.webview = QWebEngineView(self)
+        self.popup_page = CyberWebEnginePage(profile, self.webview)
+        self.webview.setPage(self.popup_page)
+
+        # Close dialog when auth completes (window.close() called by Firebase)
+        self.popup_page.windowCloseRequested.connect(self.accept)
+        layout.addWidget(self.webview)
 
 
 class CyberWebEnginePage(QWebEnginePage):
-    """Custom WebEnginePage with enhanced permissions."""
+    """Custom WebEnginePage with OAuth popup handler and permissions."""
     def __init__(self, profile, parent=None):
         super().__init__(profile, parent)
+        self.active_popups = []
 
     def featurePermissionRequested(self, securityOrigin, feature):
         self.setFeaturePermission(
             securityOrigin, feature, QWebEnginePage.PermissionGrantedByUser
         )
+
+    def createWindow(self, _type):
+        """Intercepts window.open() from Firebase Auth and renders it in a dialog."""
+        parent_win = self.view().window() if self.view() else None
+        popup = AuthPopupDialog(self.profile(), parent_win)
+        popup.setAttribute(Qt.WA_DeleteOnClose, True)
+        self.active_popups.append(popup)
+        popup.finished.connect(lambda: self.active_popups.remove(popup) if popup in self.active_popups else None)
+        popup.show()
+        return popup.popup_page
 
 
 class CyberHubWindow(QMainWindow):
@@ -115,11 +150,12 @@ class CyberHubWindow(QMainWindow):
 
         # Configure WebEngine profile & hardware acceleration settings
         profile = QWebEngineProfile.defaultProfile()
-        profile.setHttpUserAgent(
-            f"{profile.httpUserAgent()} CyberHubDesktop/{APP_VERSION}"
-        )
+        profile.setHttpUserAgent(CHROME_USER_AGENT)
+
         settings = self.webview.settings()
         settings.setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+        settings.setAttribute(QWebEngineSettings.JavascriptCanOpenWindows, True)
+        settings.setAttribute(QWebEngineSettings.AllowWindowActivationFromJavaScript, True)
         settings.setAttribute(QWebEngineSettings.LocalStorageEnabled, True)
         settings.setAttribute(QWebEngineSettings.WebGLEnabled, True)
         settings.setAttribute(QWebEngineSettings.Accelerated2dCanvasEnabled, True)
