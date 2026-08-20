@@ -234,9 +234,9 @@ export default function Settings({ user, onLogout }) {
         setNotifs(prev => ({ ...prev, [key]: val }));
     };
 
-    // Calculate if user has modified anything since last save
+    // Calculate if user has modified anything since last save (Only for registered users, not guest mode)
     const isDirty = useMemo(() => {
-        if (!savedSnapshot) return false;
+        if (isGuest || !savedSnapshot) return false;
         return (
             savedSnapshot.accent !== accentColor ||
             savedSnapshot.glitch !== glitch ||
@@ -246,7 +246,7 @@ export default function Settings({ user, onLogout }) {
             savedSnapshot.displayName !== displayName ||
             savedSnapshot.notifsStr !== JSON.stringify(notifs)
         );
-    }, [savedSnapshot, accentColor, glitch, glow, searchBarStyleVal, layout, displayName, notifs]);
+    }, [isGuest, savedSnapshot, accentColor, glitch, glow, searchBarStyleVal, layout, displayName, notifs]);
 
     // Revert all unsaved changes
     const handleReset = () => {
