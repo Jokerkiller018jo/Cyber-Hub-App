@@ -14,9 +14,11 @@ export default function Icon({ name, size = 24, className = "" }) {
             case 'message':
             case 'chat': // Comms
                 return <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />;
-            case 'chart': // Market
+            case 'chart':
+            case 'trending-up': // Market
                 return <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zm-4-4h-2v-4h2v4zm-4 0H9V9h2v6zm-4 0H5v-2h2v2z" />;
-            case 'bank': // Currencies
+            case 'bank':
+            case 'dollar': // Currencies
                 return <path d="M12 3L1 9h22L12 3zm-9 8h2v8H3v-8zm6 0h2v8H9v-8zm6 0h2v8h-2v-8zm6 0h2v8h-2v-8zM2 21h20v2H2v-2z" />;
             case 'search': // Search & Command Bar
                 return <path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />;
@@ -48,6 +50,46 @@ export default function Icon({ name, size = 24, className = "" }) {
                 return <path d="M21.35,11.1H12.18v3.83h5.15c-0.22,1.22-0.92,2.26-1.93,2.94v2.44h3.12C20.36,18.63,21.5,16.03,21.5,12.5 C21.5,12.01,21.46,11.55,21.35,11.1z M12.18,21c2.61,0,4.8-0.86,6.4-2.34l-3.12-2.44c-0.86,0.58-1.97,0.93-3.28,0.93 c-2.52,0-4.65-1.71-5.41-4.01H3.53v2.51C5.24,19.06,8.46,21,12.18,21z M6.77,13.14c-0.2-0.58-0.31-1.2-0.31-1.84s0.11-1.26,0.31-1.84V6.95H3.53C2.86,8.28,2.48,9.76,2.48,11.3s0.38,3.02,1.05,4.35L6.77,13.14z M12.18,5.06c1.42,0,2.69,0.49,3.69,1.44l2.76-2.76C16.98,2.06,14.79,1.1,12.18,1.1c-3.72,0-6.94,1.94-8.65,4.85l3.24,2.51 C7.53,6.17,9.66,5.06,12.18,5.06z" />;
             case 'star': // Favorites
                 return <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>;
+            case 'link':
+                return <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>;
+
+            // ── Pagination & Arrow SVGs ──
+            case 'chevron-left':
+                return <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>;
+            case 'chevron-right':
+                return <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>;
+            case 'chevron-up':
+                return <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>;
+            case 'chevron-down':
+                return <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>;
+            case 'arrow-left':
+                return <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>;
+            case 'arrow-right':
+                return <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>;
+
+            // ── Tools & Actions SVGs ──
+            case 'copy':
+                return <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>;
+            case 'check':
+            case 'check-circle':
+                return <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>;
+            case 'refresh':
+                return <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>;
+            case 'filter':
+                return <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>;
+            case 'grid':
+                return <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>;
+            case 'list':
+                return <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>;
+            case 'lightning':
+                return <path d="M7 2v11h3v9l7-12h-4l4-8z"/>;
+            case 'lock':
+                return <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>;
+            case 'eye':
+                return <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>;
+            case 'trash':
+                return <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>;
+
             default:
                 return <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />;
         }

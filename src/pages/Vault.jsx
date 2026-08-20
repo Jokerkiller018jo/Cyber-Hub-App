@@ -744,23 +744,53 @@ export default function Symbols({ user }) {
                         : <span>Showing <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(page * PAGE_SIZE + 1)}</span>–<span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(Math.min((page + 1) * PAGE_SIZE, activeTotal))}</span> of <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(activeTotal)}</span></span>
                     }
                 </div>
-                {!searchResults && (
+                {!searchResults && totalPages > 1 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>Go to page:</span>
-                        <input
-                            type="number" min={1} max={totalPages} placeholder="Page #"
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    const v = parseInt(e.target.value, 10);
-                                    if (!isNaN(v)) setPage(Math.max(0, Math.min(totalPages - 1, v - 1)));
-                                }
-                            }}
-                            style={{
-                                width: '70px', background: 'rgba(0,0,0,0.4)', border: '1px solid var(--border-color)',
-                                borderRadius: '5px', color: 'var(--text-main)', padding: '5px 8px',
-                                fontSize: '0.72rem', outline: 'none'
-                            }}
-                        />
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 600 }}>
+                            Page {page + 1} <span style={{ opacity: 0.6 }}>/ {totalPages}</span>
+                        </span>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                                onClick={() => setPage(p => Math.max(0, p - 1))}
+                                disabled={page === 0}
+                                title="Previous Page"
+                                style={{
+                                    background: page === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(6,182,212,0.12)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-small, 6px)',
+                                    color: page === 0 ? 'var(--text-muted)' : 'var(--accent-primary)',
+                                    padding: '5px 8px',
+                                    cursor: page === 0 ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    opacity: page === 0 ? 0.35 : 1,
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                <Icon name="chevron-left" size={14} />
+                            </button>
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                                disabled={page >= totalPages - 1}
+                                title="Next Page"
+                                style={{
+                                    background: page >= totalPages - 1 ? 'rgba(255,255,255,0.02)' : 'rgba(6,182,212,0.12)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-small, 6px)',
+                                    color: page >= totalPages - 1 ? 'var(--text-muted)' : 'var(--accent-primary)',
+                                    padding: '5px 8px',
+                                    cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    opacity: page >= totalPages - 1 ? 0.35 : 1,
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                <Icon name="chevron-right" size={14} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
