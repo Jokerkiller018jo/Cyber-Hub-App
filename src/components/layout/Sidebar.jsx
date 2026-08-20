@@ -3,7 +3,8 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../ui/Icon';
 import { handleLogout } from '../../services/auth-handler';
 
-export default function Sidebar({ user, onLogout }) {
+import { Actions } from 'flexlayout-react';
+export default function Sidebar({ user, onLogout, layoutModel }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -151,30 +152,55 @@ export default function Sidebar({ user, onLogout }) {
                 </div>
 
                 <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
-                    {navItems.map(item => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            style={({ isActive }) => ({
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '10px 15px',
-                                borderRadius: 'var(--radius-small)',
-                                color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-                                background: isActive ? 'rgba(6,182,212,0.1)' : 'transparent',
-                                textDecoration: 'none',
-                                fontWeight: 600,
-                                fontSize: '0.85rem',
-                                borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
-                                transition: 'all var(--transition-fast)',
-                            })}
-                            className="sidebar-item"
-                        >
-                            <Icon name={item.icon} size={18} />
-                            {item.name}
-                        </NavLink>
-                    ))}
+                    {navItems.map(item => {
+                        const tabId = 'tab-' + item.component;
+                        const isActive = layoutModel ? layoutModel.getActiveTabset()?.getSelectedNode()?.getId() === tabId : false;
+                        
+                        return (
+                            <button
+                                key={item.component}
+                                onClick={() => {
+                                    if (!layoutModel) return;
+                                    try {
+                                        layoutModel.doAction(Actions.selectTab(tabId));
+                                    } catch (e) {
+                                        // Tab doesn't exist, create it
+                                        let tabset = layoutModel.getActiveTabset();
+                                        if(!tabset) tabset = layoutModel.getNodeById("main-tabset");
+                                        if(tabset) {
+                                            layoutModel.doAction(Actions.addNode({
+                                                type: "tab",
+                                                component: item.component,
+                                                name: item.name,
+                                                id: tabId
+                                            }, tabset.getId(), -1));
+                                        }
+                                    }
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    padding: '10px 15px',
+                                    borderRadius: 'var(--radius-small)',
+                                    color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+                                    background: isActive ? 'rgba(6,182,212,0.1)' : 'transparent',
+                                    textDecoration: 'none',
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    borderLeft: isActive ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                                    transition: 'all var(--transition-fast)',
+                                }}
+                                className="sidebar-item"
+                            >
+                                <Icon name={item.icon} size={18} />
+                                {item.name}
+                            </button>
+                        );
+                    })}
                 </nav>
 
                 <div style={{
@@ -204,18 +230,35 @@ export default function Sidebar({ user, onLogout }) {
                                 Active Node
                             </span>
                         </div>
-                        <NavLink
-                            to="/settings"
-                            style={({ isActive }) => ({
-                                background: 'transparent', border: 'none', color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
+                        <button
+                            onClick={() => {
+                                const tabId = 'tab-settings';
+                                if (!layoutModel) return;
+                                try {
+                                    layoutModel.doAction(Actions.selectTab(tabId));
+                                } catch (e) {
+                                    let tabset = layoutModel.getActiveTabset();
+                                    if(!tabset) tabset = layoutModel.getNodeById("main-tabset");
+                                    if(tabset) {
+                                        layoutModel.doAction(Actions.addNode({
+                                            type: "tab",
+                                            component: 'settings',
+                                            name: 'Settings',
+                                            id: tabId
+                                        }, tabset.getId(), -1));
+                                    }
+                                }
+                            }}
+                            style={{
+                                background: 'transparent', border: 'none', color: 'var(--text-muted)',
                                 cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex',
                                 alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', flexShrink: 0
-                            })}
+                            }}
                             onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                             onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
                         >
                             <Icon name="settings" size={20} />
-                        </NavLink>
+                        </button>
                     </div>
                 </div>
             </aside>

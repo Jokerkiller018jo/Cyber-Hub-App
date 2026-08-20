@@ -127,8 +127,8 @@ const SEMANTIC_PALETTES = {
     ],
     coffee: [
         { name: 'Espresso', hex: '#362312', rgb: [54,35,18], group: 'Semantic' },
-        { name: 'Latte', hex: '#C68E58', rgb: [198,142,88], group: 'Semantic' },
-        { name: 'Caramel', hex: '#65350F', rgb: [101,53,15], group: 'Semantic' },
+        { name: 'Latte',    hex: '#C68E58', rgb: [198,142,88], group: 'Semantic' },
+        { name: 'Caramel',  hex: '#65350F', rgb: [101,53,15], group: 'Semantic' },
     ],
     night: [
         { name: 'Midnight Blue', hex: '#191970', rgb: [25,25,112], group: 'Semantic' },
