@@ -1,7 +1,7 @@
 /**
  * layoutConfig.js — Arc & Zen Browser-inspired Modular Layout Engine
  * Manages sidebar docking (Left/Right/Top/Floating), compact vs expanded modes,
- * drag-and-drop tab ordering, search bar placement, glass shaders, and corner styles.
+ * drag-and-drop tab ordering, search bar placement, glass shaders, dynamic backgrounds, and corner styles.
  */
 
 const STORAGE_KEY = 'cyberhub_layout_config';
@@ -13,6 +13,43 @@ export const DEFAULT_NAV_ITEMS = [
     { id: 'symbols',     path: '/symbols',     name: 'VAULT',      icon: 'database', desc: 'Unicode symbols & tools' },
 ];
 
+export const BACKGROUND_CATEGORIES = [
+    {
+        id: 'gradient',
+        name: 'Gradient & Color Effects',
+        items: [
+            { id: 'moving-gradient',   name: 'Moving Gradient',      desc: 'Smooth, looping multi-colored gradient flow', icon: 'sparkles' },
+            { id: 'liquid-gradient',   name: 'Liquid Gradient',      desc: 'Fluid mesh warping distortion effect',       icon: 'palette' },
+            { id: 'floating-orbs',     name: 'Floating Color Orbs',  desc: 'Soft glowing blurred balls floating smoothly', icon: 'sparkles' },
+            { id: 'sliding-diagonals', name: 'Sliding Diagonals',    desc: 'Cyberpunk illuminated diagonal moving bands', icon: 'chart' },
+            { id: 'animated-wave',     name: 'Animated Wave',        desc: 'Undulating harmonic sine waves',              icon: 'trending-up' },
+        ]
+    },
+    {
+        id: 'nature',
+        name: 'Nature & Organic Motion',
+        items: [
+            { id: 'soft-clouds',       name: 'Soft Clouds',          desc: 'Ethereal rolling mist and drifting clouds',   icon: 'globe' },
+            { id: 'falling-leaves',    name: 'Falling Leaves',       desc: 'Drifting leaves with gentle sway & rotation', icon: 'symbol' },
+            { id: 'gentle-ripples',    name: 'Gentle Ripples',       desc: 'Concentric water ripple waves pulsing softly', icon: 'globe' },
+            { id: 'aurora-borealis',   name: 'Aurora Borealis',      desc: 'Waving celestial ribbons of polar light',     icon: 'sparkles' },
+            { id: 'snow-flurries',     name: 'Snow Flurries',        desc: 'Gentle snowflakes falling with wind draft',   icon: 'sparkles' },
+        ]
+    },
+    {
+        id: 'tech',
+        name: 'Tech & Futuristic',
+        items: [
+            { id: 'matrix-rain',       name: 'Matrix Rain',          desc: 'Classic cascading cyber green/cyan code',     icon: 'code' },
+            { id: 'star-particles',    name: 'Star Particles',       desc: 'Connected constellation network web',         icon: 'star' },
+            { id: 'digital-lines',     name: 'High-Tech Digital Lines', desc: 'Pulsing neon circuit traces & cyber grid', icon: 'grid' },
+            { id: 'hyperspeed-space',  name: 'Hyperspeed Space',     desc: '3D warp-drive starfield streaks',             icon: 'lightning' },
+            { id: 'glowing-bokeh',     name: 'Glowing Bokeh',        desc: 'Floating out-of-focus neon hexagons & discs', icon: 'sparkles' },
+            { id: 'liquid-metal',      name: 'Liquid Metal',         desc: 'Chrome mercury flow & iridescent waves',      icon: 'shield' },
+        ]
+    }
+];
+
 export const DEFAULT_LAYOUT = {
     sidebarPosition: 'left',       // 'left' | 'right' | 'top' | 'floating'
     sidebarMode: 'expanded',       // 'expanded' | 'compact' | 'autohide'
@@ -21,9 +58,15 @@ export const DEFAULT_LAYOUT = {
     glassLevel: 'standard',        // 'subtle' | 'standard' | 'heavy' | 'solid'
     borderStyle: 'cyber-chamfer',  // 'rounded' | 'cyber-chamfer' | 'sharp' | 'pill'
     uiDensity: 'balanced',         // 'compact' | 'balanced' | 'spacious'
+    background: {
+        enabled: true,
+        type: 'matrix-rain',       // One of the 16 background effect types
+        speed: 50,                 // 10 to 100
+        opacity: 0.8,              // 0.1 to 1.0
+    },
     matrixBackground: {
         enabled: true,
-        speed: 50,                 // interval ms (lower is faster)
+        speed: 50,
         opacity: 0.8,
     }
 };
@@ -34,9 +77,20 @@ export function loadLayoutConfig() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const parsed = JSON.parse(stored);
+            const bg = parsed.background || {
+                enabled: parsed.matrixBackground?.enabled ?? true,
+                type: parsed.matrixBackground?.enabled === false ? 'none' : 'matrix-rain',
+                speed: parsed.matrixBackground?.speed || 50,
+                opacity: parsed.matrixBackground?.opacity ?? 0.8
+            };
+
             return {
                 ...DEFAULT_LAYOUT,
                 ...parsed,
+                background: {
+                    ...DEFAULT_LAYOUT.background,
+                    ...bg
+                },
                 matrixBackground: {
                     ...DEFAULT_LAYOUT.matrixBackground,
                     ...(parsed.matrixBackground || {})

@@ -10,7 +10,8 @@ import {
     loadLayoutConfig, 
     saveLayoutConfig, 
     DEFAULT_NAV_ITEMS,
-    DEFAULT_LAYOUT 
+    DEFAULT_LAYOUT,
+    BACKGROUND_CATEGORIES 
 } from '../services/layoutConfig';
 
 /* ─────────────────────────────────────────────────────────────
@@ -116,6 +117,7 @@ const TAB_SECTIONS = {
         { id: 'sessions', label: 'Session Management' }
     ],
     appearance: [
+        { id: 'backgrounds', label: 'Background Effects' },
         { id: 'docking', label: 'Sidebar Docking' },
         { id: 'sidebar-style', label: 'Sidebar Mode' },
         { id: 'nav-order', label: 'Tab Hierarchy' },
@@ -125,7 +127,6 @@ const TAB_SECTIONS = {
         { id: 'glass-shader', label: 'Glass Shaders' },
         { id: 'corners', label: 'Corner Geometry' },
         { id: 'density', label: 'UI Density' },
-        { id: 'matrix-controls', label: 'Matrix Rain' },
         { id: 'effects', label: 'Interface Effects' },
     ],
     notifications: [
@@ -384,6 +385,13 @@ export default function Settings({ user, onLogout }) {
         { id: 'notifications', icon: 'bell',       label: 'Notifications' },
     ];
 
+    const currentBg = layout.background || {
+        enabled: layout.matrixBackground?.enabled ?? true,
+        type: 'matrix-rain',
+        speed: 50,
+        opacity: 0.8
+    };
+
     /* ── Tab content ─────────────────────────────────────────── */
     const renderTab = () => {
         switch (activeTab) {
@@ -578,12 +586,136 @@ export default function Settings({ user, onLogout }) {
                 </div>
             );
 
-            // ── 3. APPEARANCE (Modular Arc & Zen Customization) ──
+            // ── 3. APPEARANCE (Modular Arc, Zen & Dynamic Background Studio) ──
             case 'appearance': return (
                 <div className="animate-fade">
                     <PageHeading>Appearance & Modular Layout</PageHeading>
 
-                    {/* 1. Sidebar Docking (Zen Browser style) */}
+                    {/* 1. Dynamic Interactive Backgrounds Engine */}
+                    <SectionCard id="backgrounds">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid rgba(6,182,212,0.12)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ color: 'var(--accent-primary)', display: 'flex' }}><Icon name="sparkles" size={18} /></span>
+                                <span style={{ fontSize: '0.78rem', fontWeight: '700', letterSpacing: '0.12em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                    Dynamic Background Effects
+                                </span>
+                            </div>
+                            <Toggle
+                                checked={currentBg.enabled}
+                                onChange={(val) => updateLayout({
+                                    background: { ...currentBg, enabled: val },
+                                    matrixBackground: { ...(layout.matrixBackground || {}), enabled: val }
+                                })}
+                            />
+                        </div>
+
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.6' }}>
+                            Select an interactive 60 FPS animated background shader. Fully rendered in real-time across the app canvas.
+                        </p>
+
+                        {currentBg.enabled && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+                                {/* Sliders */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'rgba(0,0,0,0.25)', padding: '16px', borderRadius: 'var(--radius-small)' }}>
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                            <span>Motion Speed</span>
+                                            <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{currentBg.speed || 50}</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="15"
+                                            max="100"
+                                            step="5"
+                                            value={currentBg.speed || 50}
+                                            onChange={(e) => updateLayout({
+                                                background: { ...currentBg, speed: Number(e.target.value) },
+                                                matrixBackground: { ...(layout.matrixBackground || {}), speed: Number(e.target.value) }
+                                            })}
+                                            style={{ width: '100%', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                            <span>Shader Opacity</span>
+                                            <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>{Math.round((currentBg.opacity ?? 0.8) * 100)}%</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0.1"
+                                            max="1"
+                                            step="0.05"
+                                            value={currentBg.opacity ?? 0.8}
+                                            onChange={(e) => updateLayout({
+                                                background: { ...currentBg, opacity: Number(e.target.value) },
+                                                matrixBackground: { ...(layout.matrixBackground || {}), opacity: Number(e.target.value) }
+                                            })}
+                                            style={{ width: '100%', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Three Categories */}
+                                {BACKGROUND_CATEGORIES.map(category => (
+                                    <div key={category.id}>
+                                        <div style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            letterSpacing: '0.08em',
+                                            color: 'var(--accent-primary)',
+                                            marginBottom: '12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent-primary)' }} />
+                                            {category.name.toUpperCase()}
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px' }}>
+                                            {category.items.map(item => {
+                                                const isSelected = currentBg.type === item.id;
+                                                return (
+                                                    <div
+                                                        key={item.id}
+                                                        onClick={() => updateLayout({
+                                                            background: { ...currentBg, type: item.id }
+                                                        })}
+                                                        style={{
+                                                            padding: '14px',
+                                                            borderRadius: 'var(--radius-small)',
+                                                            border: isSelected ? '1.5px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                                            background: isSelected ? 'rgba(6,182,212,0.14)' : 'rgba(255,255,255,0.02)',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.15s ease',
+                                                            boxShadow: isSelected ? '0 0 16px rgba(6,182,212,0.2)' : 'none'
+                                                        }}
+                                                        onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                                                        onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                                                            <span style={{ color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'flex' }}>
+                                                                <Icon name={item.icon || 'sparkles'} size={18} />
+                                                            </span>
+                                                            <span style={{ fontWeight: 700, fontSize: '0.86rem', color: isSelected ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                                                                {item.name}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                                            {item.desc}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </SectionCard>
+
+                    {/* 2. Sidebar Docking (Zen Browser style) */}
                     <SectionCard id="docking">
                         <SectionTitle icon="sidebar">Sidebar Docking Position</SectionTitle>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.6' }}>
@@ -623,7 +755,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 2. Sidebar Mode (Zen Compact Mode) */}
+                    {/* 3. Sidebar Mode (Zen Compact Mode) */}
                     <SectionCard id="sidebar-style">
                         <SectionTitle icon="appearance">Sidebar Display Mode</SectionTitle>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -652,7 +784,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 3. Drag & Drop Navigation Hierarchy */}
+                    {/* 4. Drag & Drop Navigation Hierarchy */}
                     <SectionCard id="nav-order">
                         <SectionTitle icon="database">Reorder Navigation Tabs (Drag & Drop)</SectionTitle>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.6' }}>
@@ -706,7 +838,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 4. Search Bar Placement (Arc style) */}
+                    {/* 5. Search Bar Placement (Arc style) */}
                     <SectionCard id="search-placement">
                         <SectionTitle icon="search">Search Bar Placement</SectionTitle>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.6' }}>
@@ -739,7 +871,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 5. Theme Accent Colors */}
+                    {/* 6. Theme Accent Colors */}
                     <SectionCard id="theme">
                         <SectionTitle icon="appearance">Color Spectrum</SectionTitle>
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.6' }}>
@@ -802,7 +934,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 6. Search Bar Visual Styles */}
+                    {/* 7. Search Bar Visual Styles */}
                     <SectionCard id="search-style">
                         <SectionTitle icon="settings">Search Bar Style</SectionTitle>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -849,7 +981,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 7. Glass Shader & Backdrop Blur */}
+                    {/* 8. Glass Shader & Backdrop Blur */}
                     <SectionCard id="glass-shader">
                         <SectionTitle icon="sparkles">Glassmorphism & Transparency</SectionTitle>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
@@ -880,7 +1012,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 8. Corner Geometry */}
+                    {/* 9. Corner Geometry */}
                     <SectionCard id="corners">
                         <SectionTitle icon="appearance">Corner Geometry</SectionTitle>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
@@ -911,7 +1043,7 @@ export default function Settings({ user, onLogout }) {
                         </div>
                     </SectionCard>
 
-                    {/* 9. UI Density */}
+                    {/* 10. UI Density */}
                     <SectionCard id="density">
                         <SectionTitle icon="settings">UI Density</SectionTitle>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
@@ -938,65 +1070,6 @@ export default function Settings({ user, onLogout }) {
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{opt.desc}</div>
                                 </div>
                             ))}
-                        </div>
-                    </SectionCard>
-
-                    {/* 10. Matrix Rain Background Shaders */}
-                    <SectionCard id="matrix-controls">
-                        <SectionTitle icon="sparkles">Matrix Digital Rain Controls</SectionTitle>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Enable Matrix Rain Background</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Falling character shader background</div>
-                                </div>
-                                <Toggle 
-                                    checked={layout.matrixBackground?.enabled ?? true}
-                                    onChange={(val) => updateLayout({
-                                        matrixBackground: { ...(layout.matrixBackground || {}), enabled: val }
-                                    })}
-                                />
-                            </div>
-
-                            {layout.matrixBackground?.enabled && (
-                                <>
-                                    <div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                                            <span>Falling Speed (Faster ↔ Slower)</span>
-                                            <span>{layout.matrixBackground?.speed || 50}ms</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="20"
-                                            max="120"
-                                            step="5"
-                                            value={layout.matrixBackground?.speed || 50}
-                                            onChange={(e) => updateLayout({
-                                                matrixBackground: { ...(layout.matrixBackground || {}), speed: Number(e.target.value) }
-                                            })}
-                                            style={{ width: '100%', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                                            <span>Shader Opacity</span>
-                                            <span>{Math.round((layout.matrixBackground?.opacity ?? 0.8) * 100)}%</span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="0.1"
-                                            max="1"
-                                            step="0.05"
-                                            value={layout.matrixBackground?.opacity ?? 0.8}
-                                            onChange={(e) => updateLayout({
-                                                matrixBackground: { ...(layout.matrixBackground || {}), opacity: Number(e.target.value) }
-                                            })}
-                                            style={{ width: '100%', accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
-                                        />
-                                    </div>
-                                </>
-                            )}
                         </div>
                     </SectionCard>
 

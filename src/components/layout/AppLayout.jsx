@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import MatrixBackground from '../canvas/MatrixBackground';
+import DynamicBackground from '../canvas/DynamicBackground';
 import CommandBar from '../ui/CommandBar';
 import SearchBar from '../ui/SearchBar';
 import { loadLayoutConfig, applyLayoutConfig } from '../../services/layoutConfig';
@@ -55,8 +55,8 @@ export default function AppLayout({ user, onLogout }) {
             overflow: 'hidden',
             position: 'relative',
         }}>
-            {/* Background Matrix Rain */}
-            {layout.matrixBackground?.enabled && <MatrixBackground />}
+            {/* Dynamic Interactive Background */}
+            <DynamicBackground />
 
             {/* Global Arc Command Bar */}
             <CommandBar
