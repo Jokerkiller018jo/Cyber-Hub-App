@@ -67,12 +67,11 @@ export default function Lobby() {
                     <span style={{ flex: 1, height: '1px', background: 'var(--border-color)', display: 'block' }} />
                 </div>
 
-                {/* Tab cards */}
+                {/* Tab cards with 45% greater glass transparency */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '14px' }}>
                     {navTabs.map(tab => (
                         <div
                             key={tab.label}
-                            className="card"
                             onClick={() => navigate(tab.path)}
                             style={{
                                 display: 'flex',
@@ -84,17 +83,24 @@ export default function Lobby() {
                                 cursor: 'pointer',
                                 minHeight: '130px',
                                 textAlign: 'center',
-                                transition: 'transform 0.2s ease, background 0.2s ease, border-color 0.2s ease',
+                                background: 'rgba(18, 18, 26, 0.35)',
+                                backdropFilter: 'blur(16px)',
+                                WebkitBackdropFilter: 'blur(16px)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: 'var(--radius-medium)',
+                                transition: 'transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
                             }}
                             onMouseEnter={e => {
                                 e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.background = `${tab.color}10`;
-                                e.currentTarget.style.borderColor = `${tab.color}55`;
+                                e.currentTarget.style.background = `${tab.color}18`;
+                                e.currentTarget.style.borderColor = `${tab.color}77`;
+                                e.currentTarget.style.boxShadow = `0 8px 24px ${tab.color}33`;
                             }}
                             onMouseLeave={e => {
                                 e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.background = 'var(--bg-secondary)';
-                                e.currentTarget.style.borderColor = 'var(--border-color)';
+                                e.currentTarget.style.background = 'rgba(18, 18, 26, 0.35)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                                e.currentTarget.style.boxShadow = 'none';
                             }}
                         >
                             <span style={{ color: tab.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -129,10 +135,23 @@ export default function Lobby() {
                     <span style={{ flex: 1, height: '1px', background: 'var(--border-color)', display: 'block' }} />
                 </div>
 
-                {/* Info cards */}
+                {/* Info cards with 45% greater glass transparency */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
                     {infoCards.map(item => (
-                        <div key={item.label} className="card" style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 18px' }}>
+                        <div 
+                            key={item.label} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '14px', 
+                                padding: '14px 18px',
+                                background: 'rgba(18, 18, 26, 0.32)',
+                                backdropFilter: 'blur(16px)',
+                                WebkitBackdropFilter: 'blur(16px)',
+                                border: '1px solid rgba(255, 255, 255, 0.07)',
+                                borderRadius: 'var(--radius-medium)'
+                            }}
+                        >
                             <span style={{ color: item.color, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                                 <Icon name={item.icon} size={20} />
                             </span>

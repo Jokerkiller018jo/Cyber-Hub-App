@@ -127,6 +127,11 @@ export default function AppLayout({ user, onLogout }) {
                     overflow: 'hidden',
                     minHeight: 0,
                     borderRadius: 'var(--radius-large)',
+                    background: isLobby ? 'rgba(16, 16, 24, 0.28)' : undefined,
+                    backdropFilter: isLobby ? 'blur(10px)' : undefined,
+                    WebkitBackdropFilter: isLobby ? 'blur(10px)' : undefined,
+                    border: isLobby ? '1px solid rgba(255, 255, 255, 0.07)' : undefined,
+                    transition: 'background 0.3s ease',
                 }}>
                     <Outlet />
                 </div>
