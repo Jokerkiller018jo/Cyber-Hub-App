@@ -167,7 +167,7 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                     })}
                 </nav>
 
-                {/* Right Utilities (Command bar trigger, Settings, User) */}
+                {/* Right Utilities (Command bar trigger, Extensions, Settings, User) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <button
                         onClick={onOpenCommandBar}
@@ -179,8 +179,24 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                     </button>
 
                     <button
+                        onClick={() => navigate('/extensions')}
+                        style={{
+                            ...iconBtnStyle,
+                            background: location.pathname === '/extensions' ? 'rgba(6,182,212,0.15)' : 'transparent',
+                            color: location.pathname === '/extensions' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                        }}
+                        title="Extensions"
+                    >
+                        <Icon name="extension" size={18} />
+                    </button>
+
+                    <button
                         onClick={() => navigate('/settings')}
-                        style={iconBtnStyle}
+                        style={{
+                            ...iconBtnStyle,
+                            background: location.pathname === '/settings' ? 'rgba(6,182,212,0.15)' : 'transparent',
+                            color: location.pathname === '/settings' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                        }}
                         title="Settings"
                     >
                         <Icon name="settings" size={18} />
@@ -443,8 +459,35 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                     borderTop: '1px solid var(--border-color)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px'
+                    gap: '4px'
                 }}>
+                    {/* Extensions Tab */}
+                    <button
+                        onClick={() => navigate('/extensions')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: isCompact || isFloating ? 'center' : 'flex-start',
+                            gap: '10px',
+                            padding: '10px',
+                            background: location.pathname === '/extensions' ? 'rgba(6,182,212,0.12)' : 'transparent',
+                            border: 'none',
+                            borderRadius: 'var(--radius-small)',
+                            color: location.pathname === '/extensions' ? 'var(--accent-primary)' : 'var(--text-muted)',
+                            cursor: 'pointer',
+                            fontSize: '0.84rem',
+                            fontWeight: 600,
+                            transition: 'all 0.15s ease'
+                        }}
+                        title="Extensions"
+                    >
+                        <span style={{ display: 'flex', color: location.pathname === '/extensions' ? 'var(--accent-primary)' : 'inherit' }}>
+                            <Icon name="extension" size={18} />
+                        </span>
+                        {!isCompact && !isFloating && <span>Extensions</span>}
+                    </button>
+
+                    {/* Settings Tab */}
                     <button
                         onClick={() => navigate('/settings')}
                         style={{
@@ -464,7 +507,9 @@ export default function Sidebar({ user, onLogout, onOpenCommandBar }) {
                         }}
                         title="Settings & Layout Studio"
                     >
-                        <Icon name="settings" size={18} />
+                        <span style={{ display: 'flex', color: location.pathname === '/settings' ? 'var(--accent-primary)' : 'inherit' }}>
+                            <Icon name="settings" size={18} />
+                        </span>
                         {!isCompact && !isFloating && <span>Settings</span>}
                     </button>
 
