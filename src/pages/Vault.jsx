@@ -385,12 +385,60 @@ export default function Symbols({ user }) {
         return results;
     }, [search, category, activeRanges, UNICODE_RANGES]);
 
-    const copy = useCallback((text, id, type) => {
-        navigator.clipboard.writeText(text).then(() => {
-            setCopied(id);
-            setCopyType(type);
-            setTimeout(() => setCopied(null), 1500);
-        });
+    const copy = useCallback(async (symOrText, id, type = 'char') => {
+        let sym = typeof symOrText === 'object' && symOrText !== null ? symOrText : { char: symOrText, cp: id, code: symOrText };
+        let resolvedType = type;
+
+        if (type === 'code') {
+            const codeText = sym.code || (typeof sym.cp === 'number' ? `U+${toHex(sym.cp)}` : sym.name);
+            await navigator.clipboard.writeText(codeText);
+            resolvedType = 'code';
+        } else if (sym.isImage && sym.char && typeof sym.char === 'string' && (sym.char.startsWith('data:image/') || sym.char.startsWith('http') || sym.char.startsWith('blob:'))) {
+            // For custom image items: copy as a real image binary onto the clipboard so pasting pastes the actual graphic/emoji!
+            try {
+                const pngBlob = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.naturalWidth || img.width || 128;
+                        canvas.height = img.naturalHeight || img.height || 128;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        canvas.toBlob((blob) => {
+                            if (blob) resolve(blob);
+                            else reject(new Error('Blob conversion failed'));
+                        }, 'image/png');
+                    };
+                    img.onerror = () => reject(new Error('Image load failed'));
+                    img.src = sym.char;
+                });
+
+                if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': pngBlob })
+                    ]);
+                    resolvedType = 'image';
+                } else {
+                    // Fallback to shortcode
+                    await navigator.clipboard.writeText(sym.code || sym.name || ':custom_emoji:');
+                    resolvedType = 'tag';
+                }
+            } catch (err) {
+                console.warn('Image clipboard write failed, copying shortcode tag:', err);
+                await navigator.clipboard.writeText(sym.code || sym.name || ':custom_emoji:');
+                resolvedType = 'tag';
+            }
+        } else {
+            // Standard Unicode glyph or custom character
+            const charText = sym.char || (typeof sym.cp === 'number' ? renderChar(sym.cp) : String(sym.cp));
+            await navigator.clipboard.writeText(charText);
+            resolvedType = 'char';
+        }
+
+        setCopied(id);
+        setCopyType(resolvedType);
+        setTimeout(() => setCopied(null), 1500);
     }, []);
 
     const handleJump = () => {
@@ -1130,7 +1178,7 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
             {/* Copy Action Buttons */}
             <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
                 <button 
-                    onClick={() => copy(sym.char, sym.cp, 'char')} 
+                    onClick={() => copy(sym, sym.cp, 'char')} 
                     style={copyBtn}
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
@@ -1138,7 +1186,7 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
                     {sym.isImage ? 'COPY' : 'CHAR'}
                 </button>
                 <button 
-                    onClick={() => copy(sym.code, `${sym.cp}-code`, 'code')} 
+                    onClick={() => copy(sym, `${sym.cp}-code`, 'code')} 
                     style={copyBtn}
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
@@ -1156,7 +1204,7 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
                     borderRadius: '4px', boxShadow: `0 0 8px ${accentColor}99`,
                     zIndex: 10
                 }}>
-                    {copyType === 'char' ? '✓ COPIED' : '✓ TAG COPIED'}
+                    {copyType === 'image' ? '✓ COPIED IMAGE' : (copyType === 'tag' ? '✓ TAG COPIED' : (copyType === 'code' ? '✓ CODE' : '✓ CHAR'))}
                 </div>
             )}
         </div>
