@@ -3,10 +3,17 @@ import { EMOJI_CATEGORIES } from './EmojiCategories';
 import Colors from './Colors';
 import Icon from '../components/ui/Icon';
 import SearchBar from '../components/ui/SearchBar';
-import { loadUserSettings, saveUserSettings } from '../services/firebase';
+import CustomItemModal from '../components/vault/CustomItemModal';
+import { 
+    loadUserSettings, 
+    saveUserSettings, 
+    subscribeCustomVaultItems, 
+    saveCustomVaultItem, 
+    deleteCustomVaultItem 
+} from '../services/firebase';
 
-// ─── Unicode ranges with category + group info ────────────────────────────────
-const UNICODE_RANGES = [
+// ─── Base Unicode ranges with category + group info ───────────────────────────
+const BASE_UNICODE_RANGES = [
     // Basic / Common
     { id: 'ascii',        label: 'ASCII Printable',      start: 0x0020, end: 0x007E, group: 'Basic', icon: '🔤' },
     { id: 'latin1',       label: 'Latin-1 Supplement',   start: 0x00A0, end: 0x00FF, group: 'Basic', icon: '🅰️' },
@@ -27,7 +34,7 @@ const UNICODE_RANGES = [
     { id: 'gujarati',     label: 'Gujarati',              start: 0x0A80, end: 0x0AFF, group: 'Scripts', icon: 'અ' },
     { id: 'tamil',        label: 'Tamil',                 start: 0x0B80, end: 0x0BFF, group: 'Scripts', icon: 'அ' },
     { id: 'telugu',       label: 'Telugu',                start: 0x0C00, end: 0x0C7F, group: 'Scripts', icon: 'అ' },
-    { id: 'kannada',      label: 'Kannada',               start: 0x0C80, end: 0x0CFF, group: 'Scripts', icon: 'ಅ' },
+    { id: 'kannada',      label: 'Kannada',               start: 0x0C80, end: 0x0CFF, group: 'Scripts', icon: 'అ' },
     { id: 'malayalam',    label: 'Malayalam',             start: 0x0D00, end: 0x0D7F, group: 'Scripts', icon: 'അ' },
     { id: 'thai',         label: 'Thai',                  start: 0x0E00, end: 0x0E7F, group: 'Scripts', icon: 'ก' },
     { id: 'lao',          label: 'Lao',                   start: 0x0E80, end: 0x0EFF, group: 'Scripts', icon: 'ກ' },
@@ -99,7 +106,6 @@ const GROUP_COLORS = {
     'Favorites':              { accent: '#00d4ff', bg: 'rgba(0,212,255,0.08)',  border: 'rgba(0,212,255,0.3)' },
 };
 
-const TOTAL = UNICODE_RANGES.reduce((acc, r) => acc + (r.end - r.start + 1), 0);
 const PAGE_SIZE = 200;
 
 // Map each group to the SVG icon name shown in block cards
@@ -113,34 +119,57 @@ const GROUP_ICONS = {
     'Emojis':                'face',
     'Favorites':             'star',
 };
-// Per-block icon overrides (use specific SVG icons where meaningful)
+
+// Per-block icon overrides
 const BLOCK_ICONS = {
-    'ascii':       'code',
-    'music':       'music',
-    'math_alpha':  'math',
-    'colors_db':   'palette',
-    'arrows':      'arrows',
-    'currency':    'currency',
-    'braille':     'braille',
-    'runic':       'runic',
+    'ascii':          'code',
+    'music':          'music',
+    'math_alpha':     'math',
+    'colors_db':      'palette',
+    'arrows':         'arrows',
+    'currency':       'currency',
+    'braille':        'braille',
+    'runic':          'runic',
+    'custom_symbols': 'plus',
+    'custom_emojis':  'plus',
 };
 
-function toHex(cp) { return cp.toString(16).toUpperCase().padStart(4, '0'); }
-function renderChar(cp) { try { return String.fromCodePoint(cp); } catch { return '?'; } }
+function toHex(cp) { 
+    if (typeof cp === 'number') {
+        return cp.toString(16).toUpperCase().padStart(4, '0');
+    }
+    return String(cp);
+}
+function renderChar(cp) { 
+    try { 
+        return typeof cp === 'number' ? String.fromCodePoint(cp) : String(cp); 
+    } catch { 
+        return '?'; 
+    } 
+}
 
 export default function Symbols({ user }) {
-    const [search, setSearch]       = useState('');
-    const [category, setCategory]   = useState(null); // null = lobby view
-    const [page, setPage]           = useState(0);
-    const [copied, setCopied]       = useState(null);
-    const [copyType, setCopyType]   = useState('');
-    const [jumpInput, setJumpInput] = useState('');
-    const [jumpResult, setJumpResult] = useState(null);
+    const isGuest = !user?.uid || !user?.email;
+
+    const [search, setSearch]             = useState('');
+    const [category, setCategory]         = useState(null); // null = lobby view
+    const [page, setPage]                 = useState(0);
+    const [copied, setCopied]             = useState(null);
+    const [copyType, setCopyType]         = useState('');
+    const [jumpInput, setJumpInput]       = useState('');
+    const [jumpResult, setJumpResult]     = useState(null);
+    const [customVaultItems, setCustomVaultItems] = useState([]);
+    
+    // Custom Creator Modal State
+    const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+    const [modalInitialType, setModalInitialType]   = useState('symbol');
+    const [droppedFile, setDroppedFile]             = useState(null);
+
     const [favorites, setFavorites] = useState(() => {
         try { return JSON.parse(localStorage.getItem('cyberhub_favorites') || '[]'); } catch { return []; }
     });
 
-    // Cloud Sync on Mount
+    // Cloud Sync Favorites on Mount
     useEffect(() => {
         if (user?.uid) {
             loadUserSettings(user.uid).then(data => {
@@ -151,13 +180,40 @@ export default function Symbols({ user }) {
             });
         }
     }, [user?.uid]);
+
+    // Real-time Firestore Cloud Subscription for Custom Vault Items
+    useEffect(() => {
+        if (isGuest) {
+            setCustomVaultItems([]);
+            return;
+        }
+        const unsubscribe = subscribeCustomVaultItems((items) => {
+            setCustomVaultItems(items || []);
+        });
+        return () => unsubscribe();
+    }, [isGuest, user?.uid]);
     
-    // Helper to sync to cloud
+    // Helper to sync favorites to cloud
     const syncFavs = (newFavs) => {
         if (user?.uid) {
             saveUserSettings(user.uid, { favorites: newFavs }).catch(e => console.error('Fav sync error', e));
         }
     };
+
+    // Save custom item to Firestore
+    const handleSaveCustomItem = async (item) => {
+        const res = await saveCustomVaultItem(item);
+        if (!res.ok) throw new Error(res.error);
+    };
+
+    // Delete custom item from Firestore
+    const handleDeleteCustomItem = async (e, itemId) => {
+        e.stopPropagation();
+        if (window.confirm('Delete this custom item from Vault Cloud?')) {
+            await deleteCustomVaultItem(itemId);
+        }
+    };
+
     const [draggedItem, setDraggedItem] = useState(null);
     const [dragOverItem, setDragOverItem] = useState(null);
 
@@ -189,7 +245,6 @@ export default function Symbols({ user }) {
         setDraggedItem(null);
         setDragOverItem(null);
     };
-    const gridRef = useRef(null);
 
     const toggleFavorite = (e, id) => {
         e.stopPropagation();
@@ -201,10 +256,78 @@ export default function Symbols({ user }) {
         });
     };
 
+    // ── Build Dynamic UNICODE_RANGES (Inject Custom Tabs for Signed-in Users) ──
+    const UNICODE_RANGES = useMemo(() => {
+        if (isGuest) return BASE_UNICODE_RANGES;
+
+        // Filter custom symbols and emojis (public or owned by user)
+        const customSymbolsList = customVaultItems
+            .filter(item => item.type === 'symbol' && (item.isPublic || item.creatorUid === user?.uid))
+            .map(item => ({
+                cp: item.id,
+                char: item.char,
+                code: item.code || ':custom_sym:',
+                name: item.name,
+                isImage: !!item.isImage,
+                isPublic: !!item.isPublic,
+                creatorUid: item.creatorUid,
+                creatorName: item.creatorName,
+                isUserCustom: true
+            }));
+
+        const customEmojisList = customVaultItems
+            .filter(item => item.type === 'emoji' && (item.isPublic || item.creatorUid === user?.uid))
+            .map(item => ({
+                cp: item.id,
+                char: item.char,
+                code: item.code || ':custom_emoji:',
+                name: item.name,
+                isImage: !!item.isImage,
+                isPublic: !!item.isPublic,
+                creatorUid: item.creatorUid,
+                creatorName: item.creatorName,
+                isUserCustom: true
+            }));
+
+        const ranges = [];
+
+        for (const r of BASE_UNICODE_RANGES) {
+            // Place Custom Symbols at the top of Symbols & Punctuation
+            if (r.id === 'genpunct') {
+                ranges.push({
+                    id: 'custom_symbols',
+                    label: 'Custom Symbols',
+                    group: 'Symbols & Punctuation',
+                    icon: 'plus',
+                    isCustom: true,
+                    isUserCustom: true,
+                    symbols: customSymbolsList
+                });
+            }
+
+            // Place Custom Emojis at the top of Emojis group
+            if (r.id === EMOJI_CATEGORIES[0]?.id) {
+                ranges.push({
+                    id: 'custom_emojis',
+                    label: 'Custom Emojis',
+                    group: 'Emojis',
+                    icon: 'plus',
+                    isCustom: true,
+                    isUserCustom: true,
+                    symbols: customEmojisList
+                });
+            }
+
+            ranges.push(r);
+        }
+
+        return ranges;
+    }, [isGuest, customVaultItems, user?.uid]);
+
     const activeRanges = useMemo(() => {
         if (!category) return UNICODE_RANGES;
         return UNICODE_RANGES.filter(r => r.id === category);
-    }, [category]);
+    }, [category, UNICODE_RANGES]);
 
     const activeTotal = useMemo(() =>
         activeRanges.reduce((acc, r) => acc + (r.isCustom ? (r.symbols ? r.symbols.length : 0) : (r.end - r.start + 1)), 0),
@@ -233,6 +356,11 @@ export default function Symbols({ user }) {
                             char: item.char,
                             code: item.code,
                             name: item.name,
+                            isImage: item.isImage,
+                            isPublic: item.isPublic,
+                            creatorUid: item.creatorUid,
+                            creatorName: item.creatorName,
+                            isUserCustom: item.isUserCustom,
                             cat: r.id,
                             subCatLabel: item.subCatLabel
                         });
@@ -248,66 +376,42 @@ export default function Symbols({ user }) {
                 const isCodeMatch = code.toLowerCase().includes(q);
                 const isCharMatch = char === q;
                 const isDecMatch = String(cp) === q;
+
                 if (isHexMatch || isCodeMatch || isCharMatch || isDecMatch) {
-                    results.push({ cp, char, code, name: r.label, cat: r.id });
+                    results.push({ cp, char, code, name: `${r.label} #${cp - r.start + 1}`, cat: r.id });
                 }
             }
-            if (results.length >= MAX) break;
         }
         return results;
-    }, [search, activeRanges, category]);
-
-    const totalPages = Math.ceil(activeTotal / PAGE_SIZE);
-
-    const pageSymbols = useMemo(() => {
-        if (searchResults || !category) return null;
-        const start = page * PAGE_SIZE;
-        const items = [];
-        let rem = start;
-        let started = false;
-        for (const r of activeRanges) {
-            const size = r.isCustom ? (r.symbols ? r.symbols.length : 0) : r.end - r.start + 1;
-            if (!started) { if (rem >= size) { rem -= size; continue; } started = true; }
-            if (r.isCustom) {
-                const placeholders = r.symbols || [];
-                const size = placeholders.length || 40;
-                for (let i = rem; i < size && items.length < PAGE_SIZE; i++) {
-                    const entry = placeholders[i];
-                    const char = (entry && typeof entry === 'object') ? entry.char : (entry || '?');
-                    const code = (entry && typeof entry === 'object') ? entry.code : `EMOJI-${i}`;
-                    const name = (entry && typeof entry === 'object') ? entry.name : `${r.label} Item ${i+1}`;
-                    const subCatLabel = (entry && typeof entry === 'object') ? entry.subCatLabel : null;
-                    items.push({ cp: code, char, code, name, cat: r.id, subCatLabel });
-                }
-
-            } else {
-                for (let cp = r.start + rem; cp <= r.end && items.length < PAGE_SIZE; cp++) {
-                    items.push({ cp, char: renderChar(cp), code: `U+${toHex(cp)}`, name: r.label, cat: r.id });
-                }
-            }
-            rem = 0;
-            if (items.length >= PAGE_SIZE) break;
-        }
-        return items;
-    }, [page, activeRanges, searchResults, category]);
-
-    const displaySymbols = searchResults || pageSymbols || [];
-
-    const handleJump = useCallback(() => {
-        const raw = jumpInput.trim().toUpperCase().replace(/^U\+|^0X/, '');
-        const cp = parseInt(raw, 16);
-        if (isNaN(cp) || cp < 0 || cp > 0x10FFFF) { setJumpResult({ error: 'Invalid code point' }); return; }
-        const char = renderChar(cp);
-        const code = `U+${toHex(cp)}`;
-        const range = UNICODE_RANGES.find(r => cp >= r.start && cp <= r.end);
-        setJumpResult({ cp, char, code, name: range ? range.label : 'Unknown Block', cat: range?.id || '' });
-    }, [jumpInput]);
+    }, [search, category, activeRanges, UNICODE_RANGES]);
 
     const copy = useCallback((text, id, type) => {
-        navigator.clipboard.writeText(text).catch(() => {});
-        setCopied(id); setCopyType(type);
-        setTimeout(() => { setCopied(null); setCopyType(''); }, 1500);
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(id);
+            setCopyType(type);
+            setTimeout(() => setCopied(null), 1500);
+        });
     }, []);
+
+    const handleJump = () => {
+        const cleaned = jumpInput.trim().toUpperCase().replace(/^U\+/, '').replace(/^0X/, '');
+        const cp = parseInt(cleaned, 16);
+        if (isNaN(cp) || cp < 0 || cp > 0x10FFFF) {
+            setJumpResult({ error: `Invalid code point: "${jumpInput}". Must be 0x0000–0x10FFFF.` });
+            return;
+        }
+        const range = UNICODE_RANGES.find(r => !r.isCustom && cp >= r.start && cp <= r.end);
+        const hex = cp.toString(16).toUpperCase().padStart(4, '0');
+        setJumpResult({
+            cp,
+            hex,
+            char: renderChar(cp),
+            code: `U+${hex}`,
+            name: range ? range.label : 'Unicode Character',
+            range,
+            error: null
+        });
+    };
 
     const handleCategorySelect = (id) => {
         setCategory(id);
@@ -323,63 +427,82 @@ export default function Symbols({ user }) {
         setJumpResult(null);
     };
 
-    useEffect(() => { setPage(0); }, [search]);
+    const openCreateModal = (type = 'symbol', file = null) => {
+        setModalInitialType(type);
+        setDroppedFile(file);
+        setIsCustomModalOpen(true);
+    };
 
-    const formatNumber = (n) => n.toLocaleString();
-
-    // Group ranges by their group
-    const grouped = useMemo(() => {
+    // Grouping
+    const groups = useMemo(() => {
         const map = {};
         for (const r of UNICODE_RANGES) {
             if (!map[r.group]) map[r.group] = [];
             map[r.group].push(r);
         }
         return map;
-    }, []);
+    }, [UNICODE_RANGES]);
 
-    // Filtered categories for lobby search
-    const matchingGroups = useMemo(() => {
-        const q = search.trim().toLowerCase();
-        if (!q) return grouped;
-        const map = {};
-        for (const r of UNICODE_RANGES) {
-            if (r.label.toLowerCase().includes(q) || r.group.toLowerCase().includes(q)) {
-                if (!map[r.group]) map[r.group] = [];
-                map[r.group].push(r);
-            }
+    const groupsWithFavorites = useMemo(() => {
+        const map = { ...groups };
+        const favRanges = UNICODE_RANGES.filter(r => favorites.includes(r.id));
+        favRanges.sort((a, b) => favorites.indexOf(a.id) - favorites.indexOf(b.id));
+
+        if (favRanges.length > 0) {
+            map['Favorites'] = favRanges;
         }
         return map;
-    }, [search, grouped]);
+    }, [groups, favorites, UNICODE_RANGES]);
 
-    const groupOrder = ['Favorites', 'Design & Utilities', 'Emojis', 'Basic', 'Scripts', 'Symbols & Punctuation', 'CJK', 'High Planes'];
-
-    // Inject Favorites group into matchingGroups if any
-    const groupsWithFavorites = useMemo(() => {
-        const mg = { ...matchingGroups };
+    const groupOrder = useMemo(() => {
+        const order = ['Basic', 'Scripts', 'Symbols & Punctuation', 'CJK', 'High Planes', 'Design & Utilities', 'Emojis'];
         if (favorites.length > 0) {
-            mg['Favorites'] = favorites.map(favId => UNICODE_RANGES.find(r => r.id === favId)).filter(Boolean);
+            return ['Favorites', ...order];
         }
-        return mg;
-    }, [matchingGroups, favorites]);
+        return order;
+    }, [favorites]);
 
-    // ── LOBBY VIEW ──────────────────────────────────────────────────────────────
+    const totalPages = Math.ceil(activeTotal / PAGE_SIZE);
+
+    const formatNumber = (n) => n.toLocaleString();
+
+    // ── LOBBY VIEW ───────────────────────────────────────────────────────────────
     if (!category) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '28px', paddingBottom: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '24px', paddingBottom: '30px' }}>
+                {/* Custom Creator Modal */}
+                <CustomItemModal
+                    isOpen={isCustomModalOpen}
+                    onClose={() => { setIsCustomModalOpen(false); setDroppedFile(null); }}
+                    onSave={handleSaveCustomItem}
+                    initialType={modalInitialType}
+                    initialFile={droppedFile}
+                    user={user}
+                />
 
-                {/* Header */}
-                <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                {/* Hero Header */}
+                <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                         <div>
-                            <h2 style={{ color: 'var(--accent-primary)', margin: 0, fontSize: '1.4rem', letterSpacing: '0.05em' }}>
-                                UNICODE SYMBOLS
-                            </h2>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '6px 0 0 0' }}>
-                                <span style={{ color: 'var(--accent-primary)', fontWeight: 900 }}>{formatNumber(TOTAL)}</span>
-                                &nbsp;code points across {UNICODE_RANGES.length} Unicode blocks — select a category to browse
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{
+                                    width: '38px', height: '38px', borderRadius: '10px',
+                                    background: 'rgba(6, 182, 212, 0.15)', border: '1px solid #06b6d4',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#06b6d4'
+                                }}>
+                                    <Icon name="cube" size={22} />
+                                </div>
+                                <h1 style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.8rem', letterSpacing: '0.08em', fontWeight: 900 }}>
+                                    THE VAULT
+                                </h1>
+                            </div>
+                            <p style={{ color: 'var(--text-muted)', margin: '6px 0 0 0', fontSize: '0.82rem' }}>
+                                Unicode glyphs, standard emojis, and community custom symbols synchronized across the Nexus.
                             </p>
                         </div>
-                        {/* Global search */}
+
+                        {/* Search & Jump Tools */}
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: '320px' }}>
                             <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 <SearchBar
@@ -401,7 +524,7 @@ export default function Symbols({ user }) {
                                 onChange={e => setSearch(e.target.value)}
                                 onClear={() => setSearch('')}
                                 placeholder="Search categories, hex, or char…"
-                                style={{ width: '100%', maxWidth: '350px' }}
+                                style={{ width: '100%', maxWidth: '320px' }}
                                 id="symbols-search"
                             />
                         </div>
@@ -445,7 +568,15 @@ export default function Symbols({ user }) {
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
                             {searchResults.map((sym, idx) => (
-                                <SymbolCard key={`${sym.cp}-${idx}`} sym={sym} copied={copied} copyType={copyType} copy={copy} />
+                                <SymbolCard 
+                                    key={`${sym.cp}-${idx}`} 
+                                    sym={sym} 
+                                    copied={copied} 
+                                    copyType={copyType} 
+                                    copy={copy} 
+                                    user={user}
+                                    onDelete={handleDeleteCustomItem}
+                                />
                             ))}
                             {searchResults.length === 0 && (
                                 <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--text-muted)', padding: '40px 20px', fontSize: '0.85rem' }}>
@@ -456,12 +587,13 @@ export default function Symbols({ user }) {
                     </div>
                 )}
 
-                {/* Category Groups */}
+                {/* Category Groups Grid */}
                 {groupOrder.map(groupName => {
                     const ranges = groupsWithFavorites[groupName] || [];
                     if (ranges.length === 0) return null;
                     const colors = GROUP_COLORS[groupName] || GROUP_COLORS['Basic'];
                     const groupTotal = ranges.reduce((acc, r) => acc + (r.isCustom ? (r.symbols ? r.symbols.length : 0) : r.end - r.start + 1), 0);
+                    
                     return (
                         <div key={groupName}>
                             {/* Group heading */}
@@ -476,11 +608,14 @@ export default function Symbols({ user }) {
                                     — {ranges.length} block{ranges.length !== 1 ? 's' : ''} {groupName !== 'Favorites' ? `· ${formatNumber(groupTotal)} items` : ''}
                                 </span>
                             </div>
+
                             {/* Cards grid */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
                                 {ranges.map(r => {
-                                    const size = r.end - r.start + 1;
+                                    const size = r.isCustom ? (r.symbols ? r.symbols.length : 0) : (r.end - r.start + 1);
                                     const isFavGroup = groupName === 'Favorites';
+                                    const isCustomBlock = r.isUserCustom;
+
                                     return (
                                         <div
                                             key={r.id}
@@ -499,7 +634,7 @@ export default function Symbols({ user }) {
                                                 borderColor: dragOverItem === r.id ? 'var(--accent-primary)' : colors.border,
                                                 borderStyle: dragOverItem === r.id ? 'dashed' : 'solid',
                                                 borderWidth: dragOverItem === r.id ? '2px' : '1px',
-                                                background: colors.bg,
+                                                background: isCustomBlock ? 'rgba(6, 182, 212, 0.08)' : colors.bg,
                                                 opacity: draggedItem === r.id ? 0.4 : 1,
                                                 transform: dragOverItem === r.id ? 'scale(1.02)' : 'none'
                                             }}
@@ -511,7 +646,7 @@ export default function Symbols({ user }) {
                                             onMouseLeave={e => {
                                                 e.currentTarget.style.transform = 'translateY(0)';
                                                 e.currentTarget.style.boxShadow = '';
-                                                e.currentTarget.style.background = colors.bg;
+                                                e.currentTarget.style.background = isCustomBlock ? 'rgba(6, 182, 212, 0.08)' : colors.bg;
                                             }}
                                         >
                                             {/* Favorite Star */}
@@ -533,21 +668,29 @@ export default function Symbols({ user }) {
                                                 borderRadius: '8px', background: colors.bg.replace('0.08', '0.18'),
                                                 border: `1px solid ${colors.border}`,
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                color: colors.accent,
+                                                color: isCustomBlock ? '#06b6d4' : colors.accent,
                                             }}>
                                                 <Icon name={BLOCK_ICONS[r.id] || GROUP_ICONS[r.group] || 'symbol'} size={20} />
                                             </div>
+
                                             {/* Info */}
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                     {r.label}
                                                 </div>
-                                                <div style={{ color: colors.accent, fontSize: '0.68rem', fontWeight: 600, marginTop: '2px' }}>
-                                                    {r.isCustom ? (r.group === 'Emojis' ? 'Emojis' : 'Tool') : `${formatNumber(size)} chars`}
+                                                <div style={{ color: isCustomBlock ? '#06b6d4' : colors.accent, fontSize: '0.68rem', fontWeight: 600, marginTop: '2px' }}>
+                                                    {isCustomBlock 
+                                                        ? `${size} Cloud Item${size !== 1 ? 's' : ''}` 
+                                                        : (r.isCustom ? (r.group === 'Emojis' ? 'Emojis' : 'Tool') : `${formatNumber(size)} chars`)}
                                                 </div>
                                                 {!r.isCustom && (
                                                     <div style={{ color: 'var(--text-muted)', fontSize: '0.62rem', fontFamily: 'monospace', marginTop: '1px' }}>
                                                         U+{toHex(r.start)}…{toHex(r.end)}
+                                                    </div>
+                                                )}
+                                                {isCustomBlock && (
+                                                    <div style={{ color: '#00ff88', fontSize: '0.6rem', fontWeight: 600, marginTop: '1px' }}>
+                                                        ● Cloud Synced
                                                     </div>
                                                 )}
                                             </div>
@@ -562,6 +705,7 @@ export default function Symbols({ user }) {
         );
     }
 
+    // ── COLOR CENTER VIEW ────────────────────────────────────────────────────────
     if (category === 'colors_db') {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0' }}>
@@ -580,10 +724,33 @@ export default function Symbols({ user }) {
         );
     }
 
-    // ── SYMBOL BROWSER VIEW ──────────────────────────────────────────────────────
+    // ── SYMBOL / EMOJI BROWSER VIEW ──────────────────────────────────────────────
     const rangeColors = GROUP_COLORS[activeRange?.group] || GROUP_COLORS['Basic'];
+    const isCustomCategory = activeRange?.isUserCustom;
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0' }}>
+        <div 
+            style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0' }}
+            onDragOver={(e) => {
+                if (isCustomCategory) e.preventDefault();
+            }}
+            onDrop={(e) => {
+                if (isCustomCategory && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    e.preventDefault();
+                    openCreateModal(activeRange?.id === 'custom_emojis' ? 'emoji' : 'symbol', e.dataTransfer.files[0]);
+                }
+            }}
+        >
+            {/* Custom Creator Modal */}
+            <CustomItemModal
+                isOpen={isCustomModalOpen}
+                onClose={() => { setIsCustomModalOpen(false); setDroppedFile(null); }}
+                onSave={handleSaveCustomItem}
+                initialType={modalInitialType}
+                initialFile={droppedFile}
+                user={user}
+            />
+
             {/* Header */}
             <div style={{ borderBottom: '1px solid var(--border-color)', marginBottom: '16px', paddingBottom: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
@@ -611,8 +778,28 @@ export default function Symbols({ user }) {
                                     <span style={{ color: rangeColors.accent, fontWeight: 900 }}>{formatNumber(activeTotal)}</span>
                                     &nbsp;items {activeRange?.isCustom ? '' : `· U+${toHex(activeRange?.start)} → U+${toHex(activeRange?.end)}`}
                                     &nbsp;·&nbsp;<span style={{ color: 'var(--text-muted)' }}>{activeRange?.group}</span>
+                                    {isCustomCategory && <span style={{ color: '#00ff88', marginLeft: '8px' }}>● Cloud Synced</span>}
                                 </p>
                             </div>
+
+                            {/* Add Custom Button in Header if Custom Category */}
+                            {isCustomCategory && (
+                                <button
+                                    onClick={() => openCreateModal(activeRange?.id === 'custom_emojis' ? 'emoji' : 'symbol')}
+                                    className="cyber-button"
+                                    style={{
+                                        padding: '7px 16px',
+                                        fontSize: '0.78rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        letterSpacing: '0.05em'
+                                    }}
+                                >
+                                    <Icon name="plus" size={16} />
+                                    ADD {activeRange?.id === 'custom_emojis' ? 'EMOJI' : 'SYMBOL'}
+                                </button>
+                            )}
 
                             {/* Pagination Controls Beside Title */}
                             {!searchResults && totalPages > 1 && (
@@ -644,6 +831,7 @@ export default function Symbols({ user }) {
                             )}
                         </div>
                     </div>
+
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Jump (only for unicode range blocks) */}
                         {!activeRange?.isCustom && (
@@ -673,34 +861,6 @@ export default function Symbols({ user }) {
                         />
                     </div>
                 </div>
-
-                {/* Jump Result */}
-                {jumpResult && (
-                    <div style={{
-                        marginTop: '12px', padding: '12px 16px', background: rangeColors.bg,
-                        border: `1px solid ${rangeColors.accent}`, borderRadius: 'var(--radius-small)',
-                        display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'
-                    }}>
-                        {jumpResult.error ? (
-                            <span style={{ color: '#ff4466', fontSize: '0.82rem' }}>{jumpResult.error}</span>
-                        ) : (
-                            <>
-                                <span style={{ fontSize: '2.5rem', lineHeight: 1, filter: `drop-shadow(0 0 10px ${rangeColors.accent}88)` }}>{jumpResult.char}</span>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-main)' }}>{jumpResult.code} — {jumpResult.name}</div>
-                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginTop: '2px' }}>
-                                        Decimal: {jumpResult.cp} · Octal: {jumpResult.cp.toString(8)} · Binary: {jumpResult.cp.toString(2)}
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button onClick={() => copy(jumpResult.char, 'jump-char', 'char')} style={copyBtn}>COPY CHAR</button>
-                                    <button onClick={() => copy(jumpResult.code, 'jump-code', 'code')} style={copyBtn}>COPY CODE</button>
-                                    <button onClick={() => setJumpResult(null)} style={{ ...copyBtn, background: 'transparent' }}>✕</button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
 
                 {/* Sub-Navigation Tabs for related categories in the same group */}
                 {activeRange && (
@@ -741,125 +901,144 @@ export default function Symbols({ user }) {
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>
                     {searchResults
                         ? <span><span style={{ color: rangeColors.accent, fontWeight: 700 }}>{searchResults.length}</span> match{searchResults.length !== 1 ? 'es' : ''} for "<span style={{ color: 'var(--text-main)' }}>{search}</span>"</span>
-                        : <span>Showing <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(page * PAGE_SIZE + 1)}</span>–<span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(Math.min((page + 1) * PAGE_SIZE, activeTotal))}</span> of <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(activeTotal)}</span></span>
+                        : (activeTotal === 0 
+                            ? <span>No custom items created yet. Click "+ ADD" to create your first!</span> 
+                            : <span>Showing <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(page * PAGE_SIZE + 1)}</span>–<span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(Math.min((page + 1) * PAGE_SIZE, activeTotal))}</span> of <span style={{ color: rangeColors.accent, fontWeight: 700 }}>{formatNumber(activeTotal)}</span></span>)
                     }
                 </div>
-                {!searchResults && totalPages > 1 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem', fontWeight: 600 }}>
-                            Page {page + 1} <span style={{ opacity: 0.6 }}>/ {totalPages}</span>
-                        </span>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                            <button
-                                onClick={() => setPage(p => Math.max(0, p - 1))}
-                                disabled={page === 0}
-                                title="Previous Page"
-                                style={{
-                                    background: page === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(6,182,212,0.12)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: 'var(--radius-small, 6px)',
-                                    color: page === 0 ? 'var(--text-muted)' : 'var(--accent-primary)',
-                                    padding: '5px 8px',
-                                    cursor: page === 0 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    opacity: page === 0 ? 0.35 : 1,
-                                    transition: 'all 0.15s ease'
-                                }}
-                            >
-                                <Icon name="chevron-left" size={14} />
-                            </button>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                                disabled={page >= totalPages - 1}
-                                title="Next Page"
-                                style={{
-                                    background: page >= totalPages - 1 ? 'rgba(255,255,255,0.02)' : 'rgba(6,182,212,0.12)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: 'var(--radius-small, 6px)',
-                                    color: page >= totalPages - 1 ? 'var(--text-muted)' : 'var(--accent-primary)',
-                                    padding: '5px 8px',
-                                    cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    opacity: page >= totalPages - 1 ? 0.35 : 1,
-                                    transition: 'all 0.15s ease'
-                                }}
-                            >
-                                <Icon name="chevron-right" size={14} />
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
 
-            {/* Symbol Grid */}
-            <div ref={gridRef} style={{
-                flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '20px'
-            }}>
-                {(() => {
-                    if (displaySymbols.length === 0) {
-                        return (
-                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 20px', fontSize: '0.85rem' }}>
-                                No symbols found for "<span style={{ color: 'var(--text-main)' }}>{search}</span>"
-                            </div>
-                        );
-                    }
-
-                    // Group by subCatLabel (if custom) or category label
-                    const groupedSymbols = {};
-                    displaySymbols.forEach(sym => {
-                        let groupKey;
-                        if (searchResults) {
-                            const range = UNICODE_RANGES.find(r => r.id === sym.cat);
-                            groupKey = sym.subCatLabel || (range ? range.label : 'Symbols');
-                        } else {
-                            groupKey = sym.subCatLabel || 'Default';
-                        }
-                        
-                        if (!groupedSymbols[groupKey]) groupedSymbols[groupKey] = [];
-                        groupedSymbols[groupKey].push(sym);
-                    });
-
-                    return Object.entries(groupedSymbols).map(([groupKey, symbols]) => {
-                        const showSeparator = groupKey !== 'Default';
-                        return (
-                            <div key={groupKey}>
-                                {showSeparator && (
-                                    <div style={{ 
-                                        padding: '10px 0', 
-                                        marginBottom: '15px', 
-                                        borderBottom: `1px solid ${rangeColors.accent}55`, 
-                                        display: 'flex', alignItems: 'center', gap: '10px' 
-                                    }}>
-                                        <div style={{ width: '8px', height: '8px', background: rangeColors.accent, borderRadius: '50%', boxShadow: `0 0 8px ${rangeColors.accent}` }}></div>
-                                        <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.1rem', letterSpacing: '1px' }}>
-                                            {groupKey.toUpperCase()}
-                                        </h3>
-                                    </div>
-                                )}
+            {/* Grid display */}
+            <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                {searchResults ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                        {searchResults.map((sym, idx) => (
+                            <SymbolCard 
+                                key={`${sym.cp}-${idx}`} 
+                                sym={sym} 
+                                copied={copied} 
+                                copyType={copyType} 
+                                copy={copy} 
+                                accentColor={rangeColors.accent} 
+                                user={user}
+                                onDelete={handleDeleteCustomItem}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                        {/* If in Custom Category: Render [+ ADD NEW] Card at top */}
+                        {isCustomCategory && page === 0 && (
+                            <div
+                                className="card"
+                                onClick={() => openCreateModal(activeRange?.id === 'custom_emojis' ? 'emoji' : 'symbol')}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '10px',
+                                    padding: '24px 12px',
+                                    border: '2px dashed rgba(6, 182, 212, 0.45)',
+                                    background: 'rgba(6, 182, 212, 0.05)',
+                                    borderRadius: 'var(--radius-medium, 10px)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    minHeight: '130px'
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = '#06b6d4';
+                                    e.currentTarget.style.background = 'rgba(6, 182, 212, 0.15)';
+                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = 'rgba(6, 182, 212, 0.45)';
+                                    e.currentTarget.style.background = 'rgba(6, 182, 212, 0.05)';
+                                    e.currentTarget.style.transform = 'none';
+                                }}
+                            >
                                 <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                                    gap: '10px'
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(6, 182, 212, 0.2)',
+                                    border: '1px solid #06b6d4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#06b6d4'
                                 }}>
-                                    {symbols.map((sym, idx) => (
-                                        <SymbolCard key={`${sym.cp}-${idx}`} sym={sym} copied={copied} copyType={copyType} copy={copy} accentColor={rangeColors.accent} />
-                                    ))}
+                                    <Icon name="plus" size={20} />
+                                </div>
+                                <div style={{ textAlign: 'center' }}>
+                                    <div style={{ color: '#ffffff', fontSize: '0.8rem', fontWeight: 800 }}>
+                                        + ADD {activeRange?.id === 'custom_emojis' ? 'EMOJI' : 'SYMBOL'}
+                                    </div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: '0.65rem', marginTop: '2px' }}>
+                                        Drag & drop image or click
+                                    </div>
                                 </div>
                             </div>
-                        );
-                    });
-                })()}
+                        )}
+
+                        {/* Render items */}
+                        {(() => {
+                            if (activeRange?.isCustom) {
+                                const symbols = activeRange?.symbols || [];
+                                const pageSymbols = symbols.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+                                return pageSymbols.map((sym, idx) => (
+                                    <SymbolCard 
+                                        key={`${sym.cp}-${idx}`} 
+                                        sym={sym} 
+                                        copied={copied} 
+                                        copyType={copyType} 
+                                        copy={copy} 
+                                        accentColor={rangeColors.accent}
+                                        user={user}
+                                        onDelete={handleDeleteCustomItem}
+                                    />
+                                ));
+                            }
+
+                            // Standard unicode codepoint generation
+                            const start = activeRange?.start + page * PAGE_SIZE;
+                            const end = Math.min(start + PAGE_SIZE - 1, activeRange?.end);
+                            const items = [];
+                            for (let cp = start; cp <= end; cp++) {
+                                const hex = toHex(cp);
+                                items.push({
+                                    cp,
+                                    char: renderChar(cp),
+                                    code: `U+${hex}`,
+                                    name: `${activeRange?.label} #${cp - activeRange?.start + 1}`,
+                                    cat: activeRange?.id
+                                });
+                            }
+                            return items.map((sym, idx) => (
+                                <SymbolCard 
+                                    key={`${sym.cp}-${idx}`} 
+                                    sym={sym} 
+                                    copied={copied} 
+                                    copyType={copyType} 
+                                    copy={copy} 
+                                    accentColor={rangeColors.accent}
+                                    user={user}
+                                    onDelete={handleDeleteCustomItem}
+                                />
+                            ));
+                        })()}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-// ─── Shared Symbol Card ────────────────────────────────────────────────────────
-function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-primary)' }) {
+// ─── Shared Symbol / Emoji Card with Image and Cloud Sync Support ────────────
+function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-primary)', user, onDelete }) {
+    const isOwner = user?.uid && (sym.creatorUid === user.uid || !sym.creatorUid);
+    const isCustom = sym.isUserCustom;
+
     return (
         <div className="card" style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -875,50 +1054,114 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
                 e.currentTarget.style.boxShadow = '';
             }}
         >
+            {/* Delete button for user's custom items */}
+            {isCustom && isOwner && (
+                <button
+                    onClick={(e) => onDelete(e, sym.cp)}
+                    title="Delete custom item from cloud"
+                    style={{
+                        position: 'absolute',
+                        top: '4px',
+                        left: '4px',
+                        background: 'rgba(255, 68, 68, 0.15)',
+                        border: '1px solid rgba(255, 68, 68, 0.3)',
+                        borderRadius: '4px',
+                        color: '#ff6666',
+                        fontSize: '0.65rem',
+                        padding: '1px 4px',
+                        cursor: 'pointer',
+                        lineHeight: 1,
+                        zIndex: 2
+                    }}
+                >
+                    ✕
+                </button>
+            )}
+
+            {/* Public/Private Badge for custom items */}
+            {isCustom && (
+                <div style={{
+                    position: 'absolute',
+                    top: '4px',
+                    right: '4px',
+                    fontSize: '0.52rem',
+                    fontWeight: 700,
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    background: sym.isPublic ? 'rgba(0, 255, 136, 0.15)' : 'rgba(255, 255, 255, 0.1)',
+                    color: sym.isPublic ? '#00ff88' : '#cbd5e1',
+                    border: `1px solid ${sym.isPublic ? 'rgba(0, 255, 136, 0.3)' : 'rgba(255, 255, 255, 0.15)'}`,
+                    lineHeight: 1
+                }}>
+                    {sym.isPublic ? 'PUBLIC' : 'PRIVATE'}
+                </div>
+            )}
+
+            {/* Glyph / Image Rendering */}
             <div style={{
                 fontSize: '2rem', userSelect: 'none', lineHeight: 1,
                 filter: `drop-shadow(0 0 6px ${accentColor}44)`,
-                minHeight: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                minHeight: '2.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginTop: isCustom ? '6px' : '0'
             }}>
-                {sym.char}
+                {sym.isImage ? (
+                    <div style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img 
+                            src={sym.char} 
+                            alt={sym.name} 
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                        />
+                    </div>
+                ) : (
+                    sym.char
+                )}
             </div>
+
+            {/* Metadata */}
             <div style={{ textAlign: 'center', width: '100%' }}>
-                <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: accentColor, fontWeight: 700, marginBottom: '2px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: accentColor, fontWeight: 700, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {sym.code}
                 </div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {sym.name}
                 </div>
             </div>
+
+            {/* Copy Action Buttons */}
             <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
-                <button onClick={() => copy(sym.char, sym.cp, 'char')} style={copyBtn}
+                <button 
+                    onClick={() => copy(sym.char, sym.cp, 'char')} 
+                    style={copyBtn}
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
-                >CHAR</button>
-                <button onClick={() => copy(sym.code, `${sym.cp}-code`, 'code')} style={copyBtn}
+                >
+                    {sym.isImage ? 'COPY' : 'CHAR'}
+                </button>
+                <button 
+                    onClick={() => copy(sym.code, `${sym.cp}-code`, 'code')} 
+                    style={copyBtn}
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
-                >CODE</button>
+                >
+                    {sym.isImage ? 'TAG' : 'CODE'}
+                </button>
             </div>
+
+            {/* Copy Toast Badge */}
             {(copied === sym.cp || copied === `${sym.cp}-code`) && (
                 <div style={{
                     position: 'absolute', top: '6px', right: '6px',
                     background: accentColor, color: '#fff',
                     fontSize: '0.58rem', fontWeight: 'bold', padding: '3px 6px',
-                    borderRadius: '4px', boxShadow: `0 0 8px ${accentColor}99`
+                    borderRadius: '4px', boxShadow: `0 0 8px ${accentColor}99`,
+                    zIndex: 10
                 }}>
-                    {copyType === 'char' ? '✓ CHAR' : '✓ CODE'}
+                    {copyType === 'char' ? '✓ COPIED' : '✓ TAG COPIED'}
                 </div>
             )}
         </div>
     );
 }
-
-const navBtn = {
-    background: 'rgba(6,182,212,0.08)', border: '1px solid var(--border-color)',
-    color: 'var(--text-main)', padding: '5px 10px', borderRadius: '5px',
-    cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, transition: 'all 0.15s',
-};
 
 const copyBtn = {
     flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-color)',
