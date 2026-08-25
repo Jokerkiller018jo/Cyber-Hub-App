@@ -189,7 +189,7 @@ export default function Symbols({ user }) {
         }
         const unsubscribe = subscribeCustomVaultItems((items) => {
             setCustomVaultItems(items || []);
-        });
+        }, user?.uid);
         return () => unsubscribe();
     }, [isGuest, user?.uid]);
     
@@ -202,7 +202,7 @@ export default function Symbols({ user }) {
 
     // Save custom item to Firestore
     const handleSaveCustomItem = async (item) => {
-        const res = await saveCustomVaultItem(item);
+        const res = await saveCustomVaultItem(item, user?.uid);
         if (!res.ok) throw new Error(res.error);
     };
 
@@ -210,7 +210,7 @@ export default function Symbols({ user }) {
     const handleDeleteCustomItem = async (e, itemId) => {
         e.stopPropagation();
         if (window.confirm('Delete this custom item from Vault Cloud?')) {
-            await deleteCustomVaultItem(itemId);
+            await deleteCustomVaultItem(itemId, user?.uid);
         }
     };
 
