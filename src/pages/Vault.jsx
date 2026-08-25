@@ -393,8 +393,8 @@ export default function Symbols({ user }) {
             const codeText = sym.code || (typeof sym.cp === 'number' ? `U+${toHex(sym.cp)}` : sym.name);
             await navigator.clipboard.writeText(codeText);
             resolvedType = 'code';
-        } else if (sym.isImage && sym.char && typeof sym.char === 'string' && (sym.char.startsWith('data:image/') || sym.char.startsWith('http') || sym.char.startsWith('blob:'))) {
-            // For custom image items: copy as a real image binary onto the clipboard so pasting pastes the actual graphic/emoji!
+        } else if (type === 'image' && sym.isImage && sym.char) {
+            // Explicitly copy as Image Binary for pasting into graphics/chat apps
             try {
                 const pngBlob = await new Promise((resolve, reject) => {
                     const img = new Image();
@@ -420,18 +420,22 @@ export default function Symbols({ user }) {
                     ]);
                     resolvedType = 'image';
                 } else {
-                    // Fallback to shortcode
                     await navigator.clipboard.writeText(sym.code || sym.name || ':custom_emoji:');
-                    resolvedType = 'tag';
+                    resolvedType = 'char';
                 }
             } catch (err) {
-                console.warn('Image clipboard write failed, copying shortcode tag:', err);
+                console.warn('Image clipboard write failed, copying character code:', err);
                 await navigator.clipboard.writeText(sym.code || sym.name || ':custom_emoji:');
-                resolvedType = 'tag';
+                resolvedType = 'char';
             }
         } else {
-            // Standard Unicode glyph or custom character
-            const charText = sym.char || (typeof sym.cp === 'number' ? renderChar(sym.cp) : String(sym.cp));
+            // Copy as Character:
+            // If it's a character/glyph, copy the actual character (e.g. ⚡, ✦, Ω)
+            // If it's an image item, copy its clean character shortcode (e.g. :cyber_icon:)
+            const charText = sym.isImage
+                ? (sym.code || `:custom_${sym.name?.toLowerCase().replace(/\s+/g, '_') || 'emoji'}:`)
+                : (sym.char || (typeof sym.cp === 'number' ? renderChar(sym.cp) : String(sym.cp)));
+
             await navigator.clipboard.writeText(charText);
             resolvedType = 'char';
         }
@@ -1183,15 +1187,15 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
                 >
-                    {sym.isImage ? 'COPY' : 'CHAR'}
+                    CHAR
                 </button>
                 <button 
-                    onClick={() => copy(sym, `${sym.cp}-code`, 'code')} 
+                    onClick={() => copy(sym, `${sym.cp}-code`, sym.isImage ? 'image' : 'code')} 
                     style={copyBtn}
                     onMouseEnter={e => { e.target.style.background = `${accentColor}33`; e.target.style.borderColor = accentColor; }}
                     onMouseLeave={e => { e.target.style.background = 'rgba(176,0,255,0.05)'; e.target.style.borderColor = 'var(--border-color)'; }}
                 >
-                    {sym.isImage ? 'TAG' : 'CODE'}
+                    {sym.isImage ? 'IMG' : 'CODE'}
                 </button>
             </div>
 
@@ -1204,7 +1208,7 @@ function SymbolCard({ sym, copied, copyType, copy, accentColor = 'var(--accent-p
                     borderRadius: '4px', boxShadow: `0 0 8px ${accentColor}99`,
                     zIndex: 10
                 }}>
-                    {copyType === 'image' ? '✓ COPIED IMAGE' : (copyType === 'tag' ? '✓ TAG COPIED' : (copyType === 'code' ? '✓ CODE' : '✓ CHAR'))}
+                    {copyType === 'image' ? '✓ COPIED IMAGE' : (copyType === 'code' ? '✓ CODE' : '✓ CHAR')}
                 </div>
             )}
         </div>
