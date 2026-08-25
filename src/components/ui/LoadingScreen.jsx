@@ -61,17 +61,15 @@ const LoadingScreen = ({ onComplete }) => {
                     <div className="ls-hex-ring ls-ring-2" />
                     <div className="ls-hex-ring ls-ring-3" />
                     <div className="ls-icon-core" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img
-                            src="/favicon.jpg"
-                            alt="Cyber-Hub"
-                            style={{
-                                width: '54px',
-                                height: '54px',
-                                borderRadius: '12px',
-                                objectFit: 'cover',
-                                boxShadow: '0 0 20px rgba(6, 182, 212, 0.6), 0 0 10px rgba(168, 85, 247, 0.4)'
-                            }}
-                        />
+                        <div style={{
+                            fontSize: '2.8rem',
+                            lineHeight: 1,
+                            userSelect: 'none',
+                            filter: 'drop-shadow(0 0 16px #06b6d4) drop-shadow(0 0 30px #a855f7)',
+                            animation: 'pulse 2s infinite ease-in-out'
+                        }}>
+                            👾
+                        </div>
                     </div>
                 </div>
 
