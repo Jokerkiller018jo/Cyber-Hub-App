@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/ui/SearchBar';
+import Icon from '../components/ui/Icon';
+import { addColorToHistory } from '../services/colorHistory';
 
 // ─── Curated palettes (shown when no search is active) ────────────────────────
 const PALETTES = [  
     { name: 'White',        hex: '#f7f4f8', rgb: [247,247,247],   group: 'Neon' },
+    { name: 'Yellow',       hex: '#B4B400', rgb: [180,180,0],   group: 'Neon' },
     { name: 'Red',          hex: '#ff0000', rgb: [150,0,0],   group: 'Neon' },
     { name: 'Orange',       hex: '#ff6600', rgb: [0,255,136],   group: 'Neon' },
-    { name: 'Yellow',       hex: '#B4B400', rgb: [180,180,0],   group: 'Neon' },
     { name: 'Green',        hex: '#007800', rgb: [0,120,0],   group: 'Neon' },
     { name: 'Lime',         hex: '#00C800', rgb: [0,200,0],   group: 'Neon' },
     { name: 'Cyan',         hex: '#00B4B4', rgb: [0,180,180], group: 'Pastel' },
@@ -66,9 +69,9 @@ const COLOR_DEFS = {
 // ─── Semantic Object Palettes ────────────────────────────────────────────────
 const SEMANTIC_PALETTES = {
     apple: [
-        { name: 'Apple Red', hex: '#FF0800', rgb: [255,8,0], group: 'Semantic' },
-        { name: 'Apple Green', hex: '#8DB600', rgb: [141,182,0], group: 'Semantic' },
-        { name: 'Apple Yellow', hex: '#E2B714', rgb: [226,183,20], group: 'Semantic' },
+        { name: 'Red Apple', hex: '#FF0800', rgb: [255,8,0], group: 'Semantic' },
+        { name: 'Green Apple', hex: '#8DB600', rgb: [141,182,0], group: 'Semantic' },
+        { name: 'Yellow Apple', hex: '#E2B714', rgb: [226,183,20], group: 'Semantic' },
     ],
     banana: [
         { name: 'Banana Yellow', hex: '#FFE135', rgb: [255,225,53], group: 'Semantic' },
@@ -236,6 +239,7 @@ async function generateColors({ colorDef, signal, onBatch, maxResults = 2500 }) 
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function Colors() {
+    const navigate = useNavigate();
     const [search, setSearch]       = useState('');
     const [group, setGroup]         = useState('All');
     const [copied, setCopied]       = useState(null);
@@ -263,6 +267,7 @@ export default function Colors() {
     const copy = useCallback((text, id) => {
         navigator.clipboard.writeText(text);
         setCopied(id);
+        addColorToHistory({ hex: text, source: 'Color Spectrum' });
         setTimeout(() => setCopied(null), 1500);
     }, []);
 
@@ -392,19 +397,41 @@ export default function Colors() {
                 )}
             </div>
 
-            {/* Group tabs */}
-            <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'5px' }}>
-                {GROUPS.map(g => (
-                    <button key={g} onClick={() => { setGroup(g); setSelected(null); setSearch(''); }} style={{
-                        background: group===g ? 'rgba(6,182,212,0.15)' : 'rgba(0,0,0,0.3)',
-                        border: `1px solid ${group===g ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                        color: group===g ? 'var(--text-main)' : 'var(--text-muted)',
-                        padding:'7px 16px', borderRadius:'var(--radius-small)', cursor:'pointer',
-                        fontSize:'0.8rem', fontWeight:600, whiteSpace:'nowrap',
-                        boxShadow: group===g && g==='16M+ Generator' ? '0 0 15px rgba(6,182,212,0.3)' : 'none',
-                        transition: 'all 0.15s ease',
-                    }}>{g}</button>
-                ))}
+            {/* Group tabs & History Button */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'5px' }}>
+                <div style={{ display:'flex', gap:'8px' }}>
+                    {GROUPS.map(g => (
+                        <button key={g} onClick={() => { setGroup(g); setSelected(null); setSearch(''); }} style={{
+                            background: group===g ? 'rgba(6,182,212,0.15)' : 'rgba(0,0,0,0.3)',
+                            border: `1px solid ${group===g ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                            color: group===g ? 'var(--text-main)' : 'var(--text-muted)',
+                            padding:'7px 16px', borderRadius:'var(--radius-small)', cursor:'pointer',
+                            fontSize:'0.8rem', fontWeight:600, whiteSpace:'nowrap',
+                            boxShadow: group===g && g==='16M+ Generator' ? '0 0 15px rgba(6,182,212,0.3)' : 'none',
+                            transition: 'all 0.15s ease',
+                        }}>{g}</button>
+                    ))}
+                </div>
+                <button
+                    onClick={() => navigate('/color-history')}
+                    style={{
+                        background: 'rgba(236, 72, 153, 0.12)',
+                        border: '1px solid #ec4899',
+                        color: '#ec4899',
+                        padding: '7px 14px',
+                        borderRadius: 'var(--radius-small)',
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
+                >
+                    <Icon name="eyedropper" size={14} />
+                    PICKING COLOR HISTORY ➔
+                </button>
             </div>
 
             {/* ── 16M+ GENERATOR ── */}

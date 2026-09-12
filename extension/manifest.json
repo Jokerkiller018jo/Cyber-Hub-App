@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "CyberHub — Color Picker",
+  "version": "1.2.0",
+  "description": "Pick any color from anywhere on your screen and get the HEX, RGB, and HSL values instantly. Built for CyberHub.",
+  "icons": {
+    "16":  "icons/icon-16.png",
+    "48":  "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CyberHub Color Picker",
+    "default_icon": {
+      "16":  "icons/icon-16.png",
+      "48":  "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "pick-color": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+8",
+        "mac": "Command+Shift+8"
+      },
+      "description": "Pick color with pen (global shortcut)",
+      "global": true
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Open CyberHub Color Picker"
+    }
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "commands",
+    "windows",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}

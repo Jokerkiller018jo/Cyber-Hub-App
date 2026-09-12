@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CyberHub · Color Picker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header class="header">
+        <div class="header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.71 5.63l-2.34-2.34a1 1 0 0 0-1.41 0l-3.12 3.12-1.41-1.42-1.42 1.42 1.41 1.41-6.6 6.6A2 2 0 0 0 5 16v3h3a2 2 0 0 0 1.42-.59l6.6-6.6 1.41 1.42 1.42-1.42-1.42-1.41 3.12-3.12a1 1 0 0 0 0-1.65zM8 17H7v-1l6.59-6.59 1 1L8 17z"/>
+            </svg>
+        </div>
+        <div class="header-text">
+            <span class="header-title">COLOR PICKER</span>
+            <span class="header-brand">CYBERHUB</span>
+        </div>
+        <button class="header-settings-btn" id="openSettings" title="Settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+        </button>
+    </header>
+
+    <!-- ── Color Preview Swatch ── -->
+    <div class="swatch-section">
+        <div class="swatch-wrap">
+            <div class="swatch" id="swatch"></div>
+            <div class="swatch-glow" id="swatchGlow"></div>
+        </div>
+        <div class="color-values">
+            <div class="color-value-row">
+                <span class="color-label">HEX</span>
+                <span class="color-val mono" id="hexVal">—</span>
+            </div>
+            <div class="color-value-row">
+                <span class="color-label">RGB</span>
+                <span class="color-val mono" id="rgbVal">—</span>
+            </div>
+            <div class="color-value-row">
+                <span class="color-label">HSL</span>
+                <span class="color-val mono" id="hslVal">—</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Action Buttons ── -->
+    <div style="display: flex; flex-direction: column; gap: 8px; margin: 14px 16px 0;">
+        <button class="pick-btn pick-btn-precision" id="pickPrecisionBtn" title="Launch 1:1 pixel loupe with dense grid and zero pixel skipping">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.71 5.63l-2.34-2.34a1 1 0 0 0-1.41 0l-3.12 3.12-1.41-1.42-1.42 1.42 1.41 1.41-6.6 6.6A2 2 0 0 0 5 16v3h3a2 2 0 0 0 1.42-.59l6.6-6.6 1.41 1.42 1.42-1.42-1.42-1.41 3.12-3.12a1 1 0 0 0 0-1.65zM8 17H7v-1l6.59-6.59 1 1L8 17z"/>
+            </svg>
+            <div style="display:flex; flex-direction:column; align-items:flex-start; gap:1px;">
+                <span style="font-size:0.83rem; font-weight:800; letter-spacing:0.02em;">Precision Pen (1:1 Loupe)</span>
+                <span style="font-size:0.65rem; color:var(--accent-hover); font-weight:500;">Small pixels • 25×25 grid • No skipping</span>
+            </div>
+        </button>
+
+        <button class="pick-btn pick-btn-secondary" id="pickBtn" title="Pick from any outside desktop app or window">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 2v1h12v-1l-1-2h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/>
+            </svg>
+            <span>OS System Pen (Any App / Desktop)</span>
+        </button>
+    </div>
+
+    <!-- ── Browser Unsupported Notice (hidden by default) ── -->
+    <div class="unsupported" id="unsupported" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        EyeDropper not supported in this browser. Use Chrome, Edge, or Brave.
+    </div>
+
+    <!-- ── Copy Buttons ── -->
+    <div class="copy-row" id="copyRow">
+        <button class="copy-btn" id="copyHex" data-type="hex">Copy HEX</button>
+        <button class="copy-btn" id="copyRgb" data-type="rgb">Copy RGB</button>
+        <button class="copy-btn" id="copyHsl" data-type="hsl">Copy HSL</button>
+    </div>
+
+    <!-- ── Toast Notification ── -->
+    <div class="toast" id="toast">Copied!</div>
+
+    <!-- ── Divider ── -->
+    <div class="section-divider">
+        <span class="divider-line"></span>
+        <span class="divider-label">HISTORY</span>
+        <span class="divider-line"></span>
+    </div>
+
+    <!-- ── Color History ── -->
+    <div class="history-wrap">
+        <div class="history-grid" id="historyGrid">
+            <!-- Swatches injected by JS -->
+        </div>
+        <div class="history-empty" id="historyEmpty">
+            No colors picked yet
+        </div>
+        <button class="clear-btn" id="clearBtn" style="display:none;">Clear History</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

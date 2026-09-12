@@ -12,11 +12,12 @@ export default function Lobby() {
     }, []);
 
     const navTabs = [
-        { label: 'Market',     path: '/market',     icon: 'trending-up', color: '#de3806f5' },
-        { label: 'Currencies', path: '/currencies', icon: 'dollar',      color: '#10e059' },
-        { label: 'Vault',      path: '/symbols',    icon: 'database',    color: '#f59e0b' },
-        { label: 'Extensions', path: '/extensions', icon: 'extension',   color: '#06b6d4' },
-        { label: 'Settings',   path: '/settings',   icon: 'settings',    color: '#94a3b8' },
+        { label: 'Market',        path: '/market',        icon: 'trending-up', color: '#de3806f5' },
+        { label: 'Currencies',    path: '/currencies',    icon: 'dollar',      color: '#10e059' },
+        { label: 'Vault',         path: '/symbols',       icon: 'database',    color: '#f59e0b' },
+        { label: 'Color History', path: '/color-history', icon: 'eyedropper',  color: '#ec4899' },
+        { label: 'Extensions',    path: '/extensions',    icon: 'extension',   color: '#06b6d4' },
+        { label: 'Settings',      path: '/settings',      icon: 'settings',    color: '#94a3b8' },
     ];
 
     const infoCards = [
